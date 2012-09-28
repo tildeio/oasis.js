@@ -1,6 +1,6 @@
 QUnit.config.testTimeout = 1000;
 
-var iframe;
+var sandbox;
 
 module("Oasis");
 
@@ -19,14 +19,15 @@ test("Assert browser satisfies minimum requirements", function() {
 
 module("Oasis.createSandbox", {
   teardown: function() {
-    if (iframe && iframe.parentNode) { iframe.parentNode.removeChild(iframe); }
+    var el = sandbox && sandbox.el;
+    if (el && el.parentNode) { el.parentNode.removeChild(el); }
     Oasis.reset();
   }
 });
 
 test("assertion: must register package", function() {
   raises(function() {
-    iframe = Oasis.createSandbox({
+    sandbox = Oasis.createSandbox({
       url: "fixtures/index.html"
     });
   }, Error, "Creating a card from an unregistered package fails");
@@ -40,17 +41,17 @@ test("assertion: must provide capabilities when registering a package", function
   }, Error, "Registering a package without capabilities fails");
 });
 
-test("returns an iframe", function() {
+test("returns a sandbox with an iframe element", function() {
   Oasis.register({
     url: "fixtures/index.html",
     capabilities: []
   });
 
-  iframe = Oasis.createSandbox({
+  sandbox = Oasis.createSandbox({
     url: "fixtures/index.html"
   });
 
-  ok(iframe instanceof window.HTMLIFrameElement, "A new iframe was returned");
+  ok(sandbox.el instanceof window.HTMLIFrameElement, "A new iframe was returned");
 });
 
 test("service is notified about ports created for a card", function() {
@@ -68,17 +69,17 @@ test("service is notified about ports created for a card", function() {
     }
   };
 
-  iframe = Oasis.createSandbox({
+  sandbox = Oasis.createSandbox({
     url: "fixtures/index.html",
     services: {
       testData: dataService
     }
   });
 
-  document.body.appendChild(iframe);
+  document.body.appendChild(sandbox.el);
 });
 
-test("card can communicate with the environment through a port", function() {
+test("service - card can communicate with the environment through a port", function() {
   Oasis.register({
     url: "fixtures/assertions.html",
     capabilities: ['assertions']
@@ -97,14 +98,36 @@ test("card can communicate with the environment through a port", function() {
     }
   };
 
-  iframe = Oasis.createSandbox({
+  sandbox = Oasis.createSandbox({
     url: "fixtures/assertions.html",
     services: {
       assertions: assertionsService
     }
   });
 
-  document.body.appendChild(iframe);
+  document.body.appendChild(sandbox.el);
+});
+
+test("shorthand - card can communicate with the environment through a port", function() {
+  Oasis.register({
+    url: "fixtures/assertions.html",
+    capabilities: ['assertions']
+  });
+
+  stop();
+
+  sandbox = Oasis.createSandbox({
+    url: "fixtures/assertions.html"
+  });
+
+  sandbox.connect('assertions').then(function(port) {
+    port.on('ok', function(data) {
+      start();
+      equal(data, 'success', "The card was able to communicate back");
+    });
+  });
+
+  document.body.appendChild(sandbox.el);
 });
 
 test("environment can communicate with the card through a port", function() {
@@ -128,14 +151,14 @@ test("environment can communicate with the card through a port", function() {
     }
   };
 
-  iframe = Oasis.createSandbox({
+  sandbox = Oasis.createSandbox({
     url: 'fixtures/to_environment.html',
     services: {
       pingpong: pingPongService
     }
   });
 
-  document.body.appendChild(iframe);
+  document.body.appendChild(sandbox.el);
 });
 
 test("environment can request a value from a sandbox", function() {
@@ -156,14 +179,14 @@ test("environment can request a value from a sandbox", function() {
     }
   };
 
-  iframe = Oasis.createSandbox({
+  sandbox = Oasis.createSandbox({
     url: 'fixtures/promise.html',
     services: {
       promisepong: pingPongPromiseService
     }
   });
 
-  document.body.appendChild(iframe);
+  document.body.appendChild(sandbox.el);
 });
 
 test("sandbox can request a value from the environment", function() {
@@ -187,12 +210,12 @@ test("sandbox can request a value from the environment", function() {
     }
   };
 
-  iframe = Oasis.createSandbox({
+  sandbox = Oasis.createSandbox({
     url: 'fixtures/promise_request_from_environment.html',
     services: {
       promisepong: pingPongPromiseService
     }
   });
 
-  document.body.appendChild(iframe);
+  document.body.appendChild(sandbox.el);
 });
