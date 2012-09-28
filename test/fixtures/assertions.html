@@ -1,0 +1,15 @@
+<!doctype html>
+
+<html>
+  <body>
+  <script src="../../lib/promise.js"></script>
+  <script src="../../lib/sandbox.js"></script>
+  <script>
+    Oasis.registerHandler('assertions', {
+      setupCapability: function(port) {
+        port.send('ok', "success");
+      }
+    });
+  </script>
+  </body>
+</html>

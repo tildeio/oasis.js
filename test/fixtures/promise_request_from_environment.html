@@ -1,0 +1,22 @@
+<!doctype html>
+
+<html>
+  <body>
+  <script src="../../lib/promise.js"></script>
+  <script src="../../lib/sandbox.js"></script>
+  <script>
+    Oasis.registerHandler('promisepong', {
+      setupCapability: function(port) {
+        port.request('ping').then(function(data) {
+          if (data === 'pong') {
+            port.send('testResolvedToSatisfaction');
+          }
+        });
+      }
+    });
+  </script>
+  </body>
+</html>
+
+
+
