@@ -19,17 +19,15 @@ Here is what your application would look like:
   </head>
   <body>
     <script>
-      var profileService = {
-        sandboxLoaded: function(port) {
-          port.receive('profile', function(promise) {
-            promise.resolve({ email: 'wycats@gmail.com' });
-          }
-        }
-      }
-
       var sandbox = Oasis.createSandbox({
         url: 'http://example.com/profile_viewer.html',
-        services: { profile: profileService }
+        capabilities: [ 'account' ]
+      });
+
+      sandbox.connect('account').then(function(port) {
+        port.onRequest('profile', function(promise) {
+          promise.resolve({ email: 'wycats@gmail.com' });
+        });
       });
 
       document.body.appendChild(sandbox);
@@ -54,12 +52,10 @@ or a third-party's domain):
       <p>Email: <span id="email"><img src="loading.png"></span></p>
     </div>
     <script>
-      Oasis.registerHandler('profile', {
-        setupCapability: function(port) {
-          port.request('profile').then(function(profile) {
-            $("#email").html(profile.email);
-          });
-        }
+      Oasis.connect('account').then(function(port) {
+        port.request('profile').then(function(profile) {
+          $("#email").html(profile.email);
+        });
       });
     </script>
   </body>
@@ -77,26 +73,22 @@ code and your application to communicate in a predictable and secure way.
 You can send a message from your application to the sandbox:
 
 ```javascript
-var service = {
-  sandboxLoaded: function(port) {
-    port.send('person', {
-      firstName: "Tom",
-      lastName: "Dale"
-    });
-  }
-};
+sandbox.connect('person').then(function(port) {
+  port.send('person', {
+    firstName: "Tom",
+    lastName: "Dale"
+  });
+});
 ```
 
 You can send a message from the sandbox to the application:
 
 ```javascript
-Oasis.registerHandler('person', {
-  setupCapability: function(port) {
-    port.send('updatePerson', {
-      firstName: "Scumbag",
-      lastName: "Dale"
-    });
-  }
+Oasis.connect('person').then(function(port) {
+  port.send('updatePerson', {
+    firstName: "Scumbag",
+    lastName: "Dale"
+  });
 });
 ```
 
@@ -104,25 +96,21 @@ You can also request information that the other side of the channel can resolve 
 
 ```javascript
 // application
-var service = {
-  sandboxLoaded: function(port) {
-    port.receive('data', function(promise) {
-      promise.resolve({
-        firstName: "Tom",
-        lastName: "Dale"
-      });
+sandbox.connect('data').then(function(port) {
+  port.receive('data', function(promise) {
+    promise.resolve({
+      firstName: "Tom",
+      lastName: "Dale"
     });
-  }
-};
+  });
+});
 
 // sandbox
-Oasis.registerHandler('data', {
-  setupCapability: function(port) {
-    port.request('data').then(function(data) {
-      var html = personTemplate(data);
-      document.body.innerHTML = html;
-    });
-  }
+Oasis.connect('data').then(function(port) {
+  port.request('data').then(function(data) {
+    var html = personTemplate(data);
+    document.body.innerHTML = html;
+  });
 });
 ```
 

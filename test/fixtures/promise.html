@@ -5,12 +5,10 @@
   <script src="../../lib/promise.js"></script>
   <script src="../../lib/sandbox.js"></script>
   <script>
-    Oasis.registerHandler('promisepong', {
-      setupCapability: function(port) {
-        port.receive('ping', function(promise) {
-          promise.resolve('pong');
-        });
-      }
+    Oasis.connect('promisepong').then(function(port) {
+      port.receive('ping', function(promise) {
+        promise.resolve('pong');
+      });
     });
   </script>
   </body>

@@ -5,10 +5,8 @@
   <script src="../../lib/promise.js"></script>
   <script src="../../lib/sandbox.js"></script>
   <script>
-    Oasis.registerHandler('assertions', {
-      setupCapability: function(port) {
-        port.send('ok', "success");
-      }
+    Oasis.connect('assertions').then(function(port) {
+      port.send('ok', "success");
     });
   </script>
   </body>
