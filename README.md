@@ -92,12 +92,12 @@ Oasis.connect('person').then(function(port) {
 });
 ```
 
-You can also request information that the other side of the channel can resolve asynchronously:
+You can also request information that the other side of the channel can resolve asynchronously. In the sandbox, we chain the promises together for simplicity:
 
 ```javascript
 // application
 sandbox.connect('data').then(function(port) {
-  port.receive('data', function(promise) {
+  return port.receive('data'), function(promise) {
     promise.resolve({
       firstName: "Tom",
       lastName: "Dale"
@@ -107,10 +107,10 @@ sandbox.connect('data').then(function(port) {
 
 // sandbox
 Oasis.connect('data').then(function(port) {
-  port.request('data').then(function(data) {
-    var html = personTemplate(data);
-    document.body.innerHTML = html;
-  });
+  return port.request('data');
+}).then(function(data) {
+  var html = personTemplate(data);
+  document.body.innerHTML = html;
 });
 ```
 
