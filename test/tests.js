@@ -219,3 +219,53 @@ test("sandbox can request a value from the environment", function() {
 
   document.body.appendChild(sandbox.el);
 });
+
+module("Promise chains");
+
+test("A promise can be chained", function() {
+  stop();
+
+  var promise = new Oasis.Promise();
+
+  var next = promise.then(function(value) {
+    var innerPromise = new Oasis.Promise();
+
+    setTimeout(function() {
+      innerPromise.resolve("innerValue");
+    }, 10);
+
+    return innerPromise;
+  });
+
+  var andNext = next.then(function(value) {
+    start();
+    equal(value, "innerValue");
+  });
+
+  promise.resolve("outerValue");
+});
+
+test("A promise error can be chained", function() {
+  stop();
+
+  var promise = new Oasis.Promise();
+
+  var next = promise.then(function(value) {
+    ok(false, "Should not get here");
+  });
+
+  var andNext = next.then(function(value) {
+    ok(false, "Should not get here");
+  }, function(error) {
+    equal(error, "ERROR", "The error should propagate");
+  });
+
+  var andAndNext = andNext.then(function(value) {
+    ok(false, "Should not get here");
+  }, function(error) {
+    start();
+    equal(error, "ERROR", "The error should propagate");
+  });
+
+  promise.reject("ERROR");
+});
