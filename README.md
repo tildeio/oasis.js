@@ -25,7 +25,7 @@ Here is what your application would look like:
       });
 
       sandbox.connect('account').then(function(port) {
-        port.onRequest('profile', function(promise) {
+        port.fulfill('profile', function(promise) {
           promise.resolve({ email: 'wycats@gmail.com' });
         });
       });
