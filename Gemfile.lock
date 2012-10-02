@@ -1,0 +1,30 @@
+GIT
+  remote: git://github.com/livingsocial/rake-pipeline.git
+  revision: 3465e0e3e134bf52ddf5d138e8c8262412080095
+  specs:
+    rake-pipeline (0.6.0)
+      rake (~> 0.9.0)
+      thor
+
+GIT
+  remote: git://github.com/wycats/rake-pipeline-web-filters.git
+  revision: e14e78ae70d0d25b1668c5273e80cd05a4ee52e6
+  specs:
+    rake-pipeline-web-filters (0.6.0)
+      rack
+      rake-pipeline (~> 0.6)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rack (1.4.1)
+    rake (0.9.2.2)
+    thor (0.16.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  rack
+  rake-pipeline!
+  rake-pipeline-web-filters!

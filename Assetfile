@@ -1,0 +1,30 @@
+output "dist"
+
+class ExportsIIFE < Rake::Pipeline::Filter
+  def generate_output(inputs, output)
+    inputs.each do |file|
+      output.write %{(function(exports) { "use strict"; #{file.read}; })(this);}
+    end
+  end
+end
+
+input "lib" do
+  match "*.js" do
+    filter ExportsIIFE
+    concat ["promise.js", "environment.js"], "oasis.environment.js"
+  end
+end
+
+input "lib" do
+  match "*.js" do
+    filter ExportsIIFE
+    concat ["promise.js", "sandbox.js"], "oasis.sandbox.js"
+  end
+end
+
+input "test" do
+  output "tests"
+  concat
+end
+
+# vim: filetype=ruby

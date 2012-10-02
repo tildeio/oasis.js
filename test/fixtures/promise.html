@@ -2,8 +2,7 @@
 
 <html>
   <body>
-  <script src="../../lib/promise.js"></script>
-  <script src="../../lib/sandbox.js"></script>
+  <script src="/oasis.sandbox.js"></script>
   <script>
     Oasis.connect('promisepong').then(function(port) {
       port.receive('ping', function(promise) {

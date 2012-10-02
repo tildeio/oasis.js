@@ -109,15 +109,11 @@ test("service - card can communicate with the environment through a port", funct
 });
 
 test("shorthand - card can communicate with the environment through a port", function() {
-  Oasis.register({
-    url: "fixtures/assertions.html",
-    capabilities: ['assertions']
-  });
-
   stop();
 
   sandbox = Oasis.createSandbox({
-    url: "fixtures/assertions.html"
+    url: "fixtures/assertions.html",
+    capabilities: ['assertions']
   });
 
   sandbox.connect('assertions').then(function(port) {
@@ -199,7 +195,7 @@ test("sandbox can request a value from the environment", function() {
 
   var pingPongPromiseService = {
     sandboxLoaded: function(port, capability) {
-      port.receive('ping', function(promise) {
+      port.fulfill('ping', function(promise) {
         promise.resolve('pong');
       });
 
