@@ -3,7 +3,7 @@ output "dist"
 class ExportsIIFE < Rake::Pipeline::Filter
   def generate_output(inputs, output)
     inputs.each do |file|
-      output.write %{(function(exports) { "use strict"; #{file.read}; })(this);}
+      output.write %{(function(exports) { "use strict"; #{file.read}; })(typeof exports !== 'undefined' ? exports : (this.Oasis = this.Oasis || {}));}
     end
   end
 end
