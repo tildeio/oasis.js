@@ -215,3 +215,34 @@ test("sandbox can request a value from the environment", function() {
 
   document.body.appendChild(sandbox.el);
 });
+
+test("ports sent to a sandbox can be passed to its child sandboxes", function() {
+  Oasis.register({
+    url: "fixtures/inception_parent.html",
+    capabilities: ['inception']
+  });
+
+  stop();
+
+  var inceptionService = {
+    sandboxLoaded: function(port) {
+      port.fulfill('kick', function(promise) {
+        promise.resolve('kick');
+      });
+
+      port.on('workPlacement', function() {
+        start();
+        ok(true, "messages between deeply nested sandboxes are sent");
+      });
+    }
+  };
+
+  sandbox = Oasis.createSandbox({
+    url: 'fixtures/inception_parent.html',
+    services: {
+      inception: inceptionService
+    }
+  });
+
+  document.body.appendChild(sandbox.el);
+});

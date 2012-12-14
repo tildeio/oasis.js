@@ -83,15 +83,27 @@ define("oasis",
         var ports = [];
 
         capabilities.forEach(function(capability) {
-          var channel = new OasisMessageChannel(),
-              service = services[capability];
+          var service = services[capability],
+              channel, port;
 
-          channel.port1.port.start();
-          if (service && service.sandboxLoaded) {
-            service.sandboxLoaded(channel.port1, capability);
+          // If an existing port is provided, just
+          // pass it along to the new sandbox.
+
+          if (service && service.port instanceof MessagePort) {
+            port = service.port;
+          } else {
+            channel = new OasisMessageChannel(),
+            channel.port1.port.start();
+
+            if (service && service.sandboxLoaded) {
+              service.sandboxLoaded(channel.port1, capability);
+            }
+
+            sandbox.triggerConnect(capability, channel.port1);
+            port = channel.port2.port;
           }
-          sandbox.triggerConnect(capability, channel.port1);
-          ports.push(channel.port2.port);
+
+          ports.push(port);
         });
 
         iframe.contentWindow.postMessage(capabilities, ports, '*');
