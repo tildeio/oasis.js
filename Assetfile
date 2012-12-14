@@ -1,24 +1,53 @@
 output "dist"
 
-class ExportsIIFE < Rake::Pipeline::Filter
+class BrowserIIFE < Rake::Pipeline::Filter
   def generate_output(inputs, output)
     inputs.each do |file|
-      output.write %{(function(exports) { "use strict"; #{file.read}; })(typeof exports !== 'undefined' ? exports : (this.Oasis = this.Oasis || {}));}
+      output.write %{(function(exports) { #{file.read}\nexports.Oasis = requireModule('oasis'); })(window);}
+    end
+  end
+end
+
+require "js_module_transpiler"
+require "pry"
+
+class ModuleTranspiler < Rake::Pipeline::Filter
+  def initialize(options, &block)
+    @type = options[:type]
+    @name = options[:name]
+    @into = options[:into]
+    super(&block)
+  end
+
+  def generate_output(inputs, output)
+    inputs.each do |input|
+      converter = JsModuleTranspiler::Compiler.new(input.read, @name, into: @into)
+      output.write converter.send("to_#{@type}")
     end
   end
 end
 
 input "lib" do
-  match "*.js" do
-    filter ExportsIIFE
-    concat ["promise.js", "environment.js"], "oasis.environment.js"
+  match "environment.js" do
+    filter ModuleTranspiler, name: "oasis", type: :amd
+    concat { ["oasis.environment.amd.js", "oasis.environment.js" ] }
+  end
+
+  match "{loader,rsvp.amd,oasis.environment}.js" do
+    concat ["loader.js", "rsvp.amd.js", "oasis.environment.js"], "oasis.environment.js"
+    filter BrowserIIFE
   end
 end
 
 input "lib" do
-  match "*.js" do
-    filter ExportsIIFE
-    concat ["promise.js", "sandbox.js"], "oasis.sandbox.js"
+  match "sandbox.js" do
+    filter ModuleTranspiler, name: "oasis", type: :amd
+    concat { ["oasis.sandbox.amd.js", "oasis.sandbox.js" ] }
+  end
+
+  match "{loader,rsvp.amd,oasis.sandbox}.js" do
+    concat ["loader.js", "rsvp.amd.js", "oasis.sandbox.js"], "oasis.sandbox.js"
+    filter BrowserIIFE
   end
 end
 
