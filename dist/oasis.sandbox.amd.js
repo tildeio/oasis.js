@@ -57,6 +57,24 @@ define("oasis/sandbox",
         return promise;
       },
 
+      fulfill: function(eventName, callback, binding) {
+        var self = this;
+
+        this.on('@request:' + eventName, function(data) {
+          var promise = new RSVP.Promise();
+          var requestId = data.requestId;
+
+          promise.then(function(data) {
+            self.send('@response:' + eventName, {
+              requestId: requestId,
+              data: data
+            });
+          });
+
+          callback.call(binding, promise);
+        });
+      },
+
       receive: function(eventName, callback, binding) {
         var self = this;
 
