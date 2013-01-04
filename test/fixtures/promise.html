@@ -2,10 +2,10 @@
 
 <html>
   <body>
-  <script src="/oasis.sandbox.js"></script>
+  <script src="/oasis.js"></script>
   <script>
-    OasisSandbox.connect('promisepong').then(function(port) {
-      port.receive('ping', function(promise) {
+    Oasis.connect('promisepong').then(function(port) {
+      port.onRequest('ping', function(promise) {
         promise.resolve('pong');
       });
     });

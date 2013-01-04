@@ -2,9 +2,9 @@
 
 <html>
   <body>
-  <script src="/oasis.sandbox.js"></script>
+  <script src="/oasis.js"></script>
   <script>
-    OasisSandbox.connect('pingpong').then(function(port) {
+    Oasis.connect('pingpong').then(function(port) {
       port.on('ping', function(data) {
         port.send('pong', data);
       });

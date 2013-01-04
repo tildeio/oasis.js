@@ -1,4 +1,4 @@
-define("oasis/environment",
+define("oasis",
   ["rsvp"],
   function(RSVP) {
     "use strict";
@@ -169,7 +169,7 @@ define("oasis/environment",
         return promise;
       },
 
-      fulfill: function(eventName, callback, binding) {
+      onRequest: function(eventName, callback, binding) {
         var self = this;
 
         this.on('@request:' + eventName, function(data) {
@@ -205,6 +205,47 @@ define("oasis/environment",
       assert(options.capabilities, "You are trying to register a package without any capabilities. Please provide a list of requested capabilities, or an empty array ([]).");
 
       packages[options.url] = options;
+    };
+
+    var ports = {};
+    window.addEventListener('message', function(event) {
+      var capabilities = event.data, eventPorts = event.ports;
+
+      capabilities.forEach(function(capability, i) {
+        var handler = handlers[capability],
+            port = new OasisPort(eventPorts[i]);
+
+        if (handler && handler.setupCapability) {
+          handler.setupCapability(port);
+        }
+
+        port.port.start();
+
+        ports[capability] = port;
+      });
+    });
+
+    var handlers = {};
+    Oasis.registerHandler = function(capability, options) {
+      handlers[capability] = options;
+    };
+
+    Oasis.connect = function(capability) {
+      var promise = new RSVP.Promise();
+
+      Oasis.registerHandler(capability, {
+        setupCapability: function(port) {
+          promise.resolve(port);
+        }
+      });
+
+      return promise;
+    };
+
+    Oasis.portFor = function(capability) {
+      var port = ports[capability];
+      assert(port, "You asked for the port for the '" + capability + "' capability, but the environment did not provide one.");
+      return port;
     };
 
     return Oasis;

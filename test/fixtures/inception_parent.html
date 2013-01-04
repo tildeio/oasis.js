@@ -2,16 +2,15 @@
 
 <html>
   <body>
-  <script src="/oasis.sandbox.js"></script>
-  <script src="/oasis.environment.js"></script>
+  <script src="/oasis.js"></script>
   <script>
-    OasisSandbox.connect('inception').then(function(port) {
-      OasisEnvironment.register({
+    Oasis.connect('inception').then(function(port) {
+      Oasis.register({
         url: '/fixtures/inception_child.html',
         capabilities: ['inception']
       });
 
-      var sandbox = OasisEnvironment.createSandbox({
+      var sandbox = Oasis.createSandbox({
         url: "/fixtures/inception_child.html",
         services: {
           inception: port

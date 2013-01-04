@@ -2,9 +2,9 @@
 
 <html>
   <body>
-  <script src="/oasis.sandbox.js"></script>
+  <script src="/oasis.js"></script>
   <script>
-    OasisSandbox.connect('inception').then(function(port) {
+    Oasis.connect('inception').then(function(port) {
       port.request('kick').then(function() {
         port.send('workPlacement');
       });

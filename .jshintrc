@@ -1,11 +1,12 @@
 {
     "predef": [
-        "OasisEnvironment",
-        "OasisSandbox",
+        "Oasis",
         "QUnit",
         "console",
         "Ember",
         "DS",
+        "process",
+        "define",
         "Handlebars",
         "Metamorph",
         "ember_assert",
