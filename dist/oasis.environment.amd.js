@@ -1,4 +1,4 @@
-define("oasis",
+define("oasis/environment",
   ["rsvp"],
   function(RSVP) {
     "use strict";
@@ -20,7 +20,7 @@ define("oasis",
 
     verifySandbox();
 
-    var Oasis = exports;
+    var Oasis = {};
 
     // SANDBOXES
 

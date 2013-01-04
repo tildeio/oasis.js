@@ -1,6 +1,7 @@
 {
     "predef": [
-        "Oasis",
+        "OasisEnvironment",
+        "OasisSandbox",
         "QUnit",
         "console",
         "Ember",

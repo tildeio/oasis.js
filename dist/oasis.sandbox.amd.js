@@ -1,4 +1,4 @@
-define("oasis",
+define("oasis/sandbox",
   ["rsvp"],
   function(RSVP) {
     "use strict";

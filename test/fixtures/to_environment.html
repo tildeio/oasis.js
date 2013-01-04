@@ -4,7 +4,7 @@
   <body>
   <script src="/oasis.sandbox.js"></script>
   <script>
-    Oasis.connect('pingpong').then(function(port) {
+    OasisSandbox.connect('pingpong').then(function(port) {
       port.on('ping', function(data) {
         port.send('pong', data);
       });

@@ -11,7 +11,7 @@ task :update_rsvp => ["tmp/rsvp.js"] do
     sh "git fetch origin"
     sh "git reset --hard origin/master"
     sh "bundle"
-    Bundler.with_clean_env { sh "rake dist" }
+    Bundler.with_clean_env { sh "bundle exec rake dist" }
   end
 end
 

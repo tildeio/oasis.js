@@ -1,4 +1,5 @@
-(function(exports) { var define, requireModule;
+(function(exports) {
+var define, requireModule;
 
 (function() {
   var registry = {}, seen = {};
@@ -179,27 +180,31 @@ define("rsvp",
     var noop = function() {};
 
     var invokeCallback = function(type, promise, callback, event) {
-      var value, error;
+      var hasCallback = typeof callback === 'function',
+          value, error, succeeded, failed;
 
-      if (callback) {
+      if (hasCallback) {
         try {
           value = callback(event.detail);
+          succeeded = true;
         } catch(e) {
+          failed = true;
           error = e;
         }
       } else {
         value = event.detail;
+        succeeded = true;
       }
 
-      if (value instanceof Promise) {
+      if (value && typeof value.then === 'function') {
         value.then(function(value) {
           promise.resolve(value);
         }, function(error) {
           promise.reject(error);
         });
-      } else if (callback && value) {
+      } else if (hasCallback && succeeded) {
         promise.resolve(value);
-      } else if (error) {
+      } else if (failed) {
         promise.reject(error);
       } else {
         promise[type](value);
@@ -269,7 +274,7 @@ define("rsvp",
     RSVP = { async: async, Promise: Promise, Event: Event, EventTarget: EventTarget };
     return RSVP;
   });
-define("oasis",
+define("oasis/sandbox",
   ["rsvp"],
   function(RSVP) {
     "use strict";
@@ -390,4 +395,5 @@ define("oasis",
 
     return Oasis;
   });
-exports.Oasis = requireModule('oasis'); })(window);
+exports.OasisSandbox = requireModule('oasis/sandbox');
+})(window);

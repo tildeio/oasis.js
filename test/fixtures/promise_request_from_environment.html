@@ -4,7 +4,7 @@
   <body>
   <script src="/oasis.sandbox.js"></script>
   <script>
-    Oasis.connect('promisepong').then(function(port) {
+    OasisSandbox.connect('promisepong').then(function(port) {
       port.request('ping').then(function(data) {
         if (data === 'pong') {
           port.send('testResolvedToSatisfaction');
