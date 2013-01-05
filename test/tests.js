@@ -62,17 +62,18 @@ test("service is notified about ports created for a card", function() {
 
   stop();
 
-  var dataService = {
-    sandboxLoaded: function(port, capability) {
+  var DataService = Oasis.Service.extend({
+    initialize: function(port, capability) {
       start();
+      equal(this.sandbox, sandbox);
       equal(capability, 'testData');
     }
-  };
+  });
 
   sandbox = Oasis.createSandbox({
     url: "fixtures/index.html",
     services: {
-      testData: dataService
+      testData: DataService
     }
   });
 
@@ -87,8 +88,8 @@ test("service - card can communicate with the environment through a port", funct
 
   stop();
 
-  var assertionsService = {
-    sandboxLoaded: function(port, capability) {
+  var AssertionsService = Oasis.Service.extend({
+    initialize: function(port, capability) {
       equal(capability, 'assertions', "precond - capability is the assertions service");
 
       port.on('ok', function(data) {
@@ -96,12 +97,39 @@ test("service - card can communicate with the environment through a port", funct
         equal(data, 'success', "The card was able to communicate back");
       });
     }
-  };
+  });
 
   sandbox = Oasis.createSandbox({
     url: "fixtures/assertions.html",
     services: {
-      assertions: assertionsService
+      assertions: AssertionsService
+    }
+  });
+
+  document.body.appendChild(sandbox.el);
+});
+
+test("service - card can communicate with the environment through a port with a shorthand for events", function() {
+  Oasis.register({
+    url: "fixtures/assertions.html",
+    capabilities: ['assertions']
+  });
+
+  stop();
+
+  var AssertionsService = Oasis.Service.extend({
+    events: {
+      ok: function(data) {
+        start();
+        equal(data, 'success', "The card was able to communicate back");
+      }
+    }
+  });
+
+  sandbox = Oasis.createSandbox({
+    url: "fixtures/assertions.html",
+    services: {
+      assertions: AssertionsService
     }
   });
 
@@ -134,8 +162,8 @@ test("environment can communicate with the card through a port", function() {
 
   stop();
 
-  var pingPongService = {
-    sandboxLoaded: function(port, capability) {
+  var PingPongService = Oasis.Service.extend({
+    initialize: function(port, capability) {
       equal(capability, 'pingpong', "precond - capability is the pingpong service");
 
       port.on('pong', function(data) {
@@ -145,12 +173,43 @@ test("environment can communicate with the card through a port", function() {
 
       port.send('ping', "PONG");
     }
-  };
+  });
 
   sandbox = Oasis.createSandbox({
     url: 'fixtures/to_environment.html',
     services: {
-      pingpong: pingPongService
+      pingpong: PingPongService
+    }
+  });
+
+  document.body.appendChild(sandbox.el);
+});
+
+test("environment can communicate with the card through a port with a shorthand", function() {
+  Oasis.register({
+    url: "fixtures/to_environment.html",
+    capabilities: ['pingpong']
+  });
+
+  stop();
+
+  var PingPongService = Oasis.Service.extend({
+    events: {
+      pong: function(data) {
+        start();
+        equal(data, "PONG", "Got pong from the child");
+      }
+    },
+
+    initialize: function(port) {
+      port.send('ping', "PONG");
+    }
+  });
+
+  sandbox = Oasis.createSandbox({
+    url: 'fixtures/to_environment.html',
+    services: {
+      pingpong: PingPongService
     }
   });
 
@@ -165,20 +224,20 @@ test("environment can request a value from a sandbox", function() {
 
   stop();
 
-  var pingPongPromiseService = {
-    sandboxLoaded: function(port, capability) {
+  var PingPongPromiseService = Oasis.Service.extend({
+    initialize: function(port, capability) {
       port.request('ping').then(function(data) {
         start();
 
         equal(data, 'pong', "promise was resolved with expected value");
       });
     }
-  };
+  });
 
   sandbox = Oasis.createSandbox({
     url: 'fixtures/promise.html',
     services: {
-      promisepong: pingPongPromiseService
+      promisepong: PingPongPromiseService
     }
   });
 
@@ -193,23 +252,25 @@ test("sandbox can request a value from the environment", function() {
 
   stop();
 
-  var pingPongPromiseService = {
-    sandboxLoaded: function(port, capability) {
-      port.onRequest('ping', function(promise) {
+  var PingPongPromiseService = Oasis.Service.extend({
+    requests: {
+      ping: function(promise) {
         promise.resolve('pong');
-      });
+      }
+    },
 
-      port.on('testResolvedToSatisfaction', function() {
+    events: {
+      testResolvedToSatisfaction: function() {
         start();
         ok(true, "test was resolved to sandbox's satisfaction");
-      });
+      }
     }
-  };
+  });
 
   sandbox = Oasis.createSandbox({
     url: 'fixtures/promise_request_from_environment.html',
     services: {
-      promisepong: pingPongPromiseService
+      promisepong: PingPongPromiseService
     }
   });
 
@@ -224,8 +285,8 @@ test("ports sent to a sandbox can be passed to its child sandboxes", function() 
 
   stop();
 
-  var inceptionService = {
-    sandboxLoaded: function(port) {
+  var InceptionService = Oasis.Service.extend({
+    initialize: function(port) {
       port.onRequest('kick', function(promise) {
         promise.resolve('kick');
       });
@@ -235,12 +296,108 @@ test("ports sent to a sandbox can be passed to its child sandboxes", function() 
         ok(true, "messages between deeply nested sandboxes are sent");
       });
     }
-  };
+  });
 
   sandbox = Oasis.createSandbox({
     url: 'fixtures/inception_parent.html',
     services: {
-      inception: inceptionService
+      inception: InceptionService
+    }
+  });
+
+  document.body.appendChild(sandbox.el);
+});
+
+test("ports sent to a sandbox can be passed to its child sandboxes while supporting a shorthand", function() {
+  Oasis.register({
+    url: "fixtures/inception_parent.html",
+    capabilities: ['inception']
+  });
+
+  stop();
+
+  var InceptionService = Oasis.Service.extend({
+    requests: {
+      kick: function(promise) {
+        promise.resolve('kick');
+        ok(this instanceof InceptionService, "The callback gets the service instance as `this`");
+      }
+    },
+
+    events: {
+      workPlacement: function() {
+        start();
+        ok(true, "messages between deeply nested sandboxes are sent");
+        ok(this instanceof InceptionService, "The callback gets the service instance as `this`");
+      }
+    }
+  });
+
+  sandbox = Oasis.createSandbox({
+    url: 'fixtures/inception_parent.html',
+    services: {
+      inception: InceptionService
+    }
+  });
+
+  document.body.appendChild(sandbox.el);
+});
+
+test("When the shorthand form is used for events, they can send events", function() {
+  Oasis.register({
+    url: "fixtures/peter_pong.html",
+    capabilities: ['peterpong']
+  });
+
+  stop();
+
+  var PeterPongService = Oasis.Service.extend({
+    events: {
+      peter: function() {
+        this.send('ping');
+      },
+
+      pong: function() {
+        start();
+
+        ok(true, "Succesfully sent events from event shorthand function");
+      }
+    }
+  });
+
+  sandbox = Oasis.createSandbox({
+    url: 'fixtures/peter_pong.html',
+    services: {
+      peterpong: PeterPongService
+    }
+  });
+
+  document.body.appendChild(sandbox.el);
+});
+
+test("When the shorthand form is used for events, they can send requests", function() {
+  Oasis.register({
+    url: "fixtures/peter_pong_request.html",
+    capabilities: ['peterpong']
+  });
+
+  stop();
+
+  var PeterPongService = Oasis.Service.extend({
+    events: {
+      peter: function() {
+        this.request('ping').then(function(data) {
+          start();
+          ok(true, "Successfully sent request from event shorthand function");
+        });
+      }
+    }
+  });
+
+  sandbox = Oasis.createSandbox({
+    url: 'fixtures/peter_pong_request.html',
+    services: {
+      peterpong: PeterPongService
     }
   });
 
