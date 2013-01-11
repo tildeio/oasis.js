@@ -438,3 +438,30 @@ test("When the shorthand form is used for events, they can send requests", funct
 
   document.body.appendChild(sandbox.el);
 });
+
+test("Consumers instances are saved on the Oasis global", function() {
+  stop();
+
+  Oasis.register({
+    url: "fixtures/consumer.html",
+    capabilities: ['assertions']
+  });
+
+  var AssertionsService = Oasis.Service.extend({
+    events: {
+      ok: function() {
+        start();
+        ok(true, "Consumer was accessed");
+      }
+    }
+  });
+
+  sandbox = Oasis.createSandbox({
+    url: 'fixtures/consumer.html',
+    services: {
+      assertions: AssertionsService
+    }
+  });
+
+  document.body.appendChild(sandbox.el);
+});

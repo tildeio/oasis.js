@@ -1,0 +1,21 @@
+<!doctype html>
+
+<html>
+  <body>
+  <script src="/oasis.js"></script>
+  <script>
+    var AssertionsConsumer = Oasis.Consumer.extend({
+      initialize: function() {
+        Oasis.consumers.assertions.send('ok');
+      }
+    });
+
+    Oasis.connect({
+      consumers: {
+        assertions: AssertionsConsumer
+      }
+    });
+  </script>
+  </body>
+</html>
+

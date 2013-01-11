@@ -283,10 +283,13 @@ define("oasis",
       handlers[capability] = options;
     };
 
+    Oasis.consumers = {};
+
     Oasis.connect = function(capability) {
       function setupCapability(Consumer, name) {
         return function(port) {
           var consumer = new Consumer(port);
+          Oasis.consumers[name] = consumer;
           consumer.initialize(port, name);
         };
       }
