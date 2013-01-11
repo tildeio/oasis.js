@@ -109,7 +109,7 @@ test("service - card can communicate with the environment through a port", funct
   document.body.appendChild(sandbox.el);
 });
 
-test("service - card can communicate with the environment through a port with a shorthand for events", function() {
+test("service - card can communicate with the environment through a port with the environment shorthand for events", function() {
   Oasis.register({
     url: "fixtures/assertions.html",
     capabilities: ['assertions']
@@ -128,6 +128,41 @@ test("service - card can communicate with the environment through a port with a 
 
   sandbox = Oasis.createSandbox({
     url: "fixtures/assertions.html",
+    services: {
+      assertions: AssertionsService
+    }
+  });
+
+  document.body.appendChild(sandbox.el);
+});
+
+test("service - card can communicate with the environment through a port with the card shorthand for events", function() {
+  Oasis.register({
+    url: "fixtures/assertions_shorthand.html",
+    capabilities: ['assertions']
+  });
+
+  stop();
+
+  var AssertionsService = Oasis.Service.extend({
+    events: {
+      ok: function(data) {
+        equal(data, 'success', "The card was able to communicate back");
+
+        this.send('ping');
+      },
+
+      pong: function() {
+        this.request('ping').then(function(response) {
+          start();
+          equal(response, "pong");
+        });
+      }
+    }
+  });
+
+  sandbox = Oasis.createSandbox({
+    url: "fixtures/assertions_shorthand.html",
     services: {
       assertions: AssertionsService
     }

@@ -62,6 +62,12 @@ define("rsvp",
       var element = document.createElement('div');
       observer.observe(element, { attributes: true });
 
+      // Chrome Memory Leak: https://bugs.webkit.org/show_bug.cgi?id=93661
+      window.addEventListener('unload', function(){
+        observer.disconnect();
+        observer = null;
+      });
+
       async = function(callback, binding) {
         queue.push([callback, binding]);
         element.setAttribute('drainQueue', 'drainQueue');
@@ -373,7 +379,7 @@ define("oasis",
 
             if (service) {
               /*jshint newcap:false*/
-              service = new service(sandbox, channel.port1);
+              service = new service(channel.port1, sandbox);
               service.initialize(channel.port1, capability);
             }
 
@@ -392,7 +398,7 @@ define("oasis",
       return sandbox;
     };
 
-    Oasis.Service = function(sandbox, port) {
+    Oasis.Service = function(port, sandbox) {
       var service = this, prop, callback;
 
       this.sandbox = sandbox;
@@ -440,6 +446,8 @@ define("oasis",
 
       return Service;
     };
+
+    Oasis.Consumer = Oasis.Service;
 
     // PORTS
 
@@ -558,15 +566,31 @@ define("oasis",
     };
 
     Oasis.connect = function(capability) {
-      var promise = new RSVP.Promise();
+      function setupCapability(Consumer, name) {
+        return function(port) {
+          var consumer = new Consumer(port);
+          consumer.initialize(port, name);
+        };
+      }
 
-      Oasis.registerHandler(capability, {
-        setupCapability: function(port) {
-          promise.resolve(port);
+      if (typeof capability === 'object') {
+        var consumers = capability.consumers;
+
+        for (var prop in consumers) {
+          Oasis.registerHandler(prop, {
+            setupCapability: setupCapability(consumers[prop], prop)
+          });
         }
-      });
+      } else {
+        var promise = new RSVP.Promise();
+        Oasis.registerHandler(capability, {
+          setupCapability: function(port) {
+            promise.resolve(port);
+          }
+        });
 
-      return promise;
+        return promise;
+      }
     };
 
     Oasis.portFor = function(capability) {
