@@ -306,6 +306,21 @@ define("oasis",
 
     // ADAPTERS
 
+    function generateSrc(scriptURL) {
+      function importScripts() {}
+
+      var link = document.createElement("a");
+      link.href = "!";
+      var base = link.href.slice(0, -1);
+
+      var src = "data:text/html,<!doctype html>";
+      src += "<base href='" + base + "'>";
+      src += "<script>" + importScripts.toString() + "<" + "/script>";
+      src += "<script src='oasis.js'><" + "/script>";
+      src += "<script src='" + scriptURL + "'><" + "/script>";
+      return src;
+    }
+
     var iframeAdapter = {
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
@@ -313,7 +328,7 @@ define("oasis",
 
         iframe.sandbox = 'allow-scripts';
         iframe.seamless = true;
-        iframe.src = options.url;
+        iframe.src = generateSrc(options.url);
 
         // rendering-specific code
         if (options.width) {
@@ -456,12 +471,12 @@ define("oasis",
             if (service) {
               /*jshint newcap:false*/
               // Generic
-              service = new service(environmentPort, sandbox);
+              service = new service(environmentPort, this);
               service.initialize(environmentPort, capability);
             }
 
             // Generic
-            sandbox.triggerConnect(capability, environmentPort);
+            this.triggerConnect(capability, environmentPort);
             // Law of Demeter violation
             port = sandboxPort;
           }

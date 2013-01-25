@@ -1,4 +1,6 @@
-QUnit.config.testTimeout = 1000;
+(function() {
+
+QUnit.config.testTimeout = 200;
 
 var sandbox;
 
@@ -27,7 +29,7 @@ module("Oasis.createSandbox", {
 test("assertion: must register package", function() {
   raises(function() {
     sandbox = Oasis.createSandbox({
-      url: "fixtures/index.html"
+      url: "fixtures/index.js"
     });
   }, Error, "Creating a card from an unregistered package fails");
 });
@@ -35,19 +37,19 @@ test("assertion: must register package", function() {
 test("assertion: must provide capabilities when registering a package", function() {
   raises(function() {
     Oasis.register({
-      url: 'fixtures/index.html'
+      url: 'fixtures/index.js'
     });
   }, Error, "Registering a package without capabilities fails");
 });
 
 test("returns a sandbox with an iframe element", function() {
   Oasis.register({
-    url: "fixtures/index.html",
+    url: "fixtures/index.js",
     capabilities: []
   });
 
   sandbox = Oasis.createSandbox({
-    url: "fixtures/index.html"
+    url: "fixtures/index.js"
   });
 
   ok(sandbox.el instanceof window.HTMLIFrameElement, "A new iframe was returned");
@@ -55,7 +57,7 @@ test("returns a sandbox with an iframe element", function() {
 
 test("service is notified about ports created for a card", function() {
   Oasis.register({
-    url: "fixtures/index.html",
+    url: "fixtures/index.js",
     capabilities: ['testData']
   });
 
@@ -70,7 +72,7 @@ test("service is notified about ports created for a card", function() {
   });
 
   sandbox = Oasis.createSandbox({
-    url: "fixtures/index.html",
+    url: "fixtures/index.js",
     services: {
       testData: DataService
     }
@@ -81,7 +83,7 @@ test("service is notified about ports created for a card", function() {
 
 test("service - card can communicate with the environment through a port", function() {
   Oasis.register({
-    url: "fixtures/assertions.html",
+    url: "fixtures/assertions.js",
     capabilities: ['assertions']
   });
 
@@ -99,18 +101,18 @@ test("service - card can communicate with the environment through a port", funct
   });
 
   sandbox = Oasis.createSandbox({
-    url: "fixtures/assertions.html",
+    url: "fixtures/assertions.js",
     services: {
       assertions: AssertionsService
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("service - card can communicate with the environment through a port with the environment shorthand for events", function() {
   Oasis.register({
-    url: "fixtures/assertions.html",
+    url: "fixtures/assertions.js",
     capabilities: ['assertions']
   });
 
@@ -126,18 +128,18 @@ test("service - card can communicate with the environment through a port with th
   });
 
   sandbox = Oasis.createSandbox({
-    url: "fixtures/assertions.html",
+    url: "fixtures/assertions.js",
     services: {
       assertions: AssertionsService
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("service - card can communicate with the environment through a port with the card shorthand for events", function() {
   Oasis.register({
-    url: "fixtures/assertions_shorthand.html",
+    url: "fixtures/assertions_shorthand.js",
     capabilities: ['assertions']
   });
 
@@ -161,20 +163,20 @@ test("service - card can communicate with the environment through a port with th
   });
 
   sandbox = Oasis.createSandbox({
-    url: "fixtures/assertions_shorthand.html",
+    url: "fixtures/assertions_shorthand.js",
     services: {
       assertions: AssertionsService
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("shorthand - card can communicate with the environment through a port", function() {
   stop();
 
   sandbox = Oasis.createSandbox({
-    url: "fixtures/assertions.html",
+    url: "fixtures/assertions.js",
     capabilities: ['assertions']
   });
 
@@ -190,7 +192,7 @@ test("shorthand - card can communicate with the environment through a port", fun
 
 test("environment can communicate with the card through a port", function() {
   Oasis.register({
-    url: "fixtures/to_environment.html",
+    url: "fixtures/to_environment.js",
     capabilities: ['pingpong']
   });
 
@@ -210,7 +212,7 @@ test("environment can communicate with the card through a port", function() {
   });
 
   sandbox = Oasis.createSandbox({
-    url: 'fixtures/to_environment.html',
+    url: 'fixtures/to_environment.js',
     services: {
       pingpong: PingPongService
     }
@@ -221,7 +223,7 @@ test("environment can communicate with the card through a port", function() {
 
 test("environment can communicate with the card through a port with a shorthand", function() {
   Oasis.register({
-    url: "fixtures/to_environment.html",
+    url: "fixtures/to_environment.js",
     capabilities: ['pingpong']
   });
 
@@ -241,7 +243,7 @@ test("environment can communicate with the card through a port with a shorthand"
   });
 
   sandbox = Oasis.createSandbox({
-    url: 'fixtures/to_environment.html',
+    url: 'fixtures/to_environment.js',
     services: {
       pingpong: PingPongService
     }
@@ -252,7 +254,7 @@ test("environment can communicate with the card through a port with a shorthand"
 
 test("environment can request a value from a sandbox", function() {
   Oasis.register({
-    url: "fixtures/promise.html",
+    url: "fixtures/promise.js",
     capabilities: ['promisepong']
   });
 
@@ -269,7 +271,7 @@ test("environment can request a value from a sandbox", function() {
   });
 
   sandbox = Oasis.createSandbox({
-    url: 'fixtures/promise.html',
+    url: 'fixtures/promise.js',
     services: {
       promisepong: PingPongPromiseService
     }
@@ -280,7 +282,7 @@ test("environment can request a value from a sandbox", function() {
 
 test("sandbox can request a value from the environment", function() {
   Oasis.register({
-    url: "fixtures/promise_request_from_environment.html",
+    url: "fixtures/promise_request_from_environment.js",
     capabilities: ['promisepong']
   });
 
@@ -302,7 +304,7 @@ test("sandbox can request a value from the environment", function() {
   });
 
   sandbox = Oasis.createSandbox({
-    url: 'fixtures/promise_request_from_environment.html',
+    url: 'fixtures/promise_request_from_environment.js',
     services: {
       promisepong: PingPongPromiseService
     }
@@ -313,7 +315,7 @@ test("sandbox can request a value from the environment", function() {
 
 test("ports sent to a sandbox can be passed to its child sandboxes", function() {
   Oasis.register({
-    url: "fixtures/inception_parent.html",
+    url: "fixtures/inception_parent.js",
     capabilities: ['inception']
   });
 
@@ -333,7 +335,7 @@ test("ports sent to a sandbox can be passed to its child sandboxes", function() 
   });
 
   sandbox = Oasis.createSandbox({
-    url: 'fixtures/inception_parent.html',
+    url: 'fixtures/inception_parent.js',
     services: {
       inception: InceptionService
     }
@@ -344,7 +346,7 @@ test("ports sent to a sandbox can be passed to its child sandboxes", function() 
 
 test("ports sent to a sandbox can be passed to its child sandboxes while supporting a shorthand", function() {
   Oasis.register({
-    url: "fixtures/inception_parent.html",
+    url: "fixtures/inception_parent.js",
     capabilities: ['inception']
   });
 
@@ -368,7 +370,7 @@ test("ports sent to a sandbox can be passed to its child sandboxes while support
   });
 
   sandbox = Oasis.createSandbox({
-    url: 'fixtures/inception_parent.html',
+    url: 'fixtures/inception_parent.js',
     services: {
       inception: InceptionService
     }
@@ -379,7 +381,7 @@ test("ports sent to a sandbox can be passed to its child sandboxes while support
 
 test("When the shorthand form is used for events, they can send events", function() {
   Oasis.register({
-    url: "fixtures/peter_pong.html",
+    url: "fixtures/peter_pong.js",
     capabilities: ['peterpong']
   });
 
@@ -400,7 +402,7 @@ test("When the shorthand form is used for events, they can send events", functio
   });
 
   sandbox = Oasis.createSandbox({
-    url: 'fixtures/peter_pong.html',
+    url: 'fixtures/peter_pong.js',
     services: {
       peterpong: PeterPongService
     }
@@ -411,7 +413,7 @@ test("When the shorthand form is used for events, they can send events", functio
 
 test("When the shorthand form is used for events, they can send requests", function() {
   Oasis.register({
-    url: "fixtures/peter_pong_request.html",
+    url: "fixtures/peter_pong_request.js",
     capabilities: ['peterpong']
   });
 
@@ -429,7 +431,7 @@ test("When the shorthand form is used for events, they can send requests", funct
   });
 
   sandbox = Oasis.createSandbox({
-    url: 'fixtures/peter_pong_request.html',
+    url: 'fixtures/peter_pong_request.js',
     services: {
       peterpong: PeterPongService
     }
@@ -442,7 +444,7 @@ test("Consumers instances are saved on the Oasis global", function() {
   stop();
 
   Oasis.register({
-    url: "fixtures/consumer.html",
+    url: "fixtures/consumer.js",
     capabilities: ['assertions']
   });
 
@@ -456,7 +458,7 @@ test("Consumers instances are saved on the Oasis global", function() {
   });
 
   sandbox = Oasis.createSandbox({
-    url: 'fixtures/consumer.html',
+    url: 'fixtures/consumer.js',
     services: {
       assertions: AssertionsService
     }
@@ -464,3 +466,5 @@ test("Consumers instances are saved on the Oasis global", function() {
 
   document.body.appendChild(sandbox.el);
 });
+
+})();
