@@ -70,6 +70,18 @@ define("oasis",
         sandbox.el.contentWindow.postMessage(sandbox.capabilities, rawPorts, '*');
       },
 
+      startSandbox: function(sandbox) {
+        document.head.appendChild(sandbox.el);
+      },
+
+      terminateSandbox: function(sandbox) {
+        var el = sandbox.el;
+
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      },
+
       // SANDBOX HOOKS
       connectSandbox: function(ports) {
         window.addEventListener('message', function(event) {
@@ -152,12 +164,12 @@ define("oasis",
 
           // TODO: This should probably be an OasisPort if possible
           if (service instanceof OasisPort) {
-            port = iframeAdapter.proxyPort(this, service);
+            port = this.adapter.proxyPort(this, service);
           } else {
-            channel = iframeAdapter.createChannel();
+            channel = this.adapter.createChannel();
 
-            var environmentPort = iframeAdapter.environmentPort(this, channel),
-                sandboxPort = iframeAdapter.sandboxPort(this, channel);
+            var environmentPort = this.adapter.environmentPort(this, channel),
+                sandboxPort = this.adapter.sandboxPort(this, channel);
 
             if (service) {
               /*jshint newcap:false*/
@@ -173,9 +185,17 @@ define("oasis",
           }
 
           ports.push(port);
-        });
+        }, this);
 
-        iframeAdapter.connectPorts(this, ports);
+        this.adapter.connectPorts(this, ports);
+      },
+
+      start: function(options) {
+        this.adapter.startSandbox(this, options);
+      },
+
+      terminate: function() {
+        this.adapter.terminateSandbox(this);
       }
     };
 

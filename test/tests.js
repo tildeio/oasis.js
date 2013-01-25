@@ -19,8 +19,7 @@ test("Assert browser satisfies minimum requirements", function() {
 
 module("Oasis.createSandbox", {
   teardown: function() {
-    var el = sandbox && sandbox.el;
-    if (el && el.parentNode) { el.parentNode.removeChild(el); }
+    if (sandbox) { sandbox.terminate(); }
     Oasis.reset();
   }
 });
