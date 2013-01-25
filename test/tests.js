@@ -78,7 +78,7 @@ test("service is notified about ports created for a card", function() {
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("service - card can communicate with the environment through a port", function() {
@@ -187,7 +187,7 @@ test("shorthand - card can communicate with the environment through a port", fun
     });
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("environment can communicate with the card through a port", function() {
@@ -218,7 +218,7 @@ test("environment can communicate with the card through a port", function() {
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("environment can communicate with the card through a port with a shorthand", function() {
@@ -249,7 +249,7 @@ test("environment can communicate with the card through a port with a shorthand"
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("environment can request a value from a sandbox", function() {
@@ -277,7 +277,7 @@ test("environment can request a value from a sandbox", function() {
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("sandbox can request a value from the environment", function() {
@@ -310,7 +310,7 @@ test("sandbox can request a value from the environment", function() {
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("ports sent to a sandbox can be passed to its child sandboxes", function() {
@@ -341,7 +341,7 @@ test("ports sent to a sandbox can be passed to its child sandboxes", function() 
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("ports sent to a sandbox can be passed to its child sandboxes while supporting a shorthand", function() {
@@ -376,7 +376,7 @@ test("ports sent to a sandbox can be passed to its child sandboxes while support
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("When the shorthand form is used for events, they can send events", function() {
@@ -408,7 +408,7 @@ test("When the shorthand form is used for events, they can send events", functio
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("When the shorthand form is used for events, they can send requests", function() {
@@ -437,7 +437,7 @@ test("When the shorthand form is used for events, they can send requests", funct
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 test("Consumers instances are saved on the Oasis global", function() {
@@ -464,7 +464,7 @@ test("Consumers instances are saved on the Oasis global", function() {
     }
   });
 
-  document.body.appendChild(sandbox.el);
+  sandbox.start();
 });
 
 })();
