@@ -18,7 +18,7 @@ define("oasis",
       assert(typeof MessageChannel !== 'undefined', "The current version of Oasis requires MessageChannel, which is not supported on your current platform. A near-future version of Oasis will polyfill MessageChannel using the postMessage API");
     }
 
-    verifySandbox();
+    //verifySandbox();
 
     var Oasis = {};
 
@@ -39,7 +39,9 @@ define("oasis",
       return src;
     }
 
-    var iframeAdapter = {
+    Oasis.adapters = {};
+
+    var iframeAdapter = Oasis.adapters.iframe = {
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
             iframe = document.createElement('iframe');
@@ -56,7 +58,7 @@ define("oasis",
         }
 
         iframe.addEventListener('load', function() {
-          sandbox.didInitializeSandbox(options);
+          sandbox.didInitializeSandbox();
         });
 
         sandbox.el = iframe;
@@ -118,6 +120,63 @@ define("oasis",
       }
     };
 
+    Oasis.adapters.webworker = {
+      initializeSandbox: function(sandbox) {
+        var worker = new Worker(sandbox.options.url);
+        sandbox.worker = worker;
+        setTimeout(function() {
+          sandbox.didInitializeSandbox();
+        });
+      },
+
+      createChannel: function(sandbox) {
+        var channel = new PostMessageMessageChannel();
+        channel.port1.start();
+        return channel;
+      },
+
+      environmentPort: function(sandbox, channel) {
+        return channel.port1;
+      },
+
+      sandboxPort: function(sandbox, channel) {
+        return channel.port2;
+      },
+
+      proxyPort: function(sandbox, port) {
+        return port;
+      },
+
+      connectPorts: function(sandbox, ports) {
+        var rawPorts = ports.map(function(port) { return port.port; });
+        sandbox.worker.postMessage(sandbox.capabilities, rawPorts, '*');
+      },
+
+      startSandbox: function(sandbox) { },
+
+      terminateSandbox: function(sandbox) {
+        sandbox.worker.terminate();
+      },
+
+      connectSandbox: function(ports) {
+        self.addEventListener('message', function(event) {
+          var capabilities = event.data, eventPorts = event.ports;
+
+          capabilities.forEach(function(capability, i) {
+            var handler = handlers[capability],
+                port = new PostMessagePort(eventPorts[i]);
+
+            if (handler && handler.setupCapability) {
+              handler.setupCapability(port);
+            }
+
+            port.port.start();
+
+            ports[capability] = port;
+          });
+        });
+      }
+    };
 
     // SANDBOXES
 
@@ -165,10 +224,11 @@ define("oasis",
         }
       },
 
-      didInitializeSandbox: function(options) {
+      didInitializeSandbox: function() {
         // Generic services code
+        var options = this.options;
         var services = options.services || {};
-        var ports = [];
+        var ports = [], channels = this.channels = {};
 
         this.capabilities.forEach(function(capability) {
           var service = services[capability],
@@ -181,7 +241,7 @@ define("oasis",
           if (service instanceof OasisPort) {
             port = this.adapter.proxyPort(this, service);
           } else {
-            channel = this.adapter.createChannel();
+            channel = channels[capability] = this.adapter.createChannel();
 
             var environmentPort = this.adapter.environmentPort(this, channel),
                 sandboxPort = this.adapter.sandboxPort(this, channel);
@@ -419,7 +479,12 @@ define("oasis",
     };
 
     var ports = {};
-    iframeAdapter.connectSandbox(ports);
+
+    if (typeof window !== 'undefined') {
+      iframeAdapter.connectSandbox(ports);
+    } else {
+      Oasis.adapters.webworker.connectSandbox(ports);
+    }
 
     var handlers = {};
     Oasis.registerHandler = function(capability, options) {
@@ -428,7 +493,7 @@ define("oasis",
 
     Oasis.consumers = {};
 
-    Oasis.connect = function(capability) {
+    Oasis.connect = function(capability, callback) {
       function setupCapability(Consumer, name) {
         return function(port) {
           var consumer = new Consumer(port);
@@ -445,6 +510,12 @@ define("oasis",
             setupCapability: setupCapability(consumers[prop], prop)
           });
         }
+      } else if (callback) {
+        Oasis.registerHandler(capability, {
+          setupCapability: function(port) {
+            callback(port);
+          }
+        });
       } else {
         var promise = new RSVP.Promise();
         Oasis.registerHandler(capability, {

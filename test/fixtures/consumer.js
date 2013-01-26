@@ -1,5 +1,5 @@
 /*global importScripts*/
-importScripts('oasis.js');
+importScripts('/oasis.js');
 
 var AssertionsConsumer = Oasis.Consumer.extend({
   initialize: function() {

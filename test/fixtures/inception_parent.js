@@ -1,7 +1,7 @@
 /*global importScripts*/
-importScripts('oasis.js');
+importScripts('/oasis.js');
 
-Oasis.connect('inception').then(function(port) {
+Oasis.connect('inception', function(port) {
   Oasis.register({
     url: 'fixtures/inception_child.js',
     capabilities: ['inception']

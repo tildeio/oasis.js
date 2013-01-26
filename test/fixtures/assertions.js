@@ -1,6 +1,6 @@
 /*global importScripts*/
-importScripts('oasis.js');
+importScripts('/oasis.js');
 
-Oasis.connect('assertions').then(function(port) {
+Oasis.connect('assertions', function(port) {
   port.send('ok', "success");
 });

@@ -1,7 +1,7 @@
 /*global importScripts*/
-importScripts('oasis.js');
+importScripts('/oasis.js');
 
-Oasis.connect('inception').then(function(port) {
+Oasis.connect('inception', function(port) {
   port.request('kick').then(function() {
     port.send('workPlacement');
   });

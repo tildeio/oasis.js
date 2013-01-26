@@ -3,7 +3,7 @@ output "dist"
 class BrowserIIFE < Rake::Pipeline::Filter
   def generate_output(inputs, output)
     inputs.each do |file|
-      output.write %{(function(exports) {\n#{file.read}\nexports.Oasis = requireModule('oasis');\n})(window);}
+      output.write %{(function(exports) {\n#{file.read}\nexports.Oasis = requireModule('oasis');\n})(this);}
     end
   end
 end

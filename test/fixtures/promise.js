@@ -1,7 +1,7 @@
 /*global importScripts*/
-importScripts('oasis.js');
+importScripts('/oasis.js');
 
-Oasis.connect('promisepong').then(function(port) {
+Oasis.connect('promisepong', function(port) {
   port.onRequest('ping', function(promise) {
     promise.resolve('pong');
   });

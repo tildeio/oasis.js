@@ -1,7 +1,7 @@
 /*global importScripts*/
-importScripts('oasis.js');
+importScripts('/oasis.js');
 
-Oasis.connect('peterpong').then(function(port) {
+Oasis.connect('peterpong', function(port) {
   port.send('peter');
 
   port.on('ping', function() {
