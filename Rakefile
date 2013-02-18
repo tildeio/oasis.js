@@ -6,6 +6,7 @@ file "tmp/rsvp.js" => "tmp" do
   end
 end
 
+desc "Update the rsvp.js dependency from GitHub master"
 task :update_rsvp => ["tmp/rsvp.js"] do
   cd "tmp/rsvp.js" do
     sh "git fetch origin"
@@ -23,4 +24,5 @@ task :rakep => "lib/rsvp.js" do
   sh "rakep build"
 end
 
+desc "Build browser and AMD versions of Oasis.js"
 task :build => :rakep

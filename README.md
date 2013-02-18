@@ -167,3 +167,30 @@ Firefox, stable Chrome, and stable Opera in the future.
 ## TODO
 
 * Rename (or alias) `capabilities` to `services`
+
+# Building Oasis.js
+
+Oasis uses [Rake::Pipeline](1) and [JsModuleTranspiler](2) to use the
+same source to create two builds of the library: one for use as a
+traditional browser library, and another for AMD users.
+
+[1]: https://github.com/livingsocial/rake-pipeline
+[2]: https://github.com/wycats/js_module_transpiler
+
+To build Oasis, first install the dependencies:
+
+```
+bundle
+```
+
+Then, run the `build` Rake task:
+
+```
+bundle exec rake build
+```
+
+After this command completes, you'll find two files inside the `dist`
+directory:
+
+* `oasis.js`, which exports the library as the global variable `Oasis`
+* `oasis.amd.js`, for use with an AMD loader like require.js
