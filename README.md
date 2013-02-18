@@ -163,3 +163,7 @@ serialize and deserialize the structured data.
 
 You should expect Oasis to gain support for IE8+, Safari 6, stable
 Firefox, stable Chrome, and stable Opera in the future.
+
+## TODO
+
+* Rename (or alias) `capabilities` to `services`
