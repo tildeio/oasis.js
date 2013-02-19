@@ -1066,6 +1066,8 @@ define("oasis",
       return port;
     };
 
+    Oasis.RSVP = RSVP;
+
     return Oasis;
   });
 exports.Oasis = requireModule('oasis');

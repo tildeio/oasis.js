@@ -742,5 +742,7 @@ define("oasis",
       return port;
     };
 
+    Oasis.RSVP = RSVP;
+
     return Oasis;
   });
