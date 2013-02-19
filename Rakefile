@@ -26,3 +26,4 @@ end
 
 desc "Build browser and AMD versions of Oasis.js"
 task :build => :rakep
+task :default => :build
