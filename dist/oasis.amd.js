@@ -84,7 +84,7 @@ define("oasis",
 
       connectPorts: function(sandbox, ports) {
         var rawPorts = ports.map(function(port) { return port.port; });
-        sandbox.el.contentWindow.postMessage(sandbox.capabilities, rawPorts, '*');
+        sandbox.el.contentWindow.postMessage({ isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts, '*');
       },
 
       startSandbox: function(sandbox) {
@@ -102,7 +102,9 @@ define("oasis",
       // SANDBOX HOOKS
       connectSandbox: function(ports) {
         window.addEventListener('message', function(event) {
-          var capabilities = event.data, eventPorts = event.ports;
+          if (!event.data.isOasisInitialization) { return; }
+
+          var capabilities = event.data.capabilities, eventPorts = event.ports;
 
           capabilities.forEach(function(capability, i) {
             var handler = handlers[capability],
@@ -149,7 +151,7 @@ define("oasis",
 
       connectPorts: function(sandbox, ports) {
         var rawPorts = ports.map(function(port) { return port.port; });
-        sandbox.worker.postMessage(sandbox.capabilities, rawPorts, '*');
+        sandbox.worker.postMessage({ isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts, '*');
       },
 
       startSandbox: function(sandbox) { },
@@ -160,7 +162,9 @@ define("oasis",
 
       connectSandbox: function(ports) {
         self.addEventListener('message', function(event) {
-          var capabilities = event.data, eventPorts = event.ports;
+          if (!event.data.isOasisInitialization) { return; }
+
+          var capabilities = event.data.capabilities, eventPorts = event.ports;
 
           capabilities.forEach(function(capability, i) {
             var handler = handlers[capability],
