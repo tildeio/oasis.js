@@ -1,3 +1,3 @@
 Oasis.connect('assertions', function(port) {
-  port.send('ok', "success");
+  port.send('ok1', "success");
 });

@@ -348,8 +348,10 @@ define("oasis",
 
     // ADAPTERS
 
-    function generateSrc(scriptURL) {
+    function generateSrc(sandboxURL, dependencyURLs) {
       function importScripts() {}
+
+      dependencyURLs = dependencyURLs || [];
 
       var link = document.createElement("a");
       link.href = "!";
@@ -357,9 +359,12 @@ define("oasis",
 
       var src = "data:text/html,<!doctype html>";
       src += "<base href='" + base + "'>";
-      src += "<script>" + importScripts.toString() + "<" + "/script>";
       src += "<script src='oasis.js'><" + "/script>";
-      src += "<script src='" + scriptURL + "'><" + "/script>";
+      src += "<script>" + importScripts.toString() + "<" + "/script>";
+      dependencyURLs.forEach(function(url) {
+        src += "<script src='" + url + "'><" + "/script>";
+      });
+      src += "<script src='" + sandboxURL + "'><" + "/script>";
       return src;
     }
 
@@ -372,7 +377,7 @@ define("oasis",
 
         iframe.sandbox = 'allow-scripts';
         iframe.seamless = true;
-        iframe.src = generateSrc(options.url);
+        iframe.src = generateSrc(options.url, sandbox.dependencies);
 
         // rendering-specific code
         if (options.width) {
@@ -446,9 +451,31 @@ define("oasis",
       }
     };
 
+    function generateWebWorkerURL(sandboxURL, dependencyURLs) {
+      var link = document.createElement("a");
+      link.href = "!";
+      var base = link.href.slice(0, -1);
+
+      dependencyURLs = dependencyURLs || [];
+
+      function importScripts(url) {
+        return "importScripts('" + base + url + "'); ";
+      }
+
+      var src = importScripts("oasis.js");
+      dependencyURLs.forEach(function(url) {
+        src += importScripts(url);
+      });
+      src += importScripts(sandboxURL);
+
+      var blob = new Blob([src], {type: "text/javascript"});
+      return URL.createObjectURL(blob);
+    }
+
     Oasis.adapters.webworker = {
       initializeSandbox: function(sandbox) {
-        var worker = new Worker(sandbox.options.url);
+        var url = generateWebWorkerURL(sandbox.options.url, sandbox.dependencies);
+        var worker = new Worker(url);
         sandbox.worker = worker;
         setTimeout(function() {
           sandbox.didInitializeSandbox();
@@ -512,12 +539,17 @@ define("oasis",
       this.connections = {};
 
       // Generic capabilities code
+      var pkg = packages[options.url];
+
       var capabilities = options.capabilities;
       if (!capabilities) {
-        var pkg = packages[options.url];
         assert(pkg, "You are trying to create a sandbox from an unregistered URL without providing capabilities. Please use Oasis.register to register your package or pass a list of capabilities to createSandbox.");
         capabilities = pkg.capabilities;
       }
+
+      pkg = pkg || {};
+
+      this.dependencies = options.dependencies || pkg.dependencies;
 
       this.adapter = options.adapter || iframeAdapter;
       this.capabilities = capabilities;

@@ -1,6 +1,3 @@
-/*global importScripts*/
-importScripts('/oasis.js');
-
 var AssertionsConsumer = Oasis.Consumer.extend({
   initialize: function(port) {
     port.send('ok', "success");

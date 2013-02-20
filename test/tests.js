@@ -470,6 +470,41 @@ function suite(adapter, extras) {
 
     sandbox.start();
   });
+
+  test("Sandboxes can have multiple URLs whose sources are loaded synchronously", function() {
+    Oasis.register({
+      url: 'fixtures/multiple_url_1.js',
+      dependencies: ['fixtures/multiple_url_2.js'],
+      capabilities: ['assertions', 'assertions2']
+    });
+
+    stop();
+    stop();
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok1: function() {
+          start();
+          ok(true, "First event was fired");
+        },
+
+        ok2: function() {
+          start();
+          ok(true, "Second event was fired");
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/multiple_url_1.js',
+      services: {
+        assertions: AssertionsService,
+        assertions2: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
 }
 
 suite('iframe', function() {
