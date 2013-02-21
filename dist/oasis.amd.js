@@ -582,6 +582,7 @@ define("oasis",
       request: function(eventName) {
         var promise = new RSVP.Promise();
         var requestId = getRequestId();
+        var args = [].slice.call(arguments, 1);
 
         var observer = function(event) {
           if (event.requestId === requestId) {
@@ -591,7 +592,7 @@ define("oasis",
         };
 
         this.on('@response:' + eventName, observer, this);
-        this.send('@request:' + eventName, { requestId: requestId });
+        this.send('@request:' + eventName, { requestId: requestId, args: args });
 
         return promise;
       },
@@ -612,8 +613,11 @@ define("oasis",
         var self = this;
 
         this.on('@request:' + eventName, function(data) {
-          var promise = new RSVP.Promise();
-          var requestId = data.requestId;
+          var promise = new RSVP.Promise(),
+              requestId = data.requestId,
+              args = data.args;
+
+          args.unshift(promise);
 
           promise.then(function(data) {
             self.send('@response:' + eventName, {
@@ -622,7 +626,8 @@ define("oasis",
             });
           });
 
-          callback.call(binding, promise);
+
+          callback.apply(binding, args);
         });
       }
     };

@@ -281,6 +281,34 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
+  test("environment can request a value from a sandbox with arguments", function() {
+    Oasis.register({
+      url: "fixtures/promise_with_args.js",
+      capabilities: ['promisepong']
+    });
+
+    stop();
+
+    var PingPongPromiseService = Oasis.Service.extend({
+      initialize: function(port, capability) {
+        port.request('ping', "first", "second").then(function(data) {
+          start();
+
+          equal(data, 'pong', "promise was resolved with expected value");
+        });
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/promise_with_args.js',
+      services: {
+        promisepong: PingPongPromiseService
+      }
+    });
+
+    sandbox.start();
+  });
+
   test("sandbox can request a value from the environment", function() {
     Oasis.register({
       url: "fixtures/promise_request_from_environment.js",
@@ -306,6 +334,43 @@ function suite(adapter, extras) {
 
     createSandbox({
       url: 'fixtures/promise_request_from_environment.js',
+      services: {
+        promisepong: PingPongPromiseService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("sandbox can request a value from the environment with arguments", function() {
+    Oasis.register({
+      url: "fixtures/promise_request_from_environment_with_args.js",
+      capabilities: ['promisepong']
+    });
+
+    stop();
+
+    var PingPongPromiseService = Oasis.Service.extend({
+      requests: {
+        ping: function(promise, firstArg, secondArg) {
+          if (firstArg === 'first' && secondArg === 'second') {
+            promise.resolve('pong');
+          } else {
+            promise.reject("Did not receive expected arguments.");
+          }
+        }
+      },
+
+      events: {
+        testResolvedToSatisfaction: function() {
+          start();
+          ok(true, "test was resolved to sandbox's satisfaction");
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/promise_request_from_environment_with_args.js',
       services: {
         promisepong: PingPongPromiseService
       }
