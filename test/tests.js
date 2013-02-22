@@ -1,6 +1,6 @@
 (function() {
 
-QUnit.config.testTimeout = 200;
+QUnit.config.testTimeout = 300;
 
 module("Oasis");
 
@@ -565,6 +565,37 @@ function suite(adapter, extras) {
       services: {
         assertions: AssertionsService,
         assertions2: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("Consumers do not process events until connect() has been called", function() {
+    Oasis.register({
+      url: 'fixtures/delayed_connect.js',
+      capabilities: ['assertions']
+    });
+
+    stop();
+
+    var AssertionsService = Oasis.Service.extend({
+      initialize: function(port) {
+        port.send('ping');
+      },
+
+      events: {
+        pong: function() {
+          start();
+          ok(true, "The child card acknowledged the ping");
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/delayed_connect.js',
+      services: {
+        assertions: AssertionsService
       }
     });
 

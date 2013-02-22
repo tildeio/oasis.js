@@ -439,11 +439,10 @@ define("oasis",
             var handler = handlers[capability],
                 port = new PostMessagePort(eventPorts[i]);
 
-            if (handler && handler.setupCapability) {
+            if (handler) {
               handler.setupCapability(port);
+              port.start();
             }
-
-            port.port.start();
 
             ports[capability] = port;
           });
@@ -458,17 +457,17 @@ define("oasis",
 
       dependencyURLs = dependencyURLs || [];
 
-      function importScripts(url) {
+      function importScriptsString(url) {
         return "importScripts('" + base + url + "'); ";
       }
 
-      var src = importScripts("oasis.js");
+      var src = importScriptsString("oasis.js");
       dependencyURLs.forEach(function(url) {
-        src += importScripts(url);
+        src += importScriptsString(url);
       });
-      src += importScripts(sandboxURL);
+      src += importScriptsString(sandboxURL);
 
-      var blob = new Blob([src], {type: "text/javascript"});
+      var blob = new Blob([src], {type: "application/javascript"});
       return URL.createObjectURL(blob);
     }
 
@@ -521,11 +520,10 @@ define("oasis",
             var handler = handlers[capability],
                 port = new PostMessagePort(eventPorts[i]);
 
-            if (handler && handler.setupCapability) {
+            if (handler) {
               handler.setupCapability(port);
+              port.start();
             }
-
-            port.port.start();
 
             ports[capability] = port;
           });
@@ -1043,7 +1041,21 @@ define("oasis",
 
     var handlers = {};
     Oasis.registerHandler = function(capability, options) {
-      handlers[capability] = options;
+      var port = ports[capability];
+
+      if (port) {
+        options.setupCapability(port);
+
+        if (options.promise) {
+          options.promise.then(function() {
+            port.start();
+          });
+        } else {
+          port.start();
+        }
+      } else {
+        handlers[capability] = options;
+      }
     };
 
     Oasis.consumers = {};
@@ -1068,6 +1080,7 @@ define("oasis",
           var consumer = new Consumer(port);
           Oasis.consumers[name] = consumer;
           consumer.initialize(port, name);
+          port.start();
         };
       }
 
@@ -1088,6 +1101,7 @@ define("oasis",
       } else {
         var promise = new RSVP.Promise();
         Oasis.registerHandler(capability, {
+          promise: promise,
           setupCapability: function(port) {
             promise.resolve(port);
           }
