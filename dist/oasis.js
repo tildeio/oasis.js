@@ -553,10 +553,16 @@ define("oasis",
       this.capabilities = capabilities;
       this.options = options;
 
+      this.promise = new RSVP.Promise();
+
       this.adapter.initializeSandbox(this);
     };
 
     OasisSandbox.prototype = {
+      then: function() {
+        this.promise.then.apply(this.promise, arguments);
+      },
+
       connect: function(capability) {
         var promise = new RSVP.Promise();
         var connections;
@@ -621,6 +627,7 @@ define("oasis",
         }, this);
 
         this.adapter.connectPorts(this, ports);
+        this.promise.resolve();
       },
 
       start: function(options) {

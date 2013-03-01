@@ -601,6 +601,44 @@ function suite(adapter, extras) {
 
     sandbox.start();
   });
+
+  test("Sandboxes should be promises that are resolved when the sandbox has finished initializing", function() {
+    expect(3);
+
+    Oasis.register({
+      url: 'fixtures/sandbox_as_promise.js',
+      capabilities: ['assertions']
+    });
+
+    var serviceInitialized = false;
+
+    var AssertionsService = Oasis.Service.extend({
+      initialize: function(port) {
+        this.sandbox.assertionsPort = port;
+        serviceInitialized = true;
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/sandbox_as_promise.js',
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    equal(serviceInitialized, false, "The service is not immediately initialized");
+
+    stop();
+
+    sandbox.then(function() {
+      start();
+
+      ok(sandbox.assertionsPort, "The promise was not resolved until the service has been initialized");
+      equal(serviceInitialized, true, "The service has been initialized once the promise is resolved");
+    });
+
+    sandbox.start();
+  });
 }
 
 suite('iframe', function() {
