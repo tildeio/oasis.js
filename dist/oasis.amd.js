@@ -465,12 +465,14 @@ define("oasis",
       }
     };
 
-    Oasis.Service.extend = function(object) {
+    Oasis.Service.extend = function extend(object) {
       function Service() {
         Oasis.Service.apply(this, arguments);
       }
 
-      var ServiceProto = Service.prototype = Object.create(Oasis.Service.prototype);
+      Service.extend = extend;
+
+      var ServiceProto = Service.prototype = Object.create(this.prototype);
 
       for (var prop in object) {
         ServiceProto[prop] = object[prop];
