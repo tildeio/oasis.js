@@ -466,8 +466,11 @@ define("oasis",
     };
 
     Oasis.Service.extend = function extend(object) {
+      var superConstructor = this;
+
       function Service() {
-        Oasis.Service.apply(this, arguments);
+        if (Service.prototype.init) { Service.prototype.init.call(this); }
+        superConstructor.apply(this, arguments);
       }
 
       Service.extend = extend;
