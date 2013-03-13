@@ -24,10 +24,11 @@ define("oasis",
 
     // ADAPTERS
 
-    function generateSrc(sandboxURL, dependencyURLs) {
+    function generateSrc(sandboxURL, oasisURL, dependencyURLs) {
       function importScripts() {}
 
       dependencyURLs = dependencyURLs || [];
+      oasisURL = oasisURL || "oasis.js";
 
       var link = document.createElement("a");
       link.href = "!";
@@ -35,7 +36,7 @@ define("oasis",
 
       var src = "data:text/html,<!doctype html>";
       src += "<base href='" + base + "'>";
-      src += "<script src='oasis.js'><" + "/script>";
+      src += "<script src='"+oasisURL+"'><" + "/script>";
       src += "<script>" + importScripts.toString() + "<" + "/script>";
       dependencyURLs.forEach(function(url) {
         src += "<script src='" + url + "'><" + "/script>";
@@ -53,7 +54,7 @@ define("oasis",
 
         iframe.sandbox = 'allow-scripts';
         iframe.seamless = true;
-        iframe.src = generateSrc(options.url, sandbox.dependencies);
+        iframe.src = generateSrc(options.url, options.oasisURL, sandbox.dependencies);
 
         // rendering-specific code
         if (options.width) {
