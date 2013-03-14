@@ -40,7 +40,7 @@ input "lib" do
 end
 
 input "test" do
-  output "tests"
+  output "tmp/tests"
   concat
 end
 
