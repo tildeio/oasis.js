@@ -639,6 +639,53 @@ function suite(adapter, extras) {
 
     sandbox.start();
   });
+
+  test("Sandboxes can be wiretapped to listen to events being sent and received", function() {
+    Oasis.register({
+      url: 'fixtures/wiretapping.js',
+      capabilities: ['assertions', 'otherStuff']
+    });
+
+    var AssertionsService = Oasis.Service.extend({
+      initialize: function(port) {
+        port.send('sentAssertion');
+      }
+    });
+
+    var OtherStuffService = Oasis.Service.extend({
+      initialize: function(port) {
+        port.send('sentOther');
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/wiretapping.js',
+      services: {
+        assertions: AssertionsService,
+        otherStuff: OtherStuffService
+      }
+    });
+
+    stop();
+    stop();
+    stop();
+    stop();
+
+    var expectedEvents = ['sentAssertion', 'sentOther', 'receivedAssertion', 'receivedOther'];
+
+    sandbox.wiretap(function(service, event) {
+      console.log(service, event);
+      start();
+
+      var loc = expectedEvents.indexOf(event.type);
+      if (loc > -1) {
+        ok(true, "received expected message " + event.type);
+        expectedEvents.splice(loc, 1);
+      }
+    });
+
+    sandbox.start();
+  });
 }
 
 suite('iframe', function() {

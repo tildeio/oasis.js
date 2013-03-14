@@ -212,6 +212,7 @@ define("oasis",
 
     var OasisSandbox = function(options) {
       this.connections = {};
+      this.wiretaps = [];
 
       // Generic capabilities code
       var pkg = packages[options.url];
@@ -238,6 +239,10 @@ define("oasis",
     OasisSandbox.prototype = {
       then: function() {
         this.promise.then.apply(this.promise, arguments);
+      },
+
+      wiretap: function(callback) {
+        this.wiretaps.push(callback);
       },
 
       connect: function(capability) {
@@ -286,6 +291,30 @@ define("oasis",
 
             var environmentPort = this.adapter.environmentPort(this, channel),
                 sandboxPort = this.adapter.sandboxPort(this, channel);
+
+            environmentPort.all(function(eventName, data) {
+              this.wiretaps.forEach(function(wiretap) {
+                wiretap(capability, {
+                  type: eventName,
+                  data: data,
+                  direction: 'received'
+                });
+              });
+            }, this);
+
+            this.wiretaps.forEach(function(wiretap) {
+              var originalSend = environmentPort.send;
+
+              environmentPort.send = function(eventName, data) {
+                wiretap(capability, {
+                  type: eventName,
+                  data: data,
+                  direction: 'sent'
+                });
+
+                originalSend.apply(environmentPort, arguments);
+              };
+            });
 
             if (service) {
               /*jshint newcap:false*/
@@ -554,6 +583,12 @@ define("oasis",
       on: mustImplement('OasisPort', 'on'),
 
       /**
+        Allows you to register an event handler that is called for all events
+        that are sent to the port.
+      */
+      all: mustImplement('OasisPort', 'all'),
+
+      /**
         This allows you to unregister an event handler for an event name
         and callback. You should not pass in the optional binding.
 
@@ -658,6 +693,12 @@ define("oasis",
 
         this._callbacks.push([callback, wrappedCallback]);
         this.port.addEventListener('message', wrappedCallback);
+      },
+
+      all: function(callback, binding) {
+        this.port.addEventListener('message', function(event) {
+          callback.call(binding, event.data.type, event.data.data);
+        });
       },
 
       off: function(eventName, callback) {
