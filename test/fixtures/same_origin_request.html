@@ -1,0 +1,16 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Same Origin Request Fixture</title>
+  <script>
+    window.addEventListener('message', function (event) {
+      if (event.data === "and to you") {
+        parent.postMessage("thanks", '*');
+      }
+    });
+    parent.postMessage("good morning", '*');
+  </script>
+</head>
+<body>
+</body>
+</html>

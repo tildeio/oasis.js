@@ -701,6 +701,40 @@ suite('iframe', function() {
 
     ok(sandbox.el instanceof window.HTMLIFrameElement, "A new iframe was returned");
   });
+
+  test("Sandboxes can post messages to their own nested (non-Oasis) iframes", function() {
+    Oasis.register({
+      url: "fixtures/same_origin.js",
+      capabilities: ['origin', 'assertions']
+    });
+
+    var OriginService = Oasis.Service.extend({
+          requests: {
+            origin: function (promise) {
+              promise.resolve(location.origin);
+            }
+          }
+        }),AssertionService = Oasis.Service.extend({
+          events: {
+            result: function (result) {
+              start();
+              equal(result, "success", "Sandbox was able to request a same-origin resource");
+            }
+          }
+        });
+
+    stop();
+
+    createSandbox({
+      url: "fixtures/same_origin.js",
+      services: {
+        origin: OriginService,
+        assertions: AssertionService
+      }
+    });
+
+    sandbox.start();
+  });
 });
 
 suite('webworker');

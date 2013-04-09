@@ -52,7 +52,7 @@ define("oasis",
         var options = sandbox.options,
             iframe = document.createElement('iframe');
 
-        iframe.sandbox = 'allow-scripts';
+        iframe.sandbox = 'allow-same-origin allow-scripts';
         iframe.seamless = true;
         iframe.src = generateSrc(options.url, options.oasisURL, sandbox.dependencies);
 
