@@ -194,3 +194,15 @@ directory:
 
 * `oasis.js`, which exports the library as the global variable `Oasis`
 * `oasis.amd.js`, for use with an AMD loader like require.js
+
+# Testing Oasis.js
+
+```
+bundle exec rakep server
+```
+
+Then point your browser to
+
+```
+http://localhost:9292/index.html
+```
