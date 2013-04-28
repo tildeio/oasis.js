@@ -1,4 +1,4 @@
-# Oasis.js
+# Oasis.js [![Build Status](https://secure.travis-ci.org/tildeio/oasis.js.png?branch=master)](http://travis-ci.org/tildeio/oasis.js)
 
 Oasis.js is a pleasant API for safe communication with untrusted code in
 sandboxed iframes.

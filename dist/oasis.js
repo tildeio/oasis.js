@@ -30,20 +30,18 @@ var define, requireModule;
     return seen[name] = exports || value;
   };
 })();
-define('rsvp',
-  ["exports"],
-  function(__exports__) {
+define("rsvp",
+  [],
+  function() {
     "use strict";
-    var config = {};
-
     var browserGlobal = (typeof window !== 'undefined') ? window : {};
 
     var MutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver;
-    var RSVP;
+    var RSVP, async;
 
     if (typeof process !== 'undefined' &&
       {}.toString.call(process) === '[object process]') {
-      config.async = function(callback, binding) {
+      async = function(callback, binding) {
         process.nextTick(function() {
           callback.call(binding);
         });
@@ -70,12 +68,12 @@ define('rsvp',
         observer = null;
       });
 
-      config.async = function(callback, binding) {
+      async = function(callback, binding) {
         queue.push([callback, binding]);
         element.setAttribute('drainQueue', 'drainQueue');
       };
     } else {
-      config.async = function(callback, binding) {
+      async = function(callback, binding) {
         setTimeout(function() {
           callback.call(binding);
         }, 1);
@@ -159,8 +157,7 @@ define('rsvp',
             callbacks, callbackTuple, callback, binding, event;
 
         if (callbacks = allCallbacks[eventName]) {
-          // Don't cache the callbacks.length since it may grow
-          for (var i=0; i<callbacks.length; i++) {
+          for (var i=0, l=callbacks.length; i<l; i++) {
             callbackTuple = callbacks[i];
             callback = callbackTuple[0];
             binding = callbackTuple[1];
@@ -225,13 +222,13 @@ define('rsvp',
         var thenPromise = new Promise();
 
         if (this.isResolved) {
-          config.async(function() {
+          RSVP.async(function() {
             invokeCallback('resolve', thenPromise, done, { detail: this.resolvedValue });
           }, this);
         }
 
         if (this.isRejected) {
-          config.async(function() {
+          RSVP.async(function() {
             invokeCallback('reject', thenPromise, fail, { detail: this.rejectedValue });
           }, this);
         }
@@ -263,7 +260,7 @@ define('rsvp',
     };
 
     function resolve(promise, value) {
-      config.async(function() {
+      RSVP.async(function() {
         promise.trigger('promise:resolved', { detail: value });
         promise.isResolved = true;
         promise.resolvedValue = value;
@@ -271,7 +268,7 @@ define('rsvp',
     }
 
     function reject(promise, value) {
-      config.async(function() {
+      RSVP.async(function() {
         promise.trigger('promise:failed', { detail: value });
         promise.isRejected = true;
         promise.rejectedValue = value;
@@ -279,48 +276,41 @@ define('rsvp',
     }
 
     function all(promises) {
-      var i, results = [];
-      var allPromise = new Promise();
-      var remaining = promises.length;
+    	var i, results = [];
+    	var allPromise = new Promise();
+    	var remaining = promises.length;
 
       if (remaining === 0) {
         allPromise.resolve([]);
       }
 
-      var resolver = function(index) {
-        return function(value) {
-          resolve(index, value);
-        };
-      };
+    	var resolver = function(index) {
+    		return function(value) {
+    			resolve(index, value);
+    		};
+    	};
 
-      var resolve = function(index, value) {
-        results[index] = value;
-        if (--remaining === 0) {
-          allPromise.resolve(results);
-        }
-      };
+    	var resolve = function(index, value) {
+    		results[index] = value;
+    		if (--remaining === 0) {
+    			allPromise.resolve(results);
+    		}
+    	};
 
-      var reject = function(error) {
-        allPromise.reject(error);
-      };
+    	var reject = function(error) {
+    		allPromise.reject(error);
+    	};
 
-      for (i = 0; i < remaining; i++) {
-        promises[i].then(resolver(i), reject);
-      }
-      return allPromise;
+    	for (i = 0; i < remaining; i++) {
+    		promises[i].then(resolver(i), reject);
+    	}
+    	return allPromise;
     }
 
     EventTarget.mixin(Promise.prototype);
 
-    function configure(name, value) {
-      config[name] = value;
-    }
-
-    __exports__.Promise = Promise;
-    __exports__.Event = Event;
-    __exports__.EventTarget = EventTarget;
-    __exports__.all = all;
-    __exports__.configure = configure;
+    RSVP = { async: async, Promise: Promise, Event: Event, EventTarget: EventTarget, all: all, raiseOnUncaughtExceptions: true };
+    return RSVP;
   });
 define("oasis",
   ["rsvp"],
