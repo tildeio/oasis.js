@@ -1,7 +1,7 @@
 Oasis.connect('promisepong', function(port) {
-  port.onRequest('ping', function(promise, firstArg, secondArg) {
+  port.onRequest('ping', function(resolve, firstArg, secondArg) {
     if (firstArg === 'first' && secondArg === 'second') {
-      promise.resolve('pong');
+      resolve('pong');
     } else {
       promise.reject("Arguments were not passed to the request.");
     }

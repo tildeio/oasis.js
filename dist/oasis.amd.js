@@ -3,9 +3,19 @@ define("oasis",
   function(RSVP) {
     "use strict";
 
+    var Oasis = {};
+
+    Oasis.verbose = false;
+
     function assert(assertion, string) {
       if (!assertion) {
         throw new Error(string);
+      }
+    }
+
+    function log(string) {
+      if (Oasis.verbose && typeof console !== 'undefined' && typeof console.log === 'function') {
+        console.log(string);
       }
     }
 
@@ -20,7 +30,6 @@ define("oasis",
 
     //verifySandbox();
 
-    var Oasis = {};
 
     // ADAPTERS
 
@@ -50,7 +59,8 @@ define("oasis",
     var iframeAdapter = Oasis.adapters.iframe = {
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
-            iframe = document.createElement('iframe');
+            iframe = document.createElement('iframe'),
+            promise;
 
         iframe.sandbox = 'allow-same-origin allow-scripts';
         iframe.seamless = true;
@@ -63,11 +73,15 @@ define("oasis",
           iframe.height = options.height;
         }
 
-        iframe.addEventListener('load', function() {
-          sandbox.didInitializeSandbox();
-        });
 
         sandbox.el = iframe;
+
+        return new RSVP.Promise(function (resolve, reject) {
+          iframe.addEventListener('load', function() {
+            log("iframe sandbox initialized");
+            resolve(sandbox);
+          });
+        });
       },
 
       createChannel: function(sandbox) {
@@ -107,8 +121,12 @@ define("oasis",
 
       // SANDBOX HOOKS
       connectSandbox: function(ports) {
+        log("Listening for initialization message");
+
         window.addEventListener('message', function(event) {
           if (!event.data.isOasisInitialization) { return; }
+
+          log("Sandbox initializing.");
 
           var capabilities = event.data.capabilities, eventPorts = event.ports;
 
@@ -117,6 +135,8 @@ define("oasis",
                 port = new PostMessagePort(eventPorts[i]);
 
             if (handler) {
+              log("Invoking handler for '" + capability + "'");
+
               handler.setupCapability(port);
               port.start();
             }
@@ -161,8 +181,11 @@ define("oasis",
         var url = generateWebWorkerURL(sandbox.options.url, sandbox.dependencies);
         var worker = new Worker(url);
         sandbox.worker = worker;
-        setTimeout(function() {
-          sandbox.didInitializeSandbox();
+        return new RSVP.Promise(function (resolve, reject) {
+          setTimeout(function() {
+            log("webworker sandbox initialized");
+            resolve(sandbox);
+          });
         });
       },
 
@@ -235,113 +258,119 @@ define("oasis",
 
       this.dependencies = options.dependencies || pkg.dependencies;
 
-      this.adapter = options.adapter || iframeAdapter;
+      var adapter = this.adapter = options.adapter || iframeAdapter;
+
       this.capabilities = capabilities;
+      this.envPortDefereds = {};
+      this.sandboxPortDefereds = {};
+      this.channels = {};
       this.options = options;
 
-      this.promise = new RSVP.Promise();
+      this.promise = adapter.initializeSandbox(this);
 
-      this.adapter.initializeSandbox(this);
+      this.capabilities.forEach(function(capability) {
+        this.envPortDefereds[capability] = RSVP.defer();
+        this.sandboxPortDefereds[capability] = RSVP.defer();
+      }, this);
+
+      this.createChannels();
+
+      this.connectPorts();
     };
 
     OasisSandbox.prototype = {
-      then: function() {
-        this.promise.then.apply(this.promise, arguments);
-      },
-
       wiretap: function(callback) {
         this.wiretaps.push(callback);
       },
 
       connect: function(capability) {
-        var promise = new RSVP.Promise();
-        var connections;
+        var portPromise = this.envPortDefereds[capability].promise;
 
-        connections = this.connections[capability];
-        connections = connections || [];
+        // TODO: test this error case; we might also silently fail for optional
+        // services?
+        assert(portPromise, "Connect was called on '" + capability + "' but no such capability was registered.");
 
-        connections.push(promise);
-        this.connections[capability] = connections;
-
-        return promise;
+        return portPromise;
       },
 
-      triggerConnect: function(capability, port) {
-        var connections = this.connections[capability];
+      createChannels: function () {
+        this.capabilities.forEach(function (capability) {
+          var sandbox = this,
+              services = this.options.services || {},
+              channels = this.channels;
 
-        if (connections) {
-          connections.forEach(function(connection) {
-            connection.resolve(port);
-          });
+          log("Will create port for '" + capability + "'");
+          sandbox.promise.then(function (sandbox) {
+            var service = services[capability],
+                channel, port;
 
-          this.connections[capability] = [];
-        }
-      },
+            // If an existing port is provided, just
+            // pass it along to the new sandbox.
 
-      didInitializeSandbox: function() {
-        // Generic services code
-        var options = this.options;
-        var services = options.services || {};
-        var ports = [], channels = this.channels = {};
+            // TODO: This should probably be an OasisPort if possible
+            if (service instanceof OasisPort) {
+              port = this.adapter.proxyPort(this, service);
+            } else {
+              channel = channels[capability] = this.adapter.createChannel();
 
-        this.capabilities.forEach(function(capability) {
-          var service = services[capability],
-              channel, port;
+              var environmentPort = this.adapter.environmentPort(this, channel),
+                  sandboxPort = this.adapter.sandboxPort(this, channel);
 
-          // If an existing port is provided, just
-          // pass it along to the new sandbox.
+              log("Wiretapping '" + capability + "'");
 
-          // TODO: This should probably be an OasisPort if possible
-          if (service instanceof OasisPort) {
-            port = this.adapter.proxyPort(this, service);
-          } else {
-            channel = channels[capability] = this.adapter.createChannel();
+              environmentPort.all(function(eventName, data) {
+                this.wiretaps.forEach(function(wiretap) {
+                  wiretap(capability, {
+                    type: eventName,
+                    data: data,
+                    direction: 'received'
+                  });
+                });
+              }, this);
 
-            var environmentPort = this.adapter.environmentPort(this, channel),
-                sandboxPort = this.adapter.sandboxPort(this, channel);
-
-            environmentPort.all(function(eventName, data) {
               this.wiretaps.forEach(function(wiretap) {
-                wiretap(capability, {
-                  type: eventName,
-                  data: data,
-                  direction: 'received'
-                });
+                var originalSend = environmentPort.send;
+
+                environmentPort.send = function(eventName, data) {
+                  wiretap(capability, {
+                    type: eventName,
+                    data: data,
+                    direction: 'sent'
+                  });
+
+                  originalSend.apply(environmentPort, arguments);
+                };
               });
-            }, this);
 
-            this.wiretaps.forEach(function(wiretap) {
-              var originalSend = environmentPort.send;
+              if (service) {
+                log("Creating service for '" + capability + "'");
+                /*jshint newcap:false*/
+                // Generic
+                service = new service(environmentPort, this);
+                service.initialize(environmentPort, capability);
+              }
 
-              environmentPort.send = function(eventName, data) {
-                wiretap(capability, {
-                  type: eventName,
-                  data: data,
-                  direction: 'sent'
-                });
+              // Law of Demeter violation
+              port = sandboxPort;
 
-                originalSend.apply(environmentPort, arguments);
-              };
-            });
-
-            if (service) {
-              /*jshint newcap:false*/
-              // Generic
-              service = new service(environmentPort, this);
-              service.initialize(environmentPort, capability);
+              this.envPortDefereds[capability].resolve(environmentPort);
             }
 
-            // Generic
-            this.triggerConnect(capability, environmentPort);
-            // Law of Demeter violation
-            port = sandboxPort;
-          }
-
-          ports.push(port);
+            log("Port created for '" + capability + "'");
+            this.sandboxPortDefereds[capability].resolve(port);
+          }.bind(sandbox));
         }, this);
+      },
 
-        this.adapter.connectPorts(this, ports);
-        this.promise.resolve();
+      connectPorts: function () {
+        var allSandboxPortPromises = this.capabilities.reduce(function (accumulator, capability) {
+          return accumulator.concat(this.sandboxPortDefereds[capability].promise);
+        }.bind(this), []);
+
+        RSVP.all(allSandboxPortPromises).then(function (ports) {
+          log("All " + ports.length + " ports created.  Transferring them.");
+          this.adapter.connectPorts(this, ports);
+        }.bind(this));
       },
 
       start: function(options) {
@@ -634,21 +663,22 @@ define("oasis",
           must be structured data.
       */
       request: function(eventName) {
-        var promise = new RSVP.Promise();
-        var requestId = getRequestId();
+        var port = this;
         var args = [].slice.call(arguments, 1);
 
-        var observer = function(event) {
-          if (event.requestId === requestId) {
-            this.off('@response:' + eventName, observer);
-            promise.resolve(event.data);
-          }
-        };
+        return new RSVP.Promise(function (resolve, reject) {
+          var requestId = getRequestId();
 
-        this.on('@response:' + eventName, observer, this);
-        this.send('@request:' + eventName, { requestId: requestId, args: args });
+          var observer = function(event) {
+            if (event.requestId === requestId) {
+              port.off('@response:' + eventName, observer);
+              resolve(event.data);
+            }
+          };
 
-        return promise;
+          port.on('@response:' + eventName, observer, port);
+          port.send('@request:' + eventName, { requestId: requestId, args: args });
+        });
       },
 
       /**
@@ -667,21 +697,18 @@ define("oasis",
         var self = this;
 
         this.on('@request:' + eventName, function(data) {
-          var promise = new RSVP.Promise(),
-              requestId = data.requestId,
+          var requestId = data.requestId,
               args = data.args;
 
-          args.unshift(promise);
-
-          promise.then(function(data) {
+          new RSVP.Promise(function (resolve, reject) {
+            args.unshift(resolve);
+            callback.apply(binding, args);
+          }).then(function (data) {
             self.send('@response:' + eventName, {
               requestId: requestId,
               data: data
             });
           });
-
-
-          callback.apply(binding, args);
         });
       }
     };
@@ -831,21 +858,24 @@ define("oasis",
           });
         }
       } else if (callback) {
+        log("Connecting to '" + capability + "' with callback.");
+
         Oasis.registerHandler(capability, {
           setupCapability: function(port) {
             callback(port);
           }
         });
       } else {
-        var promise = new RSVP.Promise();
+        log("Connecting to '" + capability + "' with promise.");
+
+        var defered = RSVP.defer();
         Oasis.registerHandler(capability, {
-          promise: promise,
+          promise: defered.promise,
           setupCapability: function(port) {
-            promise.resolve(port);
+            defered.resolve(port);
           }
         });
-
-        return promise;
+        return defered.promise;
       }
     };
 

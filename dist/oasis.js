@@ -30,14 +30,57 @@ var define, requireModule;
     return seen[name] = exports || value;
   };
 })();
-define("rsvp",
-  [],
-  function() {
+define("rsvp/all",
+  ["rsvp/defer","exports"],
+  function(__dependency1__, __exports__) {
+    "use strict";
+    var defer = __dependency1__.defer;
+
+    function all(promises) {
+      var results = [], deferred = defer(), remaining = promises.length;
+
+      if (remaining === 0) {
+        deferred.resolve([]);
+      }
+
+      var resolver = function(index) {
+        return function(value) {
+          resolveAll(index, value);
+        };
+      };
+
+      var resolveAll = function(index, value) {
+        results[index] = value;
+        if (--remaining === 0) {
+          deferred.resolve(results);
+        }
+      };
+
+      var rejectAll = function(error) {
+        deferred.reject(error);
+      };
+
+      for (var i = 0; i < promises.length; i++) {
+        if (promises[i] && typeof promises[i].then === 'function') {
+          promises[i].then(resolver(i), rejectAll);
+        } else {
+          resolveAll(i, promises[i]);
+        }
+      }
+      return deferred.promise;
+    }
+
+    __exports__.all = all;
+  });
+
+define("rsvp/async",
+  ["exports"],
+  function(__exports__) {
     "use strict";
     var browserGlobal = (typeof window !== 'undefined') ? window : {};
 
-    var MutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver;
-    var RSVP, async;
+    var BrowserMutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver;
+    var async;
 
     if (typeof process !== 'undefined' &&
       {}.toString.call(process) === '[object process]') {
@@ -46,10 +89,10 @@ define("rsvp",
           callback.call(binding);
         });
       };
-    } else if (MutationObserver) {
+    } else if (BrowserMutationObserver) {
       var queue = [];
 
-      var observer = new MutationObserver(function() {
+      var observer = new BrowserMutationObserver(function() {
         var toProcess = queue.slice();
         queue = [];
 
@@ -80,6 +123,47 @@ define("rsvp",
       };
     }
 
+
+    __exports__.async = async;
+  });
+
+define("rsvp/config",
+  ["rsvp/async","exports"],
+  function(__dependency1__, __exports__) {
+    "use strict";
+    var async = __dependency1__.async;
+
+    var config = {};
+    config.async = async;
+
+    __exports__.config = config;
+  });
+
+define("rsvp/defer",
+  ["rsvp/promise","exports"],
+  function(__dependency1__, __exports__) {
+    "use strict";
+    var Promise = __dependency1__.Promise;
+
+    function defer() {
+      var deferred = {};
+
+      var promise = new Promise(function(resolve, reject) {
+        deferred.resolve = resolve;
+        deferred.reject = reject;
+      });
+
+      deferred.promise = promise;
+      return deferred;
+    }
+
+    __exports__.defer = defer;
+  });
+
+define("rsvp/events",
+  ["exports"],
+  function(__exports__) {
+    "use strict";
     var Event = function(type, options) {
       this.type = type;
 
@@ -157,7 +241,8 @@ define("rsvp",
             callbacks, callbackTuple, callback, binding, event;
 
         if (callbacks = allCallbacks[eventName]) {
-          for (var i=0, l=callbacks.length; i<l; i++) {
+          // Don't cache the callbacks.length since it may grow
+          for (var i=0; i<callbacks.length; i++) {
             callbackTuple = callbacks[i];
             callback = callbackTuple[0];
             binding = callbackTuple[1];
@@ -173,7 +258,142 @@ define("rsvp",
       }
     };
 
-    var Promise = function() {
+
+    __exports__.EventTarget = EventTarget;
+  });
+
+define("rsvp/hash",
+  ["rsvp/defer","exports"],
+  function(__dependency1__, __exports__) {
+    "use strict";
+    var defer = __dependency1__.defer;
+
+    function size(object) {
+      var size = 0;
+
+      for (var prop in object) {
+        size++;
+      }
+
+      return size;
+    }
+
+    function hash(promises) {
+      var results = {}, deferred = defer(), remaining = size(promises);
+
+      if (remaining === 0) {
+        deferred.resolve({});
+      }
+
+      var resolver = function(prop) {
+        return function(value) {
+          resolveAll(prop, value);
+        };
+      };
+
+      var resolveAll = function(prop, value) {
+        results[prop] = value;
+        if (--remaining === 0) {
+          deferred.resolve(results);
+        }
+      };
+
+      var rejectAll = function(error) {
+        deferred.reject(error);
+      };
+
+      for (var prop in promises) {
+        if (promises[prop] && typeof promises[prop].then === 'function') {
+          promises[prop].then(resolver(prop), rejectAll);
+        } else {
+          resolveAll(prop, promises[prop]);
+        }
+      }
+
+      return deferred.promise;
+    }
+
+    __exports__.hash = hash;
+  });
+
+define("rsvp/node",
+  ["rsvp/promise","rsvp/all","exports"],
+  function(__dependency1__, __dependency2__, __exports__) {
+    "use strict";
+    var Promise = __dependency1__.Promise;
+    var all = __dependency2__.all;
+
+    function makeNodeCallbackFor(resolve, reject) {
+      return function (error, value) {
+        if (error) {
+          reject(error);
+        } else if (arguments.length > 2) {
+          resolve(Array.prototype.slice.call(arguments, 1));
+        } else {
+          resolve(value);
+        }
+      };
+    }
+
+    function denodeify(nodeFunc) {
+      return function()  {
+        var nodeArgs = Array.prototype.slice.call(arguments), resolve, reject;
+
+        var promise = new Promise(function(nodeResolve, nodeReject) {
+          resolve = nodeResolve;
+          reject = nodeReject;
+        });
+
+        all(nodeArgs).then(function(nodeArgs) {
+          nodeArgs.push(makeNodeCallbackFor(resolve, reject));
+
+          try {
+            nodeFunc.apply(this, nodeArgs);
+          } catch(e) {
+            reject(e);
+          }
+        });
+
+        return promise;
+      };
+    }
+
+    __exports__.denodeify = denodeify;
+  });
+
+define("rsvp/promise",
+  ["rsvp/config","rsvp/events","exports"],
+  function(__dependency1__, __dependency2__, __exports__) {
+    "use strict";
+    var config = __dependency1__.config;
+    var EventTarget = __dependency2__.EventTarget;
+
+    var noop = function() {};
+
+    var Promise = function(resolver) {
+      var promise = this,
+      resolved = false;
+
+      if (typeof resolver !== 'function') {
+        throw new TypeError('You must pass a resolver function as the sole argument to the promise constructor');
+      }
+
+      if (!(promise instanceof Promise)) {
+        return new Promise(resolver);
+      }
+
+      var resolvePromise = function(value) {
+        if (resolved) { return; }
+        resolved = true;
+        resolve(promise, value);
+      };
+
+      var rejectPromise = function(value) {
+        if (resolved) { return; }
+        resolved = true;
+        reject(promise, value);
+      };
+
       this.on('promise:resolved', function(event) {
         this.trigger('success', { detail: event.detail });
       }, this);
@@ -181,9 +401,9 @@ define("rsvp",
       this.on('promise:failed', function(event) {
         this.trigger('error', { detail: event.detail });
       }, this);
-    };
 
-    var noop = function() {};
+      resolver(resolvePromise, rejectPromise);
+    };
 
     var invokeCallback = function(type, promise, callback, event) {
       var hasCallback = typeof callback === 'function',
@@ -204,32 +424,36 @@ define("rsvp",
 
       if (value && typeof value.then === 'function') {
         value.then(function(value) {
-          promise.resolve(value);
+          resolve(promise, value);
         }, function(error) {
-          promise.reject(error);
+          reject(promise, error);
         });
       } else if (hasCallback && succeeded) {
-        promise.resolve(value);
+        resolve(promise, value);
       } else if (failed) {
-        promise.reject(error);
-      } else {
-        promise[type](value);
+        reject(promise, error);
+      } else if (type === 'resolve') {
+        resolve(promise, value);
+      } else if (type === 'reject') {
+        reject(promise, value);
       }
     };
 
     Promise.prototype = {
-      then: function(done, fail) {
-        var thenPromise = new Promise();
+      constructor: Promise,
 
-        if (this.isResolved) {
-          RSVP.async(function() {
-            invokeCallback('resolve', thenPromise, done, { detail: this.resolvedValue });
+      then: function(done, fail) {
+        var thenPromise = new Promise(function() {});
+
+        if (this.isFulfilled) {
+          config.async(function() {
+            invokeCallback('resolve', thenPromise, done, { detail: this.fulfillmentValue });
           }, this);
         }
 
         if (this.isRejected) {
-          RSVP.async(function() {
-            invokeCallback('reject', thenPromise, fail, { detail: this.rejectedValue });
+          config.async(function() {
+            invokeCallback('reject', thenPromise, fail, { detail: this.rejectedReason });
           }, this);
         }
 
@@ -242,84 +466,130 @@ define("rsvp",
         });
 
         return thenPromise;
-      },
-
-      resolve: function(value) {
-        resolve(this, value);
-
-        this.resolve = noop;
-        this.reject = noop;
-      },
-
-      reject: function(value) {
-        reject(this, value);
-
-        this.resolve = noop;
-        this.reject = noop;
       }
     };
 
+    EventTarget.mixin(Promise.prototype);
+
     function resolve(promise, value) {
-      RSVP.async(function() {
+      if (value && typeof value.then === 'function') {
+        value.then(function(val) {
+          resolve(promise, val);
+        }, function(val) {
+          reject(promise, val);
+        });
+      } else {
+        fulfill(promise, value);
+      }
+    }
+
+    function fulfill(promise, value) {
+      config.async(function() {
         promise.trigger('promise:resolved', { detail: value });
-        promise.isResolved = true;
-        promise.resolvedValue = value;
+        promise.isFulfilled = true;
+        promise.fulfillmentValue = value;
       });
     }
 
     function reject(promise, value) {
-      RSVP.async(function() {
+      config.async(function() {
         promise.trigger('promise:failed', { detail: value });
         promise.isRejected = true;
-        promise.rejectedValue = value;
+        promise.rejectedReason = value;
       });
     }
 
-    function all(promises) {
-    	var i, results = [];
-    	var allPromise = new Promise();
-    	var remaining = promises.length;
 
-      if (remaining === 0) {
-        allPromise.resolve([]);
-      }
+    __exports__.Promise = Promise;
+  });
 
-    	var resolver = function(index) {
-    		return function(value) {
-    			resolve(index, value);
-    		};
-    	};
+define("rsvp/resolve",
+  ["rsvp/promise","exports"],
+  function(__dependency1__, __exports__) {
+    "use strict";
+    var Promise = __dependency1__.Promise;
 
-    	var resolve = function(index, value) {
-    		results[index] = value;
-    		if (--remaining === 0) {
-    			allPromise.resolve(results);
-    		}
-    	};
 
-    	var reject = function(error) {
-    		allPromise.reject(error);
-    	};
-
-    	for (i = 0; i < remaining; i++) {
-    		promises[i].then(resolver(i), reject);
-    	}
-    	return allPromise;
+    function objectOrFunction(x) {
+      return typeof x === "function" || (typeof x === "object" && x !== null);
     }
 
-    EventTarget.mixin(Promise.prototype);
+    function resolve(thenable){
+      var promise = new Promise(function(resolve, reject){
+        var then;
 
-    RSVP = { async: async, Promise: Promise, Event: Event, EventTarget: EventTarget, all: all, raiseOnUncaughtExceptions: true };
-    return RSVP;
+        try {
+          if ( objectOrFunction(thenable) ) {
+            then = thenable.then;
+
+            if (typeof then === "function") {
+              then.call(thenable, resolve, reject);
+            } else {
+              resolve(thenable);
+            }
+
+          } else {
+            resolve(thenable);
+          }
+
+        } catch(error) {
+          reject(error);
+        }
+      });
+
+      return promise;
+    }
+
+
+    __exports__.resolve = resolve;
   });
+
+define("rsvp",
+  ["rsvp/events","rsvp/promise","rsvp/node","rsvp/all","rsvp/hash","rsvp/defer","rsvp/config","rsvp/resolve","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __dependency6__, __dependency7__, __dependency8__, __exports__) {
+    "use strict";
+    var EventTarget = __dependency1__.EventTarget;
+    var Promise = __dependency2__.Promise;
+    var denodeify = __dependency3__.denodeify;
+    var all = __dependency4__.all;
+    var hash = __dependency5__.hash;
+    var defer = __dependency6__.defer;
+    var config = __dependency7__.config;
+    var resolve = __dependency8__.resolve;
+
+    function configure(name, value) {
+      config[name] = value;
+    }
+
+
+    __exports__.Promise = Promise;
+    __exports__.EventTarget = EventTarget;
+    __exports__.all = all;
+    __exports__.hash = hash;
+    __exports__.defer = defer;
+    __exports__.denodeify = denodeify;
+    __exports__.configure = configure;
+    __exports__.resolve = resolve;
+  });
+
 define("oasis",
   ["rsvp"],
   function(RSVP) {
     "use strict";
 
+    var Oasis = {};
+
+    Oasis.verbose = false;
+
     function assert(assertion, string) {
       if (!assertion) {
         throw new Error(string);
+      }
+    }
+
+    function log(string) {
+      if (Oasis.verbose && typeof console !== 'undefined' && typeof console.log === 'function') {
+        console.log(string);
       }
     }
 
@@ -334,7 +604,6 @@ define("oasis",
 
     //verifySandbox();
 
-    var Oasis = {};
 
     // ADAPTERS
 
@@ -364,7 +633,8 @@ define("oasis",
     var iframeAdapter = Oasis.adapters.iframe = {
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
-            iframe = document.createElement('iframe');
+            iframe = document.createElement('iframe'),
+            promise;
 
         iframe.sandbox = 'allow-same-origin allow-scripts';
         iframe.seamless = true;
@@ -377,11 +647,15 @@ define("oasis",
           iframe.height = options.height;
         }
 
-        iframe.addEventListener('load', function() {
-          sandbox.didInitializeSandbox();
-        });
 
         sandbox.el = iframe;
+
+        return new RSVP.Promise(function (resolve, reject) {
+          iframe.addEventListener('load', function() {
+            log("iframe sandbox initialized");
+            resolve(sandbox);
+          });
+        });
       },
 
       createChannel: function(sandbox) {
@@ -421,8 +695,12 @@ define("oasis",
 
       // SANDBOX HOOKS
       connectSandbox: function(ports) {
+        log("Listening for initialization message");
+
         window.addEventListener('message', function(event) {
           if (!event.data.isOasisInitialization) { return; }
+
+          log("Sandbox initializing.");
 
           var capabilities = event.data.capabilities, eventPorts = event.ports;
 
@@ -431,6 +709,8 @@ define("oasis",
                 port = new PostMessagePort(eventPorts[i]);
 
             if (handler) {
+              log("Invoking handler for '" + capability + "'");
+
               handler.setupCapability(port);
               port.start();
             }
@@ -475,8 +755,11 @@ define("oasis",
         var url = generateWebWorkerURL(sandbox.options.url, sandbox.dependencies);
         var worker = new Worker(url);
         sandbox.worker = worker;
-        setTimeout(function() {
-          sandbox.didInitializeSandbox();
+        return new RSVP.Promise(function (resolve, reject) {
+          setTimeout(function() {
+            log("webworker sandbox initialized");
+            resolve(sandbox);
+          });
         });
       },
 
@@ -549,113 +832,119 @@ define("oasis",
 
       this.dependencies = options.dependencies || pkg.dependencies;
 
-      this.adapter = options.adapter || iframeAdapter;
+      var adapter = this.adapter = options.adapter || iframeAdapter;
+
       this.capabilities = capabilities;
+      this.envPortDefereds = {};
+      this.sandboxPortDefereds = {};
+      this.channels = {};
       this.options = options;
 
-      this.promise = new RSVP.Promise();
+      this.promise = adapter.initializeSandbox(this);
 
-      this.adapter.initializeSandbox(this);
+      this.capabilities.forEach(function(capability) {
+        this.envPortDefereds[capability] = RSVP.defer();
+        this.sandboxPortDefereds[capability] = RSVP.defer();
+      }, this);
+
+      this.createChannels();
+
+      this.connectPorts();
     };
 
     OasisSandbox.prototype = {
-      then: function() {
-        this.promise.then.apply(this.promise, arguments);
-      },
-
       wiretap: function(callback) {
         this.wiretaps.push(callback);
       },
 
       connect: function(capability) {
-        var promise = new RSVP.Promise();
-        var connections;
+        var portPromise = this.envPortDefereds[capability].promise;
 
-        connections = this.connections[capability];
-        connections = connections || [];
+        // TODO: test this error case; we might also silently fail for optional
+        // services?
+        assert(portPromise, "Connect was called on '" + capability + "' but no such capability was registered.");
 
-        connections.push(promise);
-        this.connections[capability] = connections;
-
-        return promise;
+        return portPromise;
       },
 
-      triggerConnect: function(capability, port) {
-        var connections = this.connections[capability];
+      createChannels: function () {
+        this.capabilities.forEach(function (capability) {
+          var sandbox = this,
+              services = this.options.services || {},
+              channels = this.channels;
 
-        if (connections) {
-          connections.forEach(function(connection) {
-            connection.resolve(port);
-          });
+          log("Will create port for '" + capability + "'");
+          sandbox.promise.then(function (sandbox) {
+            var service = services[capability],
+                channel, port;
 
-          this.connections[capability] = [];
-        }
-      },
+            // If an existing port is provided, just
+            // pass it along to the new sandbox.
 
-      didInitializeSandbox: function() {
-        // Generic services code
-        var options = this.options;
-        var services = options.services || {};
-        var ports = [], channels = this.channels = {};
+            // TODO: This should probably be an OasisPort if possible
+            if (service instanceof OasisPort) {
+              port = this.adapter.proxyPort(this, service);
+            } else {
+              channel = channels[capability] = this.adapter.createChannel();
 
-        this.capabilities.forEach(function(capability) {
-          var service = services[capability],
-              channel, port;
+              var environmentPort = this.adapter.environmentPort(this, channel),
+                  sandboxPort = this.adapter.sandboxPort(this, channel);
 
-          // If an existing port is provided, just
-          // pass it along to the new sandbox.
+              log("Wiretapping '" + capability + "'");
 
-          // TODO: This should probably be an OasisPort if possible
-          if (service instanceof OasisPort) {
-            port = this.adapter.proxyPort(this, service);
-          } else {
-            channel = channels[capability] = this.adapter.createChannel();
+              environmentPort.all(function(eventName, data) {
+                this.wiretaps.forEach(function(wiretap) {
+                  wiretap(capability, {
+                    type: eventName,
+                    data: data,
+                    direction: 'received'
+                  });
+                });
+              }, this);
 
-            var environmentPort = this.adapter.environmentPort(this, channel),
-                sandboxPort = this.adapter.sandboxPort(this, channel);
-
-            environmentPort.all(function(eventName, data) {
               this.wiretaps.forEach(function(wiretap) {
-                wiretap(capability, {
-                  type: eventName,
-                  data: data,
-                  direction: 'received'
-                });
+                var originalSend = environmentPort.send;
+
+                environmentPort.send = function(eventName, data) {
+                  wiretap(capability, {
+                    type: eventName,
+                    data: data,
+                    direction: 'sent'
+                  });
+
+                  originalSend.apply(environmentPort, arguments);
+                };
               });
-            }, this);
 
-            this.wiretaps.forEach(function(wiretap) {
-              var originalSend = environmentPort.send;
+              if (service) {
+                log("Creating service for '" + capability + "'");
+                /*jshint newcap:false*/
+                // Generic
+                service = new service(environmentPort, this);
+                service.initialize(environmentPort, capability);
+              }
 
-              environmentPort.send = function(eventName, data) {
-                wiretap(capability, {
-                  type: eventName,
-                  data: data,
-                  direction: 'sent'
-                });
+              // Law of Demeter violation
+              port = sandboxPort;
 
-                originalSend.apply(environmentPort, arguments);
-              };
-            });
-
-            if (service) {
-              /*jshint newcap:false*/
-              // Generic
-              service = new service(environmentPort, this);
-              service.initialize(environmentPort, capability);
+              this.envPortDefereds[capability].resolve(environmentPort);
             }
 
-            // Generic
-            this.triggerConnect(capability, environmentPort);
-            // Law of Demeter violation
-            port = sandboxPort;
-          }
-
-          ports.push(port);
+            log("Port created for '" + capability + "'");
+            this.sandboxPortDefereds[capability].resolve(port);
+          }.bind(sandbox));
         }, this);
+      },
 
-        this.adapter.connectPorts(this, ports);
-        this.promise.resolve();
+      connectPorts: function () {
+        var allSandboxPortPromises = this.capabilities.reduce(function (accumulator, capability) {
+          return accumulator.concat(this.sandboxPortDefereds[capability].promise);
+        }.bind(this), []);
+
+        RSVP.all(allSandboxPortPromises).then(function (ports) {
+          log("All " + ports.length + " ports created.  Transferring them.");
+          this.adapter.connectPorts(this, ports);
+        }.bind(this));
       },
 
       start: function(options) {
@@ -948,21 +1237,22 @@ define("oasis",
           must be structured data.
       */
       request: function(eventName) {
-        var promise = new RSVP.Promise();
-        var requestId = getRequestId();
+        var port = this;
         var args = [].slice.call(arguments, 1);
 
-        var observer = function(event) {
-          if (event.requestId === requestId) {
-            this.off('@response:' + eventName, observer);
-            promise.resolve(event.data);
-          }
-        };
+        return new RSVP.Promise(function (resolve, reject) {
+          var requestId = getRequestId();
 
-        this.on('@response:' + eventName, observer, this);
-        this.send('@request:' + eventName, { requestId: requestId, args: args });
+          var observer = function(event) {
+            if (event.requestId === requestId) {
+              port.off('@response:' + eventName, observer);
+              resolve(event.data);
+            }
+          };
 
-        return promise;
+          port.on('@response:' + eventName, observer, port);
+          port.send('@request:' + eventName, { requestId: requestId, args: args });
+        });
       },
 
       /**
@@ -981,21 +1271,18 @@ define("oasis",
         var self = this;
 
         this.on('@request:' + eventName, function(data) {
-          var promise = new RSVP.Promise(),
-              requestId = data.requestId,
+          var requestId = data.requestId,
               args = data.args;
 
-          args.unshift(promise);
-
-          promise.then(function(data) {
+          new RSVP.Promise(function (resolve, reject) {
+            args.unshift(resolve);
+            callback.apply(binding, args);
+          }).then(function (data) {
             self.send('@response:' + eventName, {
               requestId: requestId,
               data: data
             });
           });
-
-
-          callback.apply(binding, args);
         });
       }
     };
@@ -1145,21 +1432,24 @@ define("oasis",
           });
         }
       } else if (callback) {
+        log("Connecting to '" + capability + "' with callback.");
+
         Oasis.registerHandler(capability, {
           setupCapability: function(port) {
             callback(port);
           }
         });
       } else {
-        var promise = new RSVP.Promise();
+        log("Connecting to '" + capability + "' with promise.");
+
+        var defered = RSVP.defer();
         Oasis.registerHandler(capability, {
-          promise: promise,
+          promise: defered.promise,
           setupCapability: function(port) {
-            promise.resolve(port);
+            defered.resolve(port);
           }
         });
-
-        return promise;
+        return defered.promise;
       }
     };
 

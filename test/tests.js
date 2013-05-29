@@ -319,8 +319,8 @@ function suite(adapter, extras) {
 
     var PingPongPromiseService = Oasis.Service.extend({
       requests: {
-        ping: function(promise) {
-          promise.resolve('pong');
+        ping: function(resolve) {
+          resolve('pong');
         }
       },
 
@@ -352,9 +352,9 @@ function suite(adapter, extras) {
 
     var PingPongPromiseService = Oasis.Service.extend({
       requests: {
-        ping: function(promise, firstArg, secondArg) {
+        ping: function(resolve, firstArg, secondArg) {
           if (firstArg === 'first' && secondArg === 'second') {
-            promise.resolve('pong');
+            resolve('pong');
           } else {
             promise.reject("Did not receive expected arguments.");
           }
@@ -391,8 +391,8 @@ function suite(adapter, extras) {
 
       var InceptionService = Oasis.Service.extend({
         initialize: function(port) {
-          port.onRequest('kick', function(promise) {
-            promise.resolve('kick');
+          port.onRequest('kick', function(resolve) {
+            resolve('kick');
           });
 
           port.on('workPlacement', function() {
@@ -422,8 +422,8 @@ function suite(adapter, extras) {
 
       var InceptionService = Oasis.Service.extend({
         requests: {
-          kick: function(promise) {
-            promise.resolve('kick');
+          kick: function(resolve) {
+            resolve('kick');
             ok(this instanceof InceptionService, "The callback gets the service instance as `this`");
           }
         },
@@ -602,7 +602,9 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
-  test("Sandboxes should be promises that are resolved when the sandbox has finished initializing", function() {
+  // This isn't a great API, but rsvp does not officially support promise
+  // entities.
+  test("Sandboxes should have promises that are resolved when the sandbox has finished initializing", function() {
     expect(3);
 
     Oasis.register({
@@ -630,7 +632,7 @@ function suite(adapter, extras) {
 
     stop();
 
-    sandbox.then(function() {
+    sandbox.promise.then(function() {
       start();
 
       ok(sandbox.assertionsPort, "The promise was not resolved until the service has been initialized");
@@ -709,19 +711,20 @@ suite('iframe', function() {
     });
 
     var OriginService = Oasis.Service.extend({
-          requests: {
-            origin: function (promise) {
-              promise.resolve(location.origin);
-            }
-          }
-        }),AssertionService = Oasis.Service.extend({
-          events: {
-            result: function (result) {
-              start();
-              equal(result, "success", "Sandbox was able to request a same-origin resource");
-            }
-          }
-        });
+      requests: {
+        origin: function (resolve) {
+          resolve(location.origin);
+        }
+      }
+    });
+    var AssertionService = Oasis.Service.extend({
+      events: {
+        result: function (result) {
+          start();
+          equal(result, "success", "Sandbox was able to request a same-origin resource");
+        }
+      }
+    });
 
     stop();
 
