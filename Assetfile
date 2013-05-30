@@ -33,8 +33,8 @@ input "lib" do
     concat { ["oasis.amd.js", "oasis.js" ] }
   end
 
-  match "{loader,rsvp.amd,oasis}.js" do
-    concat ["loader.js", "rsvp.amd.js", "oasis.js"], "oasis.js"
+  match "{loader,uuid.core,kamino,message_channel,rsvp.amd,oasis}.js" do
+    concat ["loader.js", "uuid.core", "kamino", "message_channel", "rsvp.amd.js", "oasis.js"], "oasis.js"
     filter BrowserIIFE
   end
 end
