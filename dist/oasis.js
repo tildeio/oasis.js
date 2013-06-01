@@ -445,6 +445,7 @@ define("oasis",
       var link = document.createElement("a");
       link.href = "!";
       var base = link.href.slice(0, -1);
+      var WorkerURL = URL || webkitURL;
 
       dependencyURLs = dependencyURLs || [];
 
@@ -459,7 +460,7 @@ define("oasis",
       src += importScriptsString(sandboxURL);
 
       var blob = new Blob([src], {type: "application/javascript"});
-      return URL.createObjectURL(blob);
+      return WorkerURL.createObjectURL(blob);
     }
 
     Oasis.adapters.webworker = {
