@@ -1,3 +1,26 @@
+<!--
+/*--><!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" >
+<script>
+(function() {
+  function hide() {
+    var html = document.body.innerHTML;
+    document.body.innerHTML = html.substring(2, html.lastIndexOf('*\/')-2);
+    document.body.style.display = '';
+  }
+
+  if (window.addEventListener) {
+    window.addEventListener('load', hide);
+  } else if (window.attachEvent) {
+    window.attachEvent('onload', hide);
+  }
+})();
+</script>
+<script type="text/x-js-payload" id="jsfr_payload">
+// */
+
 (function(exports) {
 var define, requireModule;
 
@@ -1260,7 +1283,7 @@ define("oasis",
         by the other side of the connection.
 
         The callback will be called with a `resolver` to a promise, that the
-        callback should resolve with the fulfillment value.
+        callback should invoke with the fulfillment value.
 
         @param {String} requestName the name of the request
         @param {Function} callback the callback to be called when a request
@@ -2739,3 +2762,23 @@ function UUID(){}UUID.generate=function(){var a=UUID._gri,b=UUID._ha;return b(a(
 
 exports.Oasis = requireModule('oasis');
 })(this);
+
+/*
+</script>
+<script id="jsfr_executor">
+var codeEl = document.getElementById('jsfr_payload'),
+    codePlus = codeEl.innerHTML,
+    code = codePlus.substring(0, codePlus.length-3),
+    elIds = ['jsfr_payload', 'jsfr_executor'],
+    el;
+
+for (var i=0; i<elIds.length; ++i) {
+  el = document.getElementById(elIds[i]);
+  el.parentNode.removeChild(el);
+}
+eval(code);
+</script>
+</head>
+<body style="display:none;">
+</body>
+</html>*/

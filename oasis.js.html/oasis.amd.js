@@ -37,7 +37,7 @@ define("oasis",
       function importScripts() {}
 
       dependencyURLs = dependencyURLs || [];
-      oasisURL = oasisURL || "oasis.js.html";
+      oasisURL = oasisURL || "oasis.js";
 
       var link = document.createElement("a");
       link.href = "!";
@@ -104,7 +104,7 @@ define("oasis",
 
       connectPorts: function(sandbox, ports) {
         var rawPorts = ports.map(function(port) { return port.port; });
-        Window.postMessage(sandbox.el.contentWindow, { isOasisInitialization: true, capabilities: sandbox.capabilities }, '*', rawPorts);
+        sandbox.el.contentWindow.postMessage({ isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts, '*');
       },
 
       startSandbox: function(sandbox) {
@@ -151,14 +151,6 @@ define("oasis",
       var link = document.createElement("a");
       link.href = "!";
       var base = link.href.slice(0, -1);
-      var WorkerURL;
-      if( typeof URL !== "undefined" ) {
-        WorkerURL = URL
-      } else if( typeof webkitURL !== "undefined" ) {
-        WorkerURL = webkitURL;
-      } else {
-        assert(false, "The current version of Oasis requires a way to create object URLs (URL or webkitURL for example), which is not supported on your current platform.");
-      }
 
       dependencyURLs = dependencyURLs || [];
 
@@ -166,14 +158,14 @@ define("oasis",
         return "importScripts('" + base + url + "'); ";
       }
 
-      var src = importScriptsString("oasis.js.html");
+      var src = importScriptsString("oasis.js");
       dependencyURLs.forEach(function(url) {
         src += importScriptsString(url);
       });
       src += importScriptsString(sandboxURL);
 
       var blob = new Blob([src], {type: "application/javascript"});
-      return WorkerURL.createObjectURL(blob);
+      return URL.createObjectURL(blob);
     }
 
     Oasis.adapters.webworker = {
@@ -209,7 +201,7 @@ define("oasis",
 
       connectPorts: function(sandbox, ports) {
         var rawPorts = ports.map(function(port) { return port.port; });
-        Worker.postMessage(sandbox.worker, { isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts);
+        sandbox.worker.postMessage({ isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts, '*');
       },
 
       startSandbox: function(sandbox) { },
