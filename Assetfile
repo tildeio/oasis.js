@@ -21,7 +21,8 @@ class ModuleTranspiler < Rake::Pipeline::Filter
 
   def generate_output(inputs, output)
     inputs.each do |input|
-      converter = JsModuleTranspiler::Compiler.new(input.read, @name, into: @into)
+      name = @name || input.path.chomp(".js")
+      converter = JsModuleTranspiler::Compiler.new(input.read, name, into: @into)
       output.write converter.send("to_#{@type}")
     end
   end
@@ -48,12 +49,13 @@ class Polyglotter < Rake::Pipeline::Filter
 end
 
 input "lib" do
-  match "oasis.js" do
-    filter ModuleTranspiler, name: "oasis", type: :amd
-    concat { ["oasis.amd.js", "oasis.js" ] }
+  match "{oasis,oasis/.*}.js" do
+    filter ModuleTranspiler, type: :amd do |input|
+      input.sub(/\.js$/, '.amd.js')
+    end
   end
 
-  match "{loader,uuid.core,kamino,message_channel,rsvp.amd,oasis}.js" do
+  match "{loader,uuid.core,kamino,message_channel,rsvp.amd,oasis/.*}.js" do
     concat ["loader.js", "uuid.core", "kamino", "message_channel", "rsvp.amd.js", "oasis.js"], "oasis.js.html"
     filter BrowserIIFE
     filter Polyglotter
