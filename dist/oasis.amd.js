@@ -90,7 +90,7 @@ define("oasis",
 
       connectPorts: function(sandbox, ports) {
         var rawPorts = ports.map(function(port) { return port.port; });
-        sandbox.el.contentWindow.postMessage({ isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts, '*');
+        Window.postMessage(sandbox.el.contentWindow, { isOasisInitialization: true, capabilities: sandbox.capabilities }, '*', rawPorts);
       },
 
       startSandbox: function(sandbox) {
@@ -131,6 +131,7 @@ define("oasis",
       var link = document.createElement("a");
       link.href = "!";
       var base = link.href.slice(0, -1);
+      var WorkerURL = URL || webkitURL;
 
       dependencyURLs = dependencyURLs || [];
 
@@ -145,7 +146,7 @@ define("oasis",
       src += importScriptsString(sandboxURL);
 
       var blob = new Blob([src], {type: "application/javascript"});
-      return URL.createObjectURL(blob);
+      return WorkerURL.createObjectURL(blob);
     }
 
     Oasis.adapters.webworker = {
@@ -178,7 +179,7 @@ define("oasis",
 
       connectPorts: function(sandbox, ports) {
         var rawPorts = ports.map(function(port) { return port.port; });
-        sandbox.worker.postMessage({ isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts, '*');
+        Worker.postMessage(sandbox.worker, { isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts);
       },
 
       startSandbox: function(sandbox) { },
