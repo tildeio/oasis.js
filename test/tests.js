@@ -1,6 +1,7 @@
 (function() {
 
-QUnit.config.testTimeout = 300;
+QUnit.config.testTimeout = 500;
+//QUnit.config.testTimeout = 500 * 100;
 
 module("Oasis");
 
@@ -319,8 +320,8 @@ function suite(adapter, extras) {
 
     var PingPongPromiseService = Oasis.Service.extend({
       requests: {
-        ping: function(resolve) {
-          resolve('pong');
+        ping: function(promise) {
+          promise.resolve('pong');
         }
       },
 
@@ -352,9 +353,9 @@ function suite(adapter, extras) {
 
     var PingPongPromiseService = Oasis.Service.extend({
       requests: {
-        ping: function(resolve, firstArg, secondArg) {
+        ping: function(promise, firstArg, secondArg) {
           if (firstArg === 'first' && secondArg === 'second') {
-            resolve('pong');
+            promise.resolve('pong');
           } else {
             promise.reject("Did not receive expected arguments.");
           }
@@ -391,8 +392,8 @@ function suite(adapter, extras) {
 
       var InceptionService = Oasis.Service.extend({
         initialize: function(port) {
-          port.onRequest('kick', function(resolve) {
-            resolve('kick');
+          port.onRequest('kick', function(promise) {
+            promise.resolve('kick');
           });
 
           port.on('workPlacement', function() {
@@ -422,8 +423,8 @@ function suite(adapter, extras) {
 
       var InceptionService = Oasis.Service.extend({
         requests: {
-          kick: function(resolve) {
-            resolve('kick');
+          kick: function(promise) {
+            promise.resolve('kick');
             ok(this instanceof InceptionService, "The callback gets the service instance as `this`");
           }
         },
@@ -712,8 +713,9 @@ suite('iframe', function() {
 
     var OriginService = Oasis.Service.extend({
       requests: {
-        origin: function (resolve) {
-          resolve(location.origin);
+        origin: function (promise) {
+          ok(true, "Sandbox requested origin.");
+          promise.resolve(location.protocol + '//' + location.host);
         }
       }
     });
@@ -736,6 +738,38 @@ suite('iframe', function() {
       }
     });
 
+    sandbox.start();
+  });
+
+  test("Sandboxes ignore secondary initialization messages", function() {
+    // If the second initialization message runs, two 'ok' events will be sent.
+    expect(1);
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok: function (data) {
+          start();
+          equal(data, 'success', "Sandbox communicated.");
+
+          sandbox.el.contentWindow.postMessage({
+            isOasisInitialization: true,
+            capabilities: [],
+            base: getBase(),
+            scriptURLs: ['fixtures/assertions.js']
+          }, '*');
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/assertions.js',
+      capabilities: ['assertions'],
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    stop();
     sandbox.start();
   });
 });

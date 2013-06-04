@@ -55,7 +55,7 @@ input "lib" do
     end
   end
 
-  match "{loader,uuid.core,kamino,message_channel,rsvp.amd,oasis/.*}.js" do
+  match "{loader,uuid.core,kamino,message_channel,rsvp.amd,oasis.amd,oasis/.*}.js" do
     concat ["loader.js", "uuid.core", "kamino", "message_channel", "rsvp.amd.js", "oasis.js"], "oasis.js.html"
     filter BrowserIIFE
     filter Polyglotter

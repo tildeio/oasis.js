@@ -594,63 +594,108 @@ define("rsvp",
     __exports__.resolve = resolve;
   });
 
-define("oasis/iframe_adapter",
-  ["oasis/ports", "oasis/message_channel", "rsvp", "oasis/logger"],
-  function(__dependency1__, __dependency2__, RSVP, Logger) {
+define("oasis",
+  ["oasis/util", "oasis/message_channel", "oasis/ports", "oasis/connect", "rsvp", "oasis/logger", "oasis/state", "oasis/sandbox", "oasis/sandbox_init", "oasis/service", "oasis/iframe_adapter", "oasis/webworker_adapter"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, RSVP, Logger, State, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
     "use strict";
-    var handlers = __dependency1__.handlers;
+    var assert = __dependency1__.assert;
+    var verifySandbox = __dependency1__.verifySandbox;
+    var OasisPort = __dependency2__.OasisPort;
     var PostMessagePort = __dependency2__.PostMessagePort;
-    var PostMessageMessageChannel = __dependency2__.PostMessageMessageChannel;
+    var handlers = __dependency3__.handlers;
+    var ports = __dependency3__.ports;
+    var registerHandler = __dependency4__.registerHandler;
+    var connect = __dependency4__.connect;
+    var portFor = __dependency4__.portFor;
 
 
-    function generateSrc(sandboxURL, oasisURL, dependencyURLs) {
-      function importScripts() {}
 
-      dependencyURLs = dependencyURLs || [];
-      oasisURL = oasisURL || "oasis.js.html";
+    var Oasis = {};
 
-      var link = document.createElement("a");
-      link.href = "!";
-      var base = link.href.slice(0, -1);
+    Logger.enable();
 
-      var src = "data:text/html,<!doctype html>";
-      src += "<base href='" + base + "'>";
-      src += "<script src='"+oasisURL+"'><" + "/script>";
-      src += "<script>" + importScripts.toString() + "<" + "/script>";
-      dependencyURLs.forEach(function(url) {
-        src += "<script src='" + url + "'><" + "/script>";
-      });
-      src += "<script src='" + sandboxURL + "'><" + "/script>";
-      return src;
+    //verifySandbox();
+
+    Oasis.adapters = {
+      iframe: iframeAdapter,
+      webworker: webworkerAdapter
+    };
+
+
+    /**
+      This is the entry point that allows the containing environment to create a
+      child sandbox.
+
+      Options:
+
+      * `capabilities`: an array of registered services
+      * `url`: a registered URL to a JavaScript file that will initialize the
+        sandbox in the sandboxed environment
+      * `adapter`: a reference to an adapter that will handle the lifecycle
+        of the sandbox. Right now, there are iframe and web worker adapters.
+
+      @param {Object} options
+    */
+    Oasis.createSandbox = function(options) {
+      return new Sandbox(options);
+    };
+
+    Oasis.Service = Oasis.Consumer = Service;
+
+    var packages = State.packages;
+    Oasis.reset = function() {
+      State.reset();
+      packages = State.packages;
+      Oasis.consumers = State.consumers;
+    };
+    Oasis.reset();
+
+
+    /**
+      This registers a sandbox type inside of the containing environment so that
+      it can be referenced by URL in `createSandbox`.
+
+      Options:
+
+      * `capabilities`: An array of service names that will be supplied when calling
+        `createSandbox`
+      * `url`: The URL of the JavaScript file that contains the sandbox code
+
+      @param {Object} options
+    */
+    Oasis.register = function(options) {
+      assert(options.capabilities, "You are trying to register a package without any capabilities. Please provide a list of requested capabilities, or an empty array ([]).");
+
+      packages[options.url] = options;
+    };
+
+    Oasis.registerHandler = registerHandler;
+    Oasis.connect = connect;
+    Oasis.portFor = portFor;
+
+    // initializeSandbox will detect whether we are in a sandbox that needs
+    // initialization or not.
+    initializeSandbox();
+
+
+    Oasis.RSVP = RSVP;
+
+    return Oasis;
+  });define("oasis/base_adapter",
+  ["oasis/util", "oasis/ports", "oasis/message_channel", "oasis/logger"],
+  function(__dependency1__, __dependency2__, __dependency3__, Logger) {
+    "use strict";
+    var mustImplement = __dependency1__.mustImplement;
+    var handlers = __dependency2__.handlers;
+    var PostMessagePort = __dependency3__.PostMessagePort;
+    var PostMessageMessageChannel = __dependency3__.PostMessageMessageChannel;
+
+
+    function BaseAdapter() {
     }
 
-    var iframeAdapter = {
-      initializeSandbox: function(sandbox) {
-        var options = sandbox.options,
-            iframe = document.createElement('iframe'),
-            promise;
-
-        iframe.sandbox = 'allow-same-origin allow-scripts';
-        iframe.seamless = true;
-        iframe.src = generateSrc(options.url, options.oasisURL, sandbox.dependencies);
-
-        // rendering-specific code
-        if (options.width) {
-          iframe.width = options.width;
-        } else if (options.height) {
-          iframe.height = options.height;
-        }
-
-
-        sandbox.el = iframe;
-
-        return new RSVP.Promise(function (resolve, reject) {
-          iframe.addEventListener('load', function() {
-            Logger.log("iframe sandbox initialized");
-            resolve(sandbox);
-          });
-        });
-      },
+    BaseAdapter.prototype = {
+      loadScripts: mustImplement('BaseAdapter', 'loadScripts'),
 
       createChannel: function(sandbox) {
         var channel = new PostMessageMessageChannel();
@@ -670,31 +715,18 @@ define("oasis/iframe_adapter",
         return port;
       },
 
-      connectPorts: function(sandbox, ports) {
-        var rawPorts = ports.map(function(port) { return port.port; });
-        Window.postMessage(sandbox.el.contentWindow, { isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts, '*');
-      },
+      connectSandbox: function (receiver, ports) {
+        var adapter = this;
 
-      startSandbox: function(sandbox) {
-        document.head.appendChild(sandbox.el);
-      },
-
-      terminateSandbox: function(sandbox) {
-        var el = sandbox.el;
-
-        if (el.parentNode) {
-          el.parentNode.removeChild(el);
-        }
-      },
-
-      // SANDBOX HOOKS
-      connectSandbox: function(ports) {
         Logger.log("Listening for initialization message");
 
-        window.addEventListener('message', function(event) {
+        function initializeOasisSandbox(event) {
           if (!event.data.isOasisInitialization) { return; }
 
           Logger.log("Sandbox initializing.");
+
+          receiver.removeEventListener('message', initializeOasisSandbox);
+          adapter.loadScripts(event.data.base, event.data.scriptURLs);
 
           var capabilities = event.data.capabilities, eventPorts = event.ports;
 
@@ -711,9 +743,201 @@ define("oasis/iframe_adapter",
 
             ports[capability] = port;
           });
-        });
+        }
+        receiver.addEventListener('message', initializeOasisSandbox);
+      }
+    }
+
+    return BaseAdapter;
+  });define("oasis/connect",
+  ["oasis/ports", "rsvp", "oasis/logger", "oasis/state", "exports"],
+  function(__dependency1__, RSVP, Logger, State, __exports__) {
+    "use strict";
+    var handlers = __dependency1__.handlers;
+    var ports = __dependency1__.ports;
+
+
+    function registerHandler(capability, options) {
+      var port = ports[capability];
+
+      if (port) {
+        Logger.log("Found port, setting up '" + capability + "'");
+        options.setupCapability(port);
+
+        if (options.promise) {
+          options.promise.then(function() {
+            port.start();
+          });
+        } else {
+          port.start();
+        }
+      } else {
+        Logger.log("No port found, saving handler for '" + capability + "'");
+        handlers[capability] = options;
       }
     };
+
+    /**
+      This is the main entry point that allows sandboxes to connect back
+      to their containing environment.
+
+      It should be called once for each service provided by the containing
+     environment that it wants to connect to.
+
+      @param {String} serviceName the name of the service to connect to
+      @param {Function?} callback the callback to trigger once the other
+        side of the connection is available
+      @return {Promise} a promise that will be resolved once the other
+        side of the connection is available. You can use this instead
+        of the callback.
+    */
+    function connect(capability, callback) {
+      function setupCapability(Consumer, name) {
+        return function(port) {
+          var consumer = new Consumer(port);
+          State.consumers[name] = consumer;
+          consumer.initialize(port, name);
+          port.start();
+        };
+      }
+
+      if (typeof capability === 'object') {
+        var consumers = capability.consumers;
+
+        for (var prop in consumers) {
+          registerHandler(prop, {
+            setupCapability: setupCapability(consumers[prop], prop)
+          });
+        }
+      } else if (callback) {
+        Logger.log("Connecting to '" + capability + "' with callback.");
+
+        registerHandler(capability, {
+          setupCapability: function(port) {
+            callback(port);
+          }
+        });
+      } else {
+        Logger.log("Connecting to '" + capability + "' with promise.");
+
+        var defered = RSVP.defer();
+        registerHandler(capability, {
+          promise: defered.promise,
+          setupCapability: function(port) {
+            defered.resolve(port);
+          }
+        });
+        return defered.promise;
+      }
+    };
+
+    function portFor(capability) {
+      var port = ports[capability];
+      assert(port, "You asked for the port for the '" + capability + "' capability, but the environment did not provide one.");
+      return port;
+    };
+
+    __exports__.registerHandler = registerHandler;
+    __exports__.connect = connect;
+    __exports__.portFor = portFor;
+  });define("oasis/iframe_adapter",
+  ["oasis/util", "oasis/ports", "rsvp", "oasis/logger", "oasis/base_adapter"],
+  function(__dependency1__, __dependency2__, RSVP, Logger, BaseAdapter) {
+    "use strict";
+    var extend = __dependency1__.extend;
+    var handlers = __dependency2__.handlers;
+
+
+
+    // TODO: move to base adapter?
+    function getBase () {
+      var link = document.createElement("a");
+      link.href = "!";
+      var base = link.href.slice(0, -1);
+
+      return base;
+    }
+
+    var IframeAdapter = extend(BaseAdapter, {
+      initializeSandbox: function(sandbox) {
+        var options = sandbox.options,
+            iframe = document.createElement('iframe'),
+            oasisURL = options.oasisURL || 'oasis.js.html';
+
+        // TODO: this should be configurable
+        iframe.sandbox = 'allow-same-origin allow-scripts';
+        iframe.seamless = true;
+        iframe.src = 'about:blank'
+
+        // rendering-specific code
+        if (options.width) {
+          iframe.width = options.width;
+        } else if (options.height) {
+          iframe.height = options.height;
+        }
+
+        sandbox.el = iframe;
+
+        return new RSVP.Promise(function (resolve, reject) {
+          iframe.addEventListener('load', function() {
+            if (iframe.contentWindow.location.href === 'about:blank') {
+              Logger.log("iframe loading oasis");
+              iframe.contentWindow.location.href = oasisURL;
+            } else {
+              Logger.log("iframe sandbox initialized");
+              resolve(sandbox);
+            }
+          });
+        });
+      },
+
+      loadScripts: function (base, scriptURLs) {
+        var head = document.head || document.documentElement.getElementsByTagName('head')[0],
+            scriptElement;
+
+        var baseElement = document.createElement('base');
+        baseElement.href = base;
+        head.insertBefore(baseElement);
+
+        for (var i = 0; i < scriptURLs.length; ++i ) {
+          scriptElement = document.createElement('script');
+          scriptElement.src = scriptURLs[i];
+          head.appendChild(scriptElement);
+        }
+      },
+
+      startSandbox: function(sandbox) {
+        document.head.appendChild(sandbox.el);
+      },
+
+      terminateSandbox: function(sandbox) {
+        var el = sandbox.el;
+
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      },
+
+      // TODO: this.createInitializationMessage (in baseadapter)
+      connectPorts: function(sandbox, ports) {
+        var rawPorts = ports.map(function(port) { return port.port; }),
+            sandboxURL = sandbox.options.url,
+            scriptURLs = [sandboxURL].concat(sandbox.dependencies || []);
+
+        sandbox.el.contentWindow.postMessage({
+          isOasisInitialization: true,
+          capabilities: sandbox.capabilities,
+          base: getBase(),
+          scriptURLs: scriptURLs
+        }, '*', rawPorts);
+      },
+
+      connectSandbox: function(ports) {
+        return BaseAdapter.prototype.connectSandbox.call(this, window, ports);
+      }
+    });
+
+    var iframeAdapter = new IframeAdapter;
 
     return iframeAdapter;
   });define("oasis/logger",
@@ -843,8 +1067,13 @@ define("oasis/iframe_adapter",
         This method registers a callback to be called when a request is made
         by the other side of the connection.
 
-        The callback will be called with a `resolver` to a promise, that the
-        callback should invoke with the fulfillment value.
+        The callback will be called with a promise, that the callback should fulfill.
+
+        Examples
+
+          service.onRequest('name', function (promise) {
+            promise.resolve('David');
+          });
 
         @param {String} requestName the name of the request
         @param {Function} callback the callback to be called when a request
@@ -856,17 +1085,18 @@ define("oasis/iframe_adapter",
 
         this.on('@request:' + eventName, function(data) {
           var requestId = data.requestId,
-              args = data.args;
+              args = data.args,
+              defered = RSVP.defer();
 
-          new RSVP.Promise(function (resolve, reject) {
-            args.unshift(resolve);
-            callback.apply(binding, args);
-          }).then(function (data) {
+          defered.promise.then(function (data) {
             self.send('@response:' + eventName, {
               requestId: requestId,
               data: data
             });
           });
+
+          args.unshift(defered);
+          callback.apply(binding, args);
         });
       }
     };
@@ -1099,6 +1329,22 @@ define("oasis/iframe_adapter",
     };
 
     return OasisSandbox;
+  });define("oasis/sandbox_init",
+  ["oasis/ports", "oasis/iframe_adapter", "oasis/webworker_adapter"],
+  function(__dependency1__, iframeAdapter, webworkerAdapter) {
+    "use strict";
+    var ports = __dependency1__.ports;
+
+
+    function initializeSandbox () {
+      if (typeof window !== 'undefined') {
+        iframeAdapter.connectSandbox(ports);
+      } else {
+        webworkerAdapter.connectSandbox(ports);
+      }
+    };
+
+    return initializeSandbox;
   });define("oasis/service",
   [],
   function() {
@@ -1260,15 +1506,15 @@ define("oasis/iframe_adapter",
   function() {
     "use strict";
     function State () {
-      this.packages = {};
-      this.requestId = 0;
-      this.oasisId = 'oasis' + (+new Date());
+      this.reset();
     };
 
     State.prototype.reset = function () {
       this.packages = {};
       this.requestId = 0;
       this.oasisId = 'oasis' + (+new Date());
+
+      this.consumers = {};
     }
 
     return new State;
@@ -1320,82 +1566,40 @@ define("oasis/iframe_adapter",
     __exports__.mustImplement = mustImplement;
     __exports__.verifySandbox = verifySandbox;
   });define("oasis/webworker_adapter",
-  ["oasis/ports", "oasis/message_channel", "rsvp", "oasis/logger"],
-  function(__dependency1__, __dependency2__, RSVP, Logger) {
+  ["oasis/util", "oasis/ports", "rsvp", "oasis/logger", "oasis/base_adapter"],
+  function(__dependency1__, __dependency2__, RSVP, Logger, BaseAdapter) {
     "use strict";
-    var handlers = __dependency1__.handlers;
-    var PostMessagePort = __dependency2__.PostMessagePort;
-    var PostMessageMessageChannel = __dependency2__.PostMessageMessageChannel;
+    var extend = __dependency1__.extend;
+    var handlers = __dependency2__.handlers;
 
 
-    function log(){
-      return Logger.log.apply(this, arguments);
-    }
 
-    var URLObject;
-    if (typeof URL !== 'undefined') {
-      URLObject = URL;
-    } else if (typeof webkitURL !== 'undefined') {
-      URLObject = webkitURL;
-    } else {
-      assert(false, "The current version of Oasis requires a way to creat e object URLs (URL or webkitURL for example), which is not supported on your current platform.");
-    }
-
-    function generateWebWorkerURL(sandboxURL, dependencyURLs) {
+    // TODO: move to base adapter
+    function getBase () {
       var link = document.createElement("a");
       link.href = "!";
       var base = link.href.slice(0, -1);
 
-      dependencyURLs = dependencyURLs || [];
+      return base;
+    };
 
-      function importScriptsString(url) {
-        return "importScripts('" + base + url + "'); ";
-      }
-
-      var src = importScriptsString("oasis.js.html");
-      dependencyURLs.forEach(function(url) {
-        src += importScriptsString(url);
-      });
-      src += importScriptsString(sandboxURL);
-
-      var blob = new Blob([src], {type: "application/javascript"});
-      return URLObject.createObjectURL(blob);
-    }
-
-    var webworkerAdapter = {
+    var WebworkerAdapter = extend(BaseAdapter, {
       initializeSandbox: function(sandbox) {
-        var url = generateWebWorkerURL(sandbox.options.url, sandbox.dependencies);
-        var worker = new Worker(url);
+        var oasisURL = sandbox.options.oasisURL || 'oasis.js.html';
+        var worker = new Worker(oasisURL);
         sandbox.worker = worker;
         return new RSVP.Promise(function (resolve, reject) {
           setTimeout(function() {
-            log("webworker sandbox initialized");
+            Logger.log("webworker sandbox initialized");
             resolve(sandbox);
           });
         });
       },
 
-      createChannel: function(sandbox) {
-        var channel = new PostMessageMessageChannel();
-        channel.port1.start();
-        return channel;
-      },
-
-      environmentPort: function(sandbox, channel) {
-        return channel.port1;
-      },
-
-      sandboxPort: function(sandbox, channel) {
-        return channel.port2;
-      },
-
-      proxyPort: function(sandbox, port) {
-        return port;
-      },
-
-      connectPorts: function(sandbox, ports) {
-        var rawPorts = ports.map(function(port) { return port.port; });
-        Worker.postMessage(sandbox.worker, { isOasisInitialization: true, capabilities: sandbox.capabilities }, rawPorts);
+      loadScripts: function (base, scriptURLs) {
+        scriptURLs.forEach(function (scriptURL) {
+          importScripts(base + scriptURL);
+        });
       },
 
       startSandbox: function(sandbox) { },
@@ -1403,28 +1607,27 @@ define("oasis/iframe_adapter",
       terminateSandbox: function(sandbox) {
         sandbox.worker.terminate();
       },
+  
+      // TODO: this.createInitializationMessage (in baseadapter)
+      connectPorts: function(sandbox, ports) {
+        var rawPorts = ports.map(function(port) { return port.port; }),
+            sandboxURL = sandbox.options.url,
+            scriptURLs = [sandboxURL].concat(sandbox.dependencies || []);
+
+        Worker.postMessage(sandbox.worker, {
+          isOasisInitialization: true,
+          capabilities: sandbox.capabilities,
+          base: getBase(),
+          scriptURLs: scriptURLs
+        }, rawPorts);
+      },
 
       connectSandbox: function(ports) {
-        self.addEventListener('message', function(event) {
-          debugger;
-          if (!event.data.isOasisInitialization) { return; }
-
-          var capabilities = event.data.capabilities, eventPorts = event.ports;
-
-          capabilities.forEach(function(capability, i) {
-            var handler = handlers[capability],
-                port = new PostMessagePort(eventPorts[i]);
-
-            if (handler) {
-              handler.setupCapability(port);
-              port.start();
-            }
-
-            ports[capability] = port;
-          });
-        });
+        return BaseAdapter.prototype.connectSandbox.call(this, self, ports);
       }
-    };
+    });
+
+    var webworkerAdapter = new WebworkerAdapter;
 
     return webworkerAdapter;
   });/*! Kamino v0.0.1 | http://github.com/Cyril-sf/kamino.js | Copyright 2012, Kit Cambridge | http://kit.mit-license.org */
@@ -2006,29 +2209,7 @@ define("oasis/iframe_adapter",
         abort();
       }
     }
-    // Return the sentinel `/*<!DOCTYPE html>
-<html>
-<head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" >
-<script>
-(function() {
-  function hide() {
-    var html = document.body.innerHTML;
-    document.body.innerHTML = html.substring(2, html.lastIndexOf('*\/')-2);
-    document.body.style.display = '';
-  }
-
-  if (window.addEventListener) {
-    window.addEventListener('load', hide);
-  } else if (window.attachEvent) {
-    window.attachEvent('onload', hide);
-  }
-})();
-</script>
-<script type="text/x-js-payload" id="jsfr_payload">
-// */
-
- character if the parser has reached the end
+    // Return the sentinel `$` character if the parser has reached the end
     // of the source string.
     return "$";
   };

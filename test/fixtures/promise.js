@@ -1,5 +1,5 @@
 Oasis.connect('promisepong', function(port) {
-  port.onRequest('ping', function(resolve) {
-    resolve('pong');
+  port.onRequest('ping', function(promise) {
+    promise.resolve('pong');
   });
 });
