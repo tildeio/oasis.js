@@ -105,6 +105,19 @@ Sandboxed widgets that require no UI can be loaded as web workers:
   adapter: oasis.adapters.webworker
 ```
 
+The application can grant specific privileges to the sandbox, like opening windows.
+
+```js
+oasis.createSandbox({
+  url: 'http://example.com/profile_viewer.html',
+  type: 'html',
+  capabilities: [ 'account' ],
+  sandbox: {
+    popups: true
+  }
+});
+```
+
 ### Starting Sandboxes
 
 Web worker sandboxes will start immediately.  HTML (ie iframe) sandboxes will

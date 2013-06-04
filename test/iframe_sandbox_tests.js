@@ -4,6 +4,7 @@ import Oasis from "oasis";
 
 import { a_forEach } from "oasis/shims";
 import { getBase, _addEventListener } from "test/helpers/shims";
+import { isSandboxAttributeSupported } from "test/helpers/suite";
 
 var sandbox, sandboxes,
     destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
@@ -227,6 +228,69 @@ test("Sandboxes ignore secondary initialization messages", function() {
 
   sandbox.start();
 });
+
+test("Sandboxes can open popup windows when allowed", function() {
+  expect(1);
+  stop();
+
+  var sandboxUrl = destinationUrl + '/fixtures/popup_parent.html';
+  oasis.register({
+    url: sandboxUrl,
+    capabilities: ['assertions']
+  });
+
+  var AssertionsService = Oasis.Service.extend({
+    events: {
+      ok: function(data) {
+        start();
+        equal(data, true,  "The sandboxed iframe can open a popup window");
+      }
+    }
+  });
+
+  var sandbox = createSandbox({
+    url: sandboxUrl,
+    services: {
+      assertions: AssertionsService
+    },
+    sandbox: {
+      popups: true
+    }
+  });
+
+  sandbox.start();
+});
+
+if( isSandboxAttributeSupported() ) {
+  test("Sandboxes can not open popup windows when not allowed", function() {
+    expect(1);
+    stop();
+
+    var sandboxUrl = destinationUrl + '/fixtures/popup_parent.html';
+    oasis.register({
+      url: sandboxUrl,
+      capabilities: ['assertions']
+    });
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok: function(data) {
+          start();
+          equal(data, false,  "The sandboxed iframe can not open a popup window");
+        }
+      }
+    });
+
+    var sandbox = createSandbox({
+      url: sandboxUrl,
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+}
 
 test("HTML Sandboxes can be loaded directly", function() {
   expect(1);
