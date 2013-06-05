@@ -797,6 +797,8 @@ suite('iframe', function() {
   });
 });
 
-suite('webworker');
+if (typeof Worker !== 'undefined') {
+  suite('webworker');
+}
 
 })();
