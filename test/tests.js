@@ -1,6 +1,7 @@
 (function() {
 
-QUnit.config.testTimeout = 300;
+QUnit.config.testTimeout = 500;
+//QUnit.config.testTimeout = 500 * 100;
 
 module("Oasis");
 
@@ -57,6 +58,8 @@ function suite(adapter, extras) {
   });
 
   test("service is notified about ports created for a card", function() {
+    expect(2);
+
     Oasis.register({
       url: "fixtures/index.js",
       capabilities: ['testData']
@@ -83,6 +86,8 @@ function suite(adapter, extras) {
   });
 
   test("service - card can communicate with the environment through a port", function() {
+    expect(2);
+
     Oasis.register({
       url: "fixtures/assertions.js",
       capabilities: ['assertions']
@@ -112,6 +117,8 @@ function suite(adapter, extras) {
   });
 
   test("service - card can communicate with the environment through a port with the environment shorthand for events", function() {
+    expect(1);
+
     Oasis.register({
       url: "fixtures/assertions.js",
       capabilities: ['assertions']
@@ -139,6 +146,8 @@ function suite(adapter, extras) {
   });
 
   test("service - card can communicate with the environment through a port with the card shorthand for events", function() {
+    expect(2);
+
     Oasis.register({
       url: "fixtures/assertions_shorthand.js",
       capabilities: ['assertions']
@@ -174,6 +183,7 @@ function suite(adapter, extras) {
   });
 
   test("shorthand - card can communicate with the environment through a port", function() {
+    expect(1);
     stop();
 
     createSandbox({
@@ -192,6 +202,8 @@ function suite(adapter, extras) {
   });
 
   test("environment can communicate with the card through a port", function() {
+    expect(2);
+
     Oasis.register({
       url: "fixtures/to_environment.js",
       capabilities: ['pingpong']
@@ -223,6 +235,8 @@ function suite(adapter, extras) {
   });
 
   test("environment can communicate with the card through a port with a shorthand", function() {
+    expect(1);
+
     Oasis.register({
       url: "fixtures/to_environment.js",
       capabilities: ['pingpong']
@@ -254,6 +268,7 @@ function suite(adapter, extras) {
   });
 
   test("environment can request a value from a sandbox", function() {
+    expect(1);
     Oasis.register({
       url: "fixtures/promise.js",
       capabilities: ['promisepong']
@@ -282,6 +297,7 @@ function suite(adapter, extras) {
   });
 
   test("environment can request a value from a sandbox with arguments", function() {
+    expect(1);
     Oasis.register({
       url: "fixtures/promise_with_args.js",
       capabilities: ['promisepong']
@@ -310,6 +326,7 @@ function suite(adapter, extras) {
   });
 
   test("sandbox can request a value from the environment", function() {
+    expect(1);
     Oasis.register({
       url: "fixtures/promise_request_from_environment.js",
       capabilities: ['promisepong']
@@ -343,6 +360,8 @@ function suite(adapter, extras) {
   });
 
   test("sandbox can request a value from the environment with arguments", function() {
+    expect(1);
+
     Oasis.register({
       url: "fixtures/promise_request_from_environment_with_args.js",
       capabilities: ['promisepong']
@@ -382,6 +401,8 @@ function suite(adapter, extras) {
   // TODO: Get inception adapters working in web workers
   if (adapter === 'iframe') {
     test("ports sent to a sandbox can be passed to its child sandboxes", function() {
+      expect(1);
+
       Oasis.register({
         url: "fixtures/inception_parent.js",
         capabilities: ['inception']
@@ -413,6 +434,8 @@ function suite(adapter, extras) {
     });
 
     test("ports sent to a sandbox can be passed to its child sandboxes while supporting a shorthand", function() {
+      expect(3);
+
       Oasis.register({
         url: "fixtures/inception_parent.js",
         capabilities: ['inception']
@@ -449,6 +472,7 @@ function suite(adapter, extras) {
   }
 
   test("When the shorthand form is used for events, they can send events", function() {
+    expect(1);
     Oasis.register({
       url: "fixtures/peter_pong.js",
       capabilities: ['peterpong']
@@ -602,7 +626,9 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
-  test("Sandboxes should be promises that are resolved when the sandbox has finished initializing", function() {
+  // This isn't a great API, but rsvp does not officially support promise
+  // entities.
+  test("Sandboxes should have promises that are resolved when the sandbox has finished initializing", function() {
     expect(3);
 
     Oasis.register({
@@ -630,7 +656,7 @@ function suite(adapter, extras) {
 
     stop();
 
-    sandbox.then(function() {
+    sandbox.promise.then(function() {
       start();
 
       ok(sandbox.assertionsPort, "The promise was not resolved until the service has been initialized");
@@ -709,19 +735,21 @@ suite('iframe', function() {
     });
 
     var OriginService = Oasis.Service.extend({
-          requests: {
-            origin: function (promise) {
-              promise.resolve(location.origin);
-            }
-          }
-        }),AssertionService = Oasis.Service.extend({
-          events: {
-            result: function (result) {
-              start();
-              equal(result, "success", "Sandbox was able to request a same-origin resource");
-            }
-          }
-        });
+      requests: {
+        origin: function (promise) {
+          ok(true, "Sandbox requested origin.");
+          promise.resolve(location.protocol + '//' + location.host);
+        }
+      }
+    });
+    var AssertionService = Oasis.Service.extend({
+      events: {
+        result: function (result) {
+          start();
+          equal(result, "success", "Sandbox was able to request a same-origin resource");
+        }
+      }
+    });
 
     stop();
 
@@ -735,8 +763,42 @@ suite('iframe', function() {
 
     sandbox.start();
   });
+
+  test("Sandboxes ignore secondary initialization messages", function() {
+    // If the second initialization message runs, two 'ok' events will be sent.
+    expect(1);
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok: function (data) {
+          start();
+          equal(data, 'success', "Sandbox communicated.");
+
+          sandbox.el.contentWindow.postMessage({
+            isOasisInitialization: true,
+            capabilities: [],
+            base: getBase(),
+            scriptURLs: ['fixtures/assertions.js']
+          }, '*');
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/assertions.js',
+      capabilities: ['assertions'],
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    stop();
+    sandbox.start();
+  });
 });
 
-suite('webworker');
+if (typeof Worker !== 'undefined') {
+  suite('webworker');
+}
 
 })();

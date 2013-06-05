@@ -1,0 +1,23 @@
+<!doctype html>
+
+<html>
+  <head>
+    <script src="/dist/oasis.js"></script>
+  </head>
+  <body>
+    <script>
+      var sandbox = Oasis.createSandbox({
+        url: '/dist/samples/profile_viewer/profile_viewer.html',
+        capabilities: [ 'account' ]
+      });
+
+      sandbox.connect('account').then(function(port) {
+        port.onRequest('profile', function(resolve) {
+          resolve({ email: 'wycats@gmail.com' });
+        });
+      });
+
+      document.body.appendChild(sandbox);
+    </script>
+  </body>
+</html>
