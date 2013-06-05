@@ -1223,8 +1223,11 @@ define("oasis",
         this.sandboxPortDefereds[capability] = RSVP.defer();
       }, this);
 
-      this.createChannels();
-      this.connectPorts();
+      var sandbox = this;
+      this.promise.then(function () {
+        sandbox.createChannels();
+        sandbox.connectPorts();
+      });
     };
 
     OasisSandbox.prototype = {
@@ -1241,71 +1244,69 @@ define("oasis",
       },
 
       createChannels: function () {
+        var sandbox = this,
+            services = this.options.services || {},
+            channels = this.channels;
         this.capabilities.forEach(function (capability) {
-          var sandbox = this,
-              services = this.options.services || {},
-              channels = this.channels;
 
           Logger.log("Will create port for '" + capability + "'");
-          sandbox.promise.then(function (sandbox) {
-            var service = services[capability],
-                channel, port;
+          var service = services[capability],
+              channel, port;
 
-            // If an existing port is provided, just
-            // pass it along to the new sandbox.
+          // If an existing port is provided, just
+          // pass it along to the new sandbox.
 
-            // TODO: This should probably be an OasisPort if possible
-            if (service instanceof OasisPort) {
-              port = this.adapter.proxyPort(this, service);
-            } else {
-              channel = channels[capability] = this.adapter.createChannel();
+          // TODO: This should probably be an OasisPort if possible
+          if (service instanceof OasisPort) {
+            port = this.adapter.proxyPort(this, service);
+          } else {
+            channel = channels[capability] = this.adapter.createChannel();
 
-              var environmentPort = this.adapter.environmentPort(this, channel),
-                  sandboxPort = this.adapter.sandboxPort(this, channel);
+            var environmentPort = this.adapter.environmentPort(this, channel),
+                sandboxPort = this.adapter.sandboxPort(this, channel);
 
-              Logger.log("Wiretapping '" + capability + "'");
+            Logger.log("Wiretapping '" + capability + "'");
 
-              environmentPort.all(function(eventName, data) {
-                this.wiretaps.forEach(function(wiretap) {
-                  wiretap(capability, {
-                    type: eventName,
-                    data: data,
-                    direction: 'received'
-                  });
-                });
-              }, this);
-
+            environmentPort.all(function(eventName, data) {
               this.wiretaps.forEach(function(wiretap) {
-                var originalSend = environmentPort.send;
-
-                environmentPort.send = function(eventName, data) {
-                  wiretap(capability, {
-                    type: eventName,
-                    data: data,
-                    direction: 'sent'
-                  });
-
-                  originalSend.apply(environmentPort, arguments);
-                };
+                wiretap(capability, {
+                  type: eventName,
+                  data: data,
+                  direction: 'received'
+                });
               });
+            }, this);
 
-              if (service) {
-                Logger.log("Creating service for '" + capability + "'");
-                /*jshint newcap:false*/
-                // Generic
-                service = new service(environmentPort, this);
-                service.initialize(environmentPort, capability);
-              }
+            this.wiretaps.forEach(function(wiretap) {
+              var originalSend = environmentPort.send;
 
-              // Law of Demeter violation
-              port = sandboxPort;
+              environmentPort.send = function(eventName, data) {
+                wiretap(capability, {
+                  type: eventName,
+                  data: data,
+                  direction: 'sent'
+                });
 
-              this.envPortDefereds[capability].resolve(environmentPort);
+                originalSend.apply(environmentPort, arguments);
+              };
+            });
+
+            if (service) {
+              Logger.log("Creating service for '" + capability + "'");
+              /*jshint newcap:false*/
+              // Generic
+              service = new service(environmentPort, this);
+              service.initialize(environmentPort, capability);
             }
 
-            Logger.log("Port created for '" + capability + "'");
-            this.sandboxPortDefereds[capability].resolve(port);
-          }.bind(sandbox));
+            // Law of Demeter violation
+            port = sandboxPort;
+
+            this.envPortDefereds[capability].resolve(environmentPort);
+          }
+
+          Logger.log("Port created for '" + capability + "'");
+          this.sandboxPortDefereds[capability].resolve(port);
         }, this);
       },
 

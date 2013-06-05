@@ -58,6 +58,8 @@ function suite(adapter, extras) {
   });
 
   test("service is notified about ports created for a card", function() {
+    expect(2);
+
     Oasis.register({
       url: "fixtures/index.js",
       capabilities: ['testData']
@@ -84,6 +86,8 @@ function suite(adapter, extras) {
   });
 
   test("service - card can communicate with the environment through a port", function() {
+    expect(2);
+
     Oasis.register({
       url: "fixtures/assertions.js",
       capabilities: ['assertions']
@@ -113,6 +117,8 @@ function suite(adapter, extras) {
   });
 
   test("service - card can communicate with the environment through a port with the environment shorthand for events", function() {
+    expect(1);
+
     Oasis.register({
       url: "fixtures/assertions.js",
       capabilities: ['assertions']
@@ -140,6 +146,8 @@ function suite(adapter, extras) {
   });
 
   test("service - card can communicate with the environment through a port with the card shorthand for events", function() {
+    expect(2);
+
     Oasis.register({
       url: "fixtures/assertions_shorthand.js",
       capabilities: ['assertions']
@@ -175,6 +183,7 @@ function suite(adapter, extras) {
   });
 
   test("shorthand - card can communicate with the environment through a port", function() {
+    expect(1);
     stop();
 
     createSandbox({
@@ -193,6 +202,8 @@ function suite(adapter, extras) {
   });
 
   test("environment can communicate with the card through a port", function() {
+    expect(2);
+
     Oasis.register({
       url: "fixtures/to_environment.js",
       capabilities: ['pingpong']
@@ -224,6 +235,8 @@ function suite(adapter, extras) {
   });
 
   test("environment can communicate with the card through a port with a shorthand", function() {
+    expect(1);
+
     Oasis.register({
       url: "fixtures/to_environment.js",
       capabilities: ['pingpong']
@@ -255,6 +268,7 @@ function suite(adapter, extras) {
   });
 
   test("environment can request a value from a sandbox", function() {
+    expect(1);
     Oasis.register({
       url: "fixtures/promise.js",
       capabilities: ['promisepong']
@@ -283,6 +297,7 @@ function suite(adapter, extras) {
   });
 
   test("environment can request a value from a sandbox with arguments", function() {
+    expect(1);
     Oasis.register({
       url: "fixtures/promise_with_args.js",
       capabilities: ['promisepong']
@@ -311,6 +326,7 @@ function suite(adapter, extras) {
   });
 
   test("sandbox can request a value from the environment", function() {
+    expect(1);
     Oasis.register({
       url: "fixtures/promise_request_from_environment.js",
       capabilities: ['promisepong']
@@ -344,6 +360,8 @@ function suite(adapter, extras) {
   });
 
   test("sandbox can request a value from the environment with arguments", function() {
+    expect(1);
+
     Oasis.register({
       url: "fixtures/promise_request_from_environment_with_args.js",
       capabilities: ['promisepong']
@@ -383,6 +401,8 @@ function suite(adapter, extras) {
   // TODO: Get inception adapters working in web workers
   if (adapter === 'iframe') {
     test("ports sent to a sandbox can be passed to its child sandboxes", function() {
+      expect(1);
+
       Oasis.register({
         url: "fixtures/inception_parent.js",
         capabilities: ['inception']
@@ -452,6 +472,7 @@ function suite(adapter, extras) {
   }
 
   test("When the shorthand form is used for events, they can send events", function() {
+    expect(1);
     Oasis.register({
       url: "fixtures/peter_pong.js",
       capabilities: ['peterpong']
