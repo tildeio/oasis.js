@@ -54,6 +54,7 @@
     "onevar": false,
     "plusplus": false,
     "regexp": false,
+    "scripturl": true,
     "undef": true,
     "sub": true,
     "strict": false,

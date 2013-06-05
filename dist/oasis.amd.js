@@ -551,8 +551,14 @@ define("oasis/iframe_adapter",
         if( sandbox.oasis.configuration.allowSameOrigin ) {
           sandboxAttributes.push('allow-same-origin');
         }
-        if( options && options.sandbox && options.sandbox.popups ) {
-          sandboxAttributes.push('allow-popups');
+
+        if( options && options.sandbox ) {
+          if( options.sandbox.forms ) {
+            sandboxAttributes.push('allow-forms');
+          }
+          if( options.sandbox.popups ) {
+            sandboxAttributes.push('allow-popups');
+          }
         }
 
         iframe.name = sandbox.options.url + '?uuid=' + UUID.generate();

@@ -105,7 +105,7 @@ Sandboxed widgets that require no UI can be loaded as web workers:
   adapter: oasis.adapters.webworker
 ```
 
-The application can grant specific privileges to the sandbox, like opening windows.
+The application can grant specific privileges to the sandbox, like opening windows or submitting forms.
 
 ```js
 oasis.createSandbox({
@@ -114,6 +114,7 @@ oasis.createSandbox({
   capabilities: [ 'account' ],
   sandbox: {
     popups: true
+    forms: true
   }
 });
 ```

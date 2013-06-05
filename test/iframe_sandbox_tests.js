@@ -234,6 +234,7 @@ test("Sandboxes can open popup windows when allowed", function() {
   stop();
 
   var sandboxUrl = destinationUrl + '/fixtures/popup_parent.html';
+
   oasis.register({
     url: sandboxUrl,
     capabilities: ['assertions']
@@ -261,6 +262,39 @@ test("Sandboxes can open popup windows when allowed", function() {
   sandbox.start();
 });
 
+test("Sandboxes can submit forms when allowed", function() {
+  expect(1);
+  stop();
+
+  var sandboxUrl = destinationUrl + '/fixtures/form.html';
+
+  oasis.register({
+    url: sandboxUrl,
+    capabilities: ['assertions']
+  });
+
+  var AssertionsService = Oasis.Service.extend({
+    events: {
+      ok: function(data) {
+        start();
+        equal(data, true,  "The sandboxed iframe can submit a form");
+      }
+    }
+  });
+
+  var sandbox = createSandbox({
+    url: sandboxUrl,
+    services: {
+      assertions: AssertionsService
+    },
+    sandbox: {
+      forms: true
+    }
+  });
+
+  sandbox.start();
+});
+
 if( isSandboxAttributeSupported() ) {
   test("Sandboxes can not open popup windows when not allowed", function() {
     expect(1);
@@ -277,6 +311,35 @@ if( isSandboxAttributeSupported() ) {
         ok: function(data) {
           start();
           equal(data, false,  "The sandboxed iframe can not open a popup window");
+        }
+      }
+    });
+
+    var sandbox = createSandbox({
+      url: sandboxUrl,
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("Sandboxes can not submit forms when not allowed", function() {
+    expect(1);
+    stop();
+
+    var sandboxUrl = destinationUrl + '/fixtures/form.html';
+    oasis.register({
+      url: sandboxUrl,
+      capabilities: ['assertions']
+    });
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok: function(data) {
+          start();
+          equal(data, false,  "The sandboxed iframe can submit a form");
         }
       }
     });
