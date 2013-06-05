@@ -30,7 +30,11 @@ file "lib/rsvp.js" => :update_rsvp do
   end
 end
 
-task :rakep => "lib/rsvp.js" do
+file "node_modules/jsframe" do
+  sh "npm install jsframe"
+end
+
+task :rakep => ["lib/rsvp.amd.js", "node_modules/jsframe"] do
   sh "rakep build"
 end
 

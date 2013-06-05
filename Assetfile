@@ -29,21 +29,9 @@ class ModuleTranspiler < Rake::Pipeline::Filter
 end
 
 class Polyglotter < Rake::Pipeline::Filter
-  def initialize(*args, &block)
-    verify_jsframe_in_path!
-    super
-  end
-
-  def verify_jsframe_in_path!
-    `which jsframe`
-    unless $?.success?
-      raise "Cannot find `jsframe` in path.  Try `npm install -g jsframe`"
-    end
-  end
-
   def generate_output(inputs, output)
     inputs.each do |file|
-      output.write `jsframe #{file.fullpath}`
+      output.write `./node_modules/jsframe/bin/jsframe #{file.fullpath}`
     end
   end
 end
@@ -56,9 +44,21 @@ input "lib" do
   end
 
   match "{loader,uuid.core,kamino,message_channel,rsvp.amd,oasis.amd,oasis/.*}.js" do
-    concat ["loader.js", "uuid.core", "kamino", "message_channel", "rsvp.amd.js", "oasis.js"], "oasis.js.html"
+    concat ["loader.js", "uuid.core", "kamino", "message_channel", "rsvp.amd.js", "oasis.js"], ["oasis.js.html"]
     filter BrowserIIFE
     filter Polyglotter
+  end
+end
+
+input "lib" do
+  match "{oasis,oasis/.*}.js" do
+    filter ModuleTranspiler, type: :amd do |input|
+      input.sub(/\.js$/, '.amd.js')
+    end
+
+    match "{oasis,oasis/.*}.amd.js" do
+      concat { "oasis.amd.js" }
+    end
   end
 end
 
