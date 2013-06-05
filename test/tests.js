@@ -414,6 +414,8 @@ function suite(adapter, extras) {
     });
 
     test("ports sent to a sandbox can be passed to its child sandboxes while supporting a shorthand", function() {
+      expect(3);
+
       Oasis.register({
         url: "fixtures/inception_parent.js",
         capabilities: ['inception']

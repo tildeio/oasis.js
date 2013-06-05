@@ -95,6 +95,14 @@ define("oasis",
     var PostMessageMessageChannel = __dependency3__.PostMessageMessageChannel;
 
 
+    function getBase () {
+      var link = document.createElement("a");
+      link.href = "!";
+      var base = link.href.slice(0, -1);
+
+      return base;
+    }
+
     function BaseAdapter() {
     }
 
@@ -149,6 +157,18 @@ define("oasis",
           });
         }
         receiver.addEventListener('message', initializeOasisSandbox);
+      },
+
+      createInitializationMessage: function (sandbox) {
+        var sandboxURL = sandbox.options.url,
+            scriptURLs = [sandboxURL].concat(sandbox.dependencies || []);
+
+        return {
+          isOasisInitialization: true,
+          capabilities: sandbox.capabilities,
+          base: getBase(),
+          scriptURLs: scriptURLs
+        };
       }
     }
 
@@ -253,22 +273,12 @@ define("oasis",
 
 
 
-    // TODO: move to base adapter?
-    function getBase () {
-      var link = document.createElement("a");
-      link.href = "!";
-      var base = link.href.slice(0, -1);
-
-      return base;
-    }
-
     var IframeAdapter = extend(BaseAdapter, {
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
             iframe = document.createElement('iframe'),
             oasisURL = options.oasisURL || 'oasis.js.html';
 
-        // TODO: this should be configurable
         iframe.sandbox = 'allow-same-origin allow-scripts';
         iframe.seamless = true;
         iframe.src = 'about:blank'
@@ -301,7 +311,7 @@ define("oasis",
 
         var baseElement = document.createElement('base');
         baseElement.href = base;
-        head.insertBefore(baseElement);
+        head.insertBefore(baseElement, head.childNodes[0] || null);
 
         for (var i = 0; i < scriptURLs.length; ++i ) {
           scriptElement = document.createElement('script');
@@ -322,18 +332,11 @@ define("oasis",
         }
       },
 
-      // TODO: this.createInitializationMessage (in baseadapter)
       connectPorts: function(sandbox, ports) {
         var rawPorts = ports.map(function(port) { return port.port; }),
-            sandboxURL = sandbox.options.url,
-            scriptURLs = [sandboxURL].concat(sandbox.dependencies || []);
+            message = this.createInitializationMessage(sandbox);
 
-        sandbox.el.contentWindow.postMessage({
-          isOasisInitialization: true,
-          capabilities: sandbox.capabilities,
-          base: getBase(),
-          scriptURLs: scriptURLs
-        }, '*', rawPorts);
+        Window.postMessage(sandbox.el.contentWindow, message, '*', rawPorts);
       },
 
       connectSandbox: function(ports) {
@@ -636,8 +639,6 @@ define("oasis",
       connect: function(capability) {
         var portPromise = this.envPortDefereds[capability].promise;
 
-        // TODO: test this error case; we might also silently fail for optional
-        // services?
         assert(portPromise, "Connect was called on '" + capability + "' but no such capability was registered.");
 
         return portPromise;
@@ -978,15 +979,6 @@ define("oasis",
 
 
 
-    // TODO: move to base adapter
-    function getBase () {
-      var link = document.createElement("a");
-      link.href = "!";
-      var base = link.href.slice(0, -1);
-
-      return base;
-    };
-
     var WebworkerAdapter = extend(BaseAdapter, {
       initializeSandbox: function(sandbox) {
         var oasisURL = sandbox.options.oasisURL || 'oasis.js.html';
@@ -1012,18 +1004,11 @@ define("oasis",
         sandbox.worker.terminate();
       },
   
-      // TODO: this.createInitializationMessage (in baseadapter)
       connectPorts: function(sandbox, ports) {
         var rawPorts = ports.map(function(port) { return port.port; }),
-            sandboxURL = sandbox.options.url,
-            scriptURLs = [sandboxURL].concat(sandbox.dependencies || []);
+            message = this.createInitializationMessage(sandbox);
 
-        Worker.postMessage(sandbox.worker, {
-          isOasisInitialization: true,
-          capabilities: sandbox.capabilities,
-          base: getBase(),
-          scriptURLs: scriptURLs
-        }, rawPorts);
+        Worker.postMessage(sandbox.worker, message, rawPorts);
       },
 
       connectSandbox: function(ports) {
