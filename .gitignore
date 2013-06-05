@@ -3,3 +3,4 @@ tmp
 demo
 .bundle
 bin
+/node_modules
