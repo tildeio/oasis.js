@@ -727,6 +727,41 @@ function suite(adapter, extras) {
 
     sandbox.start();
   });
+
+  test("Sandboxes can ask for ports directly via portFor", function() {
+    expect(3);
+
+    var AssertionService = Oasis.Service.extend({
+      events: {
+        blackRaven: function (message) {
+          equal(message, "dark words", "Card connected to port and sent a message.");
+        },
+
+        whiteRaven: function (message) {
+          start();
+          equal(message, "winter is coming", "Card retrieved port via `portFor`.");
+        },
+
+        redRaven: function (message) {
+          start();
+          equal(message, "no such port", "`portFor` throws an exception when asked to retrieve a port for an unsupplied capability");
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/port_for.js',
+      capabilities: ['assertions'],
+      services: {
+        assertions: AssertionService
+      }
+    });
+
+    stop();
+    stop();
+
+    sandbox.start();
+  });
 }
 
 suite('iframe', function() {

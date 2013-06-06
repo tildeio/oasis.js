@@ -174,11 +174,12 @@ define("oasis",
 
     return BaseAdapter;
   });define("oasis/connect",
-  ["oasis/ports", "rsvp", "oasis/logger", "oasis/state", "exports"],
-  function(__dependency1__, RSVP, Logger, State, __exports__) {
+  ["oasis/util", "oasis/ports", "rsvp", "oasis/logger", "oasis/state", "exports"],
+  function(__dependency1__, __dependency2__, RSVP, Logger, State, __exports__) {
     "use strict";
-    var handlers = __dependency1__.handlers;
-    var ports = __dependency1__.ports;
+    var assert = __dependency1__.assert;
+    var handlers = __dependency2__.handlers;
+    var ports = __dependency2__.ports;
 
 
     function registerHandler(capability, options) {
