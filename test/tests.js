@@ -1,6 +1,6 @@
 (function() {
 
-QUnit.config.testTimeout = 500;
+QUnit.config.testTimeout = QUnit.config.testTimeout || 5000;
 //QUnit.config.testTimeout = 500 * 100;
 
 module("Oasis");
@@ -477,7 +477,7 @@ function suite(adapter, extras) {
       });
 
       createSandbox({
-        url: 'fixtures/index.js',
+        url: 'fixtures/index.js'
       });
 
       sandbox.start();
