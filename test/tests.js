@@ -469,6 +469,21 @@ function suite(adapter, extras) {
 
       sandbox.start();
     });
+
+    test("The iframes are named to improve debugging", function() {
+      Oasis.register({
+        url: "fixtures/index.js",
+        capabilities: []
+      });
+
+      createSandbox({
+        url: 'fixtures/index.js',
+      });
+
+      sandbox.start();
+
+      equal( sandbox.el.name, 'fixtures/index.js', 'The iframe has a name' );
+    });
   }
 
   test("When the shorthand form is used for events, they can send events", function() {
