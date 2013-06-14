@@ -50,7 +50,7 @@ module.exports = function(grunt) {
 					build: process.env.TRAVIS_JOB_ID,
 					concurrency: 3,
 					browsers: browsers,
-					testname: "qunit tests",
+					testname: "Oasis.js qunit tests",
           testTimeout: 15000,
           testInterval: 5000
         }
