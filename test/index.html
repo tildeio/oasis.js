@@ -4,12 +4,28 @@
   <meta charset="utf-8">
   <title>QUnit Example</title>
   <link rel="stylesheet" href="qunit.css">
+  <script src="/oasis.js.html"></script>
+  <script src="qunit.js"></script>
+  <script src="vendor/jquery-1.9.1.js"></script>
+  <script src="test_helpers.js"></script>
+  <script src="tests.js"></script>
 </head>
 <body>
   <div id="qunit"></div>
-  <script src="/oasis.js.html"></script>
-  <script src="qunit.js"></script>
-  <script src="test_helpers.js"></script>
-  <script src="tests.js"></script>
+  <script type="text/javascript">
+    $(document)
+    .ready(function(){
+        $('#qunit-tests').addClass('hidepass');
+    })
+    .delegate("#qunit-testrunner-toolbar", "DOMNodeInserted", function(e){
+        $('#qunit-tests').addClass('hidepass');
+        $("#qunit-filter-pass").attr("checked", true)
+    })
+    .delegate("#qunit-filter-pass", "click", function(e){
+        e.stopPropagation();
+        var newValue = $(this).is(":checked");
+        $('#qunit-tests').toggleClass('hidepass', newValue);
+    });
+  </script>
 </body>
 </html>
