@@ -47,7 +47,7 @@ module.exports = function(grunt) {
             'http://localhost:8000/index.html'
           ],
           tunnelTimeout: 5,
-					build: process.env.TRAVIS_JOB_ID,
+					build: process.env.TRAVIS_BUILD_NUMBER,
 					concurrency: 3,
 					browsers: browsers,
 					testname: "Oasis.js qunit tests",
