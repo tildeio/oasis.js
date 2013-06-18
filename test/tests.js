@@ -484,6 +484,33 @@ function suite(adapter, extras) {
 
       equal( sandbox.el.name, 'fixtures/index.js', 'The iframe has a name' );
     });
+
+    test("Nested sandboxes should default `oasisURL` to the one they were given", function() {
+      expect(1);
+
+      var AssertionService = Oasis.Service.extend({
+        events: {
+          checkUrl: function (oasisURL) {
+            var expected = "oasis-custom-url.js.html";
+            start();
+            equal(oasisURL.substring(oasisURL.length - expected.length), expected, "Nested sandboxed used right oasisURL");
+          }
+        }
+      });
+
+      createSandbox({
+        url: 'fixtures/nested_custom_oasis_url_parent.js',
+        capabilities: ['assertions'],
+        services: {
+          assertions: AssertionService
+        },
+        oasisURL: '/vendor/oasis-custom-url.js.html'
+      });
+
+      stop();
+
+      sandbox.start();
+    });
   }
 
   test("When the shorthand form is used for events, they can send events", function() {
@@ -762,6 +789,7 @@ function suite(adapter, extras) {
 
     sandbox.start();
   });
+
 }
 
 suite('iframe', function() {
