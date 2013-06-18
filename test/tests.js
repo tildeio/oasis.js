@@ -647,7 +647,7 @@ function suite(adapter, extras) {
     expect(3);
 
     Oasis.register({
-      url: 'fixtures/sandbox_as_promise.js',
+      url: 'fixtures/index.js',
       capabilities: ['assertions']
     });
 
@@ -661,7 +661,7 @@ function suite(adapter, extras) {
     });
 
     createSandbox({
-      url: 'fixtures/sandbox_as_promise.js',
+      url: 'fixtures/index.js',
       services: {
         assertions: AssertionsService
       }
