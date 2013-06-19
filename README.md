@@ -2,8 +2,6 @@
 
 [![Build Status](https://secure.travis-ci.org/tildeio/oasis.js.png?branch=master)](http://travis-ci.org/tildeio/oasis.js)
 
-[![Selenium Test Status](https://saucelabs.com/browser-matrix/oasisjs.svg)](https://saucelabs.com/u/oasisjs)
-
 Oasis.js is a pleasant API for safe communication with untrusted code in
 sandboxed iframes.
 
