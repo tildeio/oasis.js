@@ -178,6 +178,75 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
+  test("service - the `destroy` hook is called on each service when terminating the sandbox", function() {
+    expect(1);
+
+    Oasis.register({
+      url: "fixtures/index.js",
+      capabilities: ['assertions']
+    });
+
+    stop();
+
+    var AssertionsService = Oasis.Service.extend({
+      destroy: function() {
+        ok(true, "The destroy hook is called");
+      }
+    });
+
+    createSandbox({
+      url: "fixtures/index.js",
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+
+    sandbox.promise.then( function() {
+      sandbox.terminate();
+      start();
+    });
+  });
+
+  test("service - when closing a port, no messages are received", function() {
+    expect(0);
+
+    var testPort;
+
+    Oasis.register({
+      url: "fixtures/close_service.js",
+      capabilities: ['close']
+    });
+
+    stop();
+
+    var CloseService = Oasis.Service.extend({
+      initialize: function(port) {
+        port.close();
+
+        setTimeout( function() {
+          start();
+        }, 200);
+      },
+
+      events: {
+        ok: function(data) {
+          ok(false, "The port should be closed");
+        }
+      }
+    });
+
+    createSandbox({
+      url: "fixtures/close_service.js",
+      services: {
+        close: CloseService
+      }
+    });
+
+    sandbox.start();
+  });
+
   test("shorthand - card can communicate with the environment through a port", function() {
     expect(1);
     stop();

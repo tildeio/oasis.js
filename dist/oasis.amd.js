@@ -384,7 +384,7 @@ define("oasis",
       terminateSandbox: function(sandbox) {
         var el = sandbox.el;
 
-        el.terminated = true;
+        sandbox.terminated = true;
         removeEventListener(el, 'load', el.oasisLoadHandler);
         removeEventListener(window, 'message', el.initializationHandler);
         removeEventListener(window, 'message', el.loadHandler);
@@ -392,14 +392,15 @@ define("oasis",
         if (el.parentNode) {
           el.parentNode.removeChild(el);
         }
+
+        sandbox.el = null;
       },
 
       connectPorts: function(sandbox, ports) {
         var rawPorts = a_map.call(ports, function(port) { return port.port; }),
-            message = this.createInitializationMessage(sandbox),
-            el = sandbox.el;
+            message = this.createInitializationMessage(sandbox);
 
-        if (el.terminated) { return; }
+        if (sandbox.terminated) { return; }
         Window.postMessage(sandbox.el.contentWindow, message, '*', rawPorts);
       },
 
@@ -525,6 +526,14 @@ define("oasis",
       start: mustImplement('OasisPort', 'start'),
 
       /**
+        @private
+
+        Adapters should implement this to stop receiving messages from the
+        other side of the connection.
+      */
+      close: mustImplement('OasisPort', 'close'),
+
+      /**
         This method sends a request to the other side of the connection.
 
         @param {String} requestName the name of the request
@@ -607,6 +616,14 @@ define("oasis",
       start: function() {
         this.port1.start();
         this.port2.start();
+      },
+
+      destroy: function() {
+        this.port1.close();
+        this.port2.close();
+        delete this.port1;
+        delete this.port2;
+        delete this.channel;
       }
     });
 
@@ -653,6 +670,18 @@ define("oasis",
 
       start: function() {
         this.port.start();
+      },
+
+      close: function() {
+        var foundCallback;
+
+        for (var i=0, l=this._callbacks.length; i<l; i++) {
+          foundCallback = this._callbacks[i];
+          this.port.removeEventListener('message', foundCallback[1]);
+        }
+        this._callbacks = [];
+
+        this.port.close();
       }
     });
 
@@ -785,6 +814,7 @@ define("oasis",
               // Generic
               service = new service(environmentPort, this);
               service.initialize(environmentPort, capability);
+              State.services.push(service);
             }
 
             // Law of Demeter violation
@@ -796,6 +826,14 @@ define("oasis",
           Logger.log("Port created for '" + capability + "'");
           this.sandboxPortDefereds[capability].resolve(port);
         }, this);
+      },
+
+      destroyChannels: function() {
+        for( var prop in this.channels ) {
+          this.channels[prop].destroy();
+          delete this.channels[prop];
+        }
+        this.channels = [];
       },
 
       connectPorts: function () {
@@ -816,7 +854,21 @@ define("oasis",
       },
 
       terminate: function() {
+        var channel,
+            environmentPort;
+
+        if( this.isTerminated ) { return; }
+        this.isTerminated = true;
+
         this.adapter.terminateSandbox(this);
+
+        this.destroyChannels();
+
+        for( var index=0 ; index<State.services.length ; index++) {
+          State.services[index].destroy();
+          delete State.services[index];
+        }
+        State.services = [];
       }
     };
 
@@ -939,7 +991,7 @@ define("oasis",
     Service.prototype = {
       /**
         This hook is called when the connection is established. When
-        `initialized` is called, it is safe to register listeners and
+        `initialize` is called, it is safe to register listeners and
         send data to the other side.
 
         The implementation of Oasis makes it impossible for messages
@@ -949,6 +1001,12 @@ define("oasis",
         @param {String} name the name of the service
       */
       initialize: function() {},
+
+      /**
+        This hook is called when the connection is stopped. When
+        `destroy` is called, it is safe to unregister listeners.
+      */
+      destroy: function() {},
 
       /**
         This method can be used to send events to the other side of the
@@ -1184,6 +1242,7 @@ define("oasis",
       this.oasisId = 'oasis' + (+new Date());
 
       this.consumers = {};
+      this.services = [];
     }
 
     return new State;
@@ -1291,9 +1350,12 @@ define("oasis",
       },
 
       loadScripts: function (base, scriptURLs) {
+        var hrefs = [];
         a_forEach.call(scriptURLs, function (scriptURL) {
-          importScripts(base + scriptURL);
+          hrefs.push( base + scriptURL );
         });
+
+        importScripts.apply(undefined, hrefs);
       },
 
       didConnect: function() {
