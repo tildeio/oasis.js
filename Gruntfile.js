@@ -71,7 +71,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-saucelabs');
 
-  grunt.registerTask('test', ['copy', 'connect', 'saucelabs-qunit']);
+  grunt.registerTask('test', ['copy', 'connect', 'saucelabs-qunit:all']);
 	grunt.registerTask('default', ['test']);
 	grunt.registerTask('server', ['copy', 'connect', 'watch']);
 };
