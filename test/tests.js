@@ -1,7 +1,7 @@
 (function() {
 
 QUnit.config.testTimeout = QUnit.config.testTimeout || 5000;
-//QUnit.config.testTimeout = 500 * 100;
+// QUnit.config.testTimeout = 1000 * 60 * 2;
 
 module("Oasis");
 
@@ -23,6 +23,11 @@ var sharedAdapter, sandbox;
 function createSandbox(options) {
   if (options.adapter === undefined) { options.adapter = Oasis.adapters[sharedAdapter]; }
   sandbox = Oasis.createSandbox(options);
+
+  stop();
+  sandbox.promise.then(function () {
+    start();
+  });
 }
 
 function suite(adapter, extras) {
@@ -742,10 +747,9 @@ function suite(adapter, extras) {
     var expectedEvents = ['sentAssertion', 'sentOther', 'receivedAssertion', 'receivedOther'];
 
     sandbox.wiretap(function(service, event) {
-      console.log(service, event);
       start();
 
-      var loc = expectedEvents.indexOf(event.type);
+      var loc = a_indexOf.call(expectedEvents, event.type);
       if (loc > -1) {
         ok(true, "received expected message " + event.type);
         expectedEvents.splice(loc, 1);
@@ -804,6 +808,8 @@ suite('iframe', function() {
     });
 
     ok(sandbox.el instanceof window.HTMLIFrameElement, "A new iframe was returned");
+
+    sandbox.start();
   });
 
   test("Sandboxes can post messages to their own nested (non-Oasis) iframes", function() {
@@ -833,6 +839,7 @@ suite('iframe', function() {
 
     createSandbox({
       url: "fixtures/same_origin.js",
+      dependencies: ['fixtures/shims.js'],
       services: {
         origin: OriginService,
         assertions: AssertionService

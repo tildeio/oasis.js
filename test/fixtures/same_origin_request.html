@@ -2,8 +2,9 @@
 <html>
 <head>
   <title>Same Origin Request Fixture</title>
+  <script src="/fixtures/shims.js"></script>
   <script>
-    window.addEventListener('message', function (event) {
+    _addEventListener(window, 'message', function (event) {
       if (event.data === "and to you") {
         parent.postMessage("thanks", '*');
       }

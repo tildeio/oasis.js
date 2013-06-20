@@ -4,3 +4,4 @@ demo
 .bundle
 bin
 /node_modules
+/sauce_connect.log*
