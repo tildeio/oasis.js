@@ -19,5 +19,9 @@ Oasis.connect('origin', function (port) {
           break;
       }
     });
+  }).then(null, function (error) {
+    setTimeout( function () {
+      throw error;
+    });
   });
 });
