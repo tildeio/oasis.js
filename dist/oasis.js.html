@@ -684,13 +684,16 @@ define("oasis",
 
     return Oasis;
   });define("oasis/base_adapter",
-  ["oasis/util", "oasis/ports", "oasis/message_channel", "oasis/logger", "oasis/config"],
-  function(__dependency1__, __dependency2__, __dependency3__, Logger, configuration) {
+  ["oasis/util", "oasis/shims", "oasis/ports", "oasis/message_channel", "oasis/logger", "oasis/config"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, Logger, configuration) {
     "use strict";
     var mustImplement = __dependency1__.mustImplement;
-    var handlers = __dependency2__.handlers;
-    var PostMessagePort = __dependency3__.PostMessagePort;
-    var PostMessageMessageChannel = __dependency3__.PostMessageMessageChannel;
+    var a_forEach = __dependency2__.a_forEach;
+    var addEventListener = __dependency2__.addEventListener;
+    var removeEventListener = __dependency2__.removeEventListener;
+    var handlers = __dependency3__.handlers;
+    var PostMessagePort = __dependency4__.PostMessagePort;
+    var PostMessageMessageChannel = __dependency4__.PostMessageMessageChannel;
 
 
     function getBase () {
@@ -741,12 +744,12 @@ define("oasis",
 
           configuration.oasisURL = event.data.oasisURL;
 
-          receiver.removeEventListener('message', initializeOasisSandbox);
+          removeEventListener(receiver, 'message', initializeOasisSandbox);
           adapter.loadScripts(event.data.base, event.data.scriptURLs);
 
           var capabilities = event.data.capabilities, eventPorts = event.ports;
 
-          capabilities.forEach(function(capability, i) {
+          a_forEach.call(capabilities, function(capability, i) {
             var handler = handlers[capability],
                 port = new PostMessagePort(eventPorts[i]);
 
@@ -760,7 +763,7 @@ define("oasis",
             ports[capability] = port;
           });
         }
-        receiver.addEventListener('message', initializeOasisSandbox);
+        addEventListener(receiver, 'message', initializeOasisSandbox);
       },
 
       createInitializationMessage: function (sandbox) {
@@ -796,6 +799,7 @@ define("oasis",
   function(__dependency1__, __dependency2__, RSVP, Logger, State, __exports__) {
     "use strict";
     var assert = __dependency1__.assert;
+    var rsvpErrorHandler = __dependency1__.rsvpErrorHandler;
     var handlers = __dependency2__.handlers;
     var ports = __dependency2__.ports;
 
@@ -810,7 +814,7 @@ define("oasis",
         if (options.promise) {
           options.promise.then(function() {
             port.start();
-          });
+          }).then(null, rsvpErrorHandler);
         } else {
           port.start();
         }
@@ -884,11 +888,14 @@ define("oasis",
     __exports__.connect = connect;
     __exports__.portFor = portFor;
   });define("oasis/iframe_adapter",
-  ["oasis/util", "oasis/ports", "rsvp", "oasis/logger", "oasis/base_adapter"],
-  function(__dependency1__, __dependency2__, RSVP, Logger, BaseAdapter) {
+  ["oasis/util", "oasis/shims", "oasis/ports", "rsvp", "oasis/logger", "oasis/base_adapter"],
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, BaseAdapter) {
     "use strict";
     var extend = __dependency1__.extend;
-    var handlers = __dependency2__.handlers;
+    var addEventListener = __dependency2__.addEventListener;
+    var removeEventListener = __dependency2__.removeEventListener;
+    var a_map = __dependency2__.a_map;
+    var handlers = __dependency3__.handlers;
 
 
 
@@ -913,7 +920,7 @@ define("oasis",
         sandbox.el = iframe;
 
         return new RSVP.Promise(function (resolve, reject) {
-          iframe.addEventListener('load', function() {
+          sandbox.iframeLoadHandler = function () {
             if (iframe.contentWindow.location.href === 'about:blank') {
               Logger.log("iframe loading oasis");
               iframe.contentWindow.location.href = oasisURL;
@@ -921,7 +928,8 @@ define("oasis",
               Logger.log("iframe sandbox initialized");
               resolve(sandbox);
             }
-          });
+          }
+          addEventListener(iframe, 'load', sandbox.iframeLoadHandler);
         });
       },
 
@@ -936,16 +944,21 @@ define("oasis",
         for (var i = 0; i < scriptURLs.length; ++i ) {
           scriptElement = document.createElement('script');
           scriptElement.src = scriptURLs[i];
+          scriptElement.async = false;
           head.appendChild(scriptElement);
         }
       },
 
       startSandbox: function(sandbox) {
-        document.head.appendChild(sandbox.el);
+        var head = document.head || document.documentElement.getElementsByTagName('head')[0];
+        head.appendChild(sandbox.el);
       },
 
       terminateSandbox: function(sandbox) {
         var el = sandbox.el;
+
+        removeEventListener(el, 'load', sandbox.iframeLoadHandler);
+        el.terminated = true;
 
         if (el.parentNode) {
           el.parentNode.removeChild(el);
@@ -953,9 +966,11 @@ define("oasis",
       },
 
       connectPorts: function(sandbox, ports) {
-        var rawPorts = ports.map(function(port) { return port.port; }),
-            message = this.createInitializationMessage(sandbox);
+        var rawPorts = a_map.call(ports, function(port) { return port.port; }),
+            message = this.createInitializationMessage(sandbox),
+            el = sandbox.el;
 
+        if (el.terminated) { return; }
         Window.postMessage(sandbox.el.contentWindow, message, '*', rawPorts);
       },
 
@@ -981,8 +996,24 @@ define("oasis",
       },
 
       log: function () {
-        if (logger.enabled && typeof console !== 'undefined' && typeof console.log === 'function') {
-          console.log.apply(console, arguments);
+        if (logger.enabled) {
+          if (typeof console !== 'undefined' && typeof console.log === 'function') {
+            console.log.apply(console, arguments);
+          } else if (typeof console !== 'undefined' && typeof console.log === 'object') {
+            // Log in IE
+            try {
+              switch (arguments.length) {
+                case 1:
+                  console.log(arguments[0]);
+                  break;
+                case 2:
+                  console.log(arguments[0], arguments[1]);
+                  break;
+                default:
+                  console.log(arguments[0], arguments[1], arguments[2]);
+              }
+            } catch(e) {}
+          }
         }
       }
     }
@@ -996,6 +1027,7 @@ define("oasis",
     "use strict";
     var extend = __dependency1__.extend;
     var mustImplement = __dependency1__.mustImplement;
+    var rsvpErrorHandler = __dependency1__.rsvpErrorHandler;
 
     /**
       OasisPort is an interface that adapters can use to implement ports.
@@ -1120,7 +1152,7 @@ define("oasis",
               requestId: requestId,
               data: data
             });
-          });
+          }).then(null, rsvpErrorHandler);
 
           args.unshift(defered);
           callback.apply(binding, args);
@@ -1208,11 +1240,14 @@ define("oasis",
     __exports__.handlers = handlers;
     __exports__.ports = ports;
   });define("oasis/sandbox",
-  ["oasis/util", "oasis/message_channel", "rsvp", "oasis/logger", "oasis/state", "oasis/config", "oasis/iframe_adapter"],
-  function(__dependency1__, __dependency2__, RSVP, Logger, State, configuration, iframeAdapter) {
+  ["oasis/util", "oasis/shims", "oasis/message_channel", "rsvp", "oasis/logger", "oasis/state", "oasis/config", "oasis/iframe_adapter"],
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, State, configuration, iframeAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
-    var OasisPort = __dependency2__.OasisPort;
+    var rsvpErrorHandler = __dependency1__.rsvpErrorHandler;
+    var a_forEach = __dependency2__.a_forEach;
+    var a_reduce = __dependency2__.a_reduce;
+    var OasisPort = __dependency3__.OasisPort;
 
 
     var OasisSandbox = function(options) {
@@ -1242,7 +1277,7 @@ define("oasis",
 
       this.promise = adapter.initializeSandbox(this);
 
-      this.capabilities.forEach(function(capability) {
+      a_forEach.call(this.capabilities, function(capability) {
         this.envPortDefereds[capability] = RSVP.defer();
         this.sandboxPortDefereds[capability] = RSVP.defer();
       }, this);
@@ -1251,7 +1286,7 @@ define("oasis",
       this.promise.then(function () {
         sandbox.createChannels();
         sandbox.connectPorts();
-      });
+      }).then(null, rsvpErrorHandler);
     };
 
     OasisSandbox.prototype = {
@@ -1271,7 +1306,7 @@ define("oasis",
         var sandbox = this,
             services = this.options.services || {},
             channels = this.channels;
-        this.capabilities.forEach(function (capability) {
+        a_forEach.call(this.capabilities, function (capability) {
 
           Logger.log("Will create port for '" + capability + "'");
           var service = services[capability],
@@ -1292,7 +1327,7 @@ define("oasis",
             Logger.log("Wiretapping '" + capability + "'");
 
             environmentPort.all(function(eventName, data) {
-              this.wiretaps.forEach(function(wiretap) {
+              a_forEach.call(this.wiretaps, function(wiretap) {
                 wiretap(capability, {
                   type: eventName,
                   data: data,
@@ -1301,7 +1336,7 @@ define("oasis",
               });
             }, this);
 
-            this.wiretaps.forEach(function(wiretap) {
+            a_forEach.call(this.wiretaps, function(wiretap) {
               var originalSend = environmentPort.send;
 
               environmentPort.send = function(eventName, data) {
@@ -1335,14 +1370,16 @@ define("oasis",
       },
 
       connectPorts: function () {
-        var allSandboxPortPromises = this.capabilities.reduce(function (accumulator, capability) {
-          return accumulator.concat(this.sandboxPortDefereds[capability].promise);
-        }.bind(this), []);
+        var sandbox = this;
+
+        var allSandboxPortPromises = a_reduce.call(this.capabilities, function (accumulator, capability) {
+          return accumulator.concat(sandbox.sandboxPortDefereds[capability].promise);
+        }, []);
 
         RSVP.all(allSandboxPortPromises).then(function (ports) {
           Logger.log("All " + ports.length + " ports created.  Transferring them.");
-          this.adapter.connectPorts(this, ports);
-        }.bind(this));
+          sandbox.adapter.connectPorts(sandbox, ports);
+        }).then(null, rsvpErrorHandler);
       },
 
       start: function(options) {
@@ -1372,9 +1409,11 @@ define("oasis",
 
     return initializeSandbox;
   });define("oasis/service",
-  [],
-  function() {
+  ["oasis/shims"],
+  function(__dependency1__) {
     "use strict";
+    var o_create = __dependency1__.o_create;
+
     /**
       This is a base class that services and consumers can subclass to easily
       implement a number of events and requests at once.
@@ -1517,7 +1556,7 @@ define("oasis",
 
       Service.extend = extend;
 
-      var ServiceProto = Service.prototype = Object.create(this.prototype);
+      var ServiceProto = Service.prototype = o_create(this.prototype);
 
       for (var prop in object) {
         ServiceProto[prop] = object[prop];
@@ -1527,6 +1566,179 @@ define("oasis",
     };
 
     return Service;
+  });define("oasis/shims",
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    var K = function() {};
+
+    function o_create(obj, props) {
+      K.prototype = obj;
+      obj = new K();
+      if (props) {
+        K.prototype = obj;
+        for (var prop in props) {
+          K.prototype[prop] = props[prop].value;
+        }
+        obj = new K();
+      }
+      K.prototype = null;
+
+      return obj;
+    };
+
+    // If it turns out we need a better polyfill we can grab mozilla's at: 
+    // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.removeEventListener?redirectlocale=en-US&redirectslug=DOM%2FEventTarget.removeEventListener#Polyfill_to_support_older_browsers
+    function addEventListener(receiver, eventName, fn) {
+      if (receiver.addEventListener) {
+        return receiver.addEventListener(eventName, fn);
+      } else if (receiver.attachEvent) {
+        return receiver.attachEvent('on' + eventName, fn);
+      }
+    }
+
+    function removeEventListener(receiver, eventName, fn) {
+      if (receiver.removeEventListener) {
+        return receiver.removeEventListener(eventName, fn);
+      } else if (receiver.removeEvent) {
+        return receiver.removeEvent('on' + eventName, fn);
+      }
+    }
+
+    function isNativeFunc(func) {
+      // This should probably work in all browsers likely to have ES5 array methods
+      return func && Function.prototype.toString.call(func).indexOf('[native code]') > -1;
+    }
+
+    var a_forEach = isNativeFunc(Array.prototype.forEach) ? Array.prototype.forEach : function(fun /*, thisp */) {
+      //"use strict";
+
+      if (this === void 0 || this === null) {
+        throw new TypeError();
+      }
+
+      var t = Object(this);
+      var len = t.length >>> 0;
+      if (typeof fun !== "function") {
+        throw new TypeError();
+      }
+
+      var thisp = arguments[1];
+      for (var i = 0; i < len; i++) {
+        if (i in t) {
+          fun.call(thisp, t[i], i, t);
+        }
+      }
+    };
+
+    var a_reduce = isNativeFunc(Array.prototype.reduce) ? Array.prototype.reduce : function(callback, opt_initialValue){
+      'use strict';
+      if (null === this || 'undefined' === typeof this) {
+        // At the moment all modern browsers, that support strict mode, have
+        // native implementation of Array.prototype.reduce. For instance, IE8
+        // does not support strict mode, so this check is actually useless.
+        throw new TypeError(
+            'Array.prototype.reduce called on null or undefined');
+      }
+      if ('function' !== typeof callback) {
+        throw new TypeError(callback + ' is not a function');
+      }
+      var index = 0, length = this.length >>> 0, value, isValueSet = false;
+      if (1 < arguments.length) {
+        value = opt_initialValue;
+        isValueSet = true;
+      }
+      for ( ; length > index; ++index) {
+        if (!this.hasOwnProperty(index)) continue;
+        if (isValueSet) {
+          value = callback(value, this[index], index, this);
+        } else {
+          value = this[index];
+          isValueSet = true;
+        }
+      }
+      if (!isValueSet) {
+        throw new TypeError('Reduce of empty array with no initial value');
+      }
+      return value;
+    };
+
+    var a_map = isNativeFunc(Array.prototype.map) ? Array.prototype.map : function(callback, thisArg) {
+
+        var T, A, k;
+
+        if (this == null) {
+          throw new TypeError(" this is null or not defined");
+        }
+
+        // 1. Let O be the result of calling ToObject passing the |this| value as the argument.
+        var O = Object(this);
+
+        // 2. Let lenValue be the result of calling the Get internal method of O with the argument "length".
+        // 3. Let len be ToUint32(lenValue).
+        var len = O.length >>> 0;
+
+        // 4. If IsCallable(callback) is false, throw a TypeError exception.
+        // See: http://es5.github.com/#x9.11
+        if (typeof callback !== "function") {
+          throw new TypeError(callback + " is not a function");
+        }
+
+        // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+        if (thisArg) {
+          T = thisArg;
+        }
+
+        // 6. Let A be a new array created as if by the expression new Array(len) where Array is
+        // the standard built-in constructor with that name and len is the value of len.
+        A = new Array(len);
+
+        // 7. Let k be 0
+        k = 0;
+
+        // 8. Repeat, while k < len
+        while(k < len) {
+
+          var kValue, mappedValue;
+
+          // a. Let Pk be ToString(k).
+          //   This is implicit for LHS operands of the in operator
+          // b. Let kPresent be the result of calling the HasProperty internal method of O with argument Pk.
+          //   This step can be combined with c
+          // c. If kPresent is true, then
+          if (k in O) {
+
+            // i. Let kValue be the result of calling the Get internal method of O with argument Pk.
+            kValue = O[ k ];
+
+            // ii. Let mappedValue be the result of calling the Call internal method of callback
+            // with T as the this value and argument list containing kValue, k, and O.
+            mappedValue = callback.call(T, kValue, k, O);
+
+            // iii. Call the DefineOwnProperty internal method of A with arguments
+            // Pk, Property Descriptor {Value: mappedValue, : true, Enumerable: true, Configurable: true},
+            // and false.
+
+            // In browsers that support Object.defineProperty, use the following:
+            // Object.defineProperty(A, Pk, { value: mappedValue, writable: true, enumerable: true, configurable: true });
+
+            // For best browser support, use the following:
+            A[ k ] = mappedValue;
+          }
+          // d. Increase k by 1.
+          k++;
+        }
+
+        // 9. return A
+        return A;
+      };  
+
+    __exports__.o_create = o_create;
+    __exports__.a_forEach = a_forEach;
+    __exports__.a_reduce = a_reduce;
+    __exports__.a_map = a_map;
+    __exports__.addEventListener = addEventListener;
+    __exports__.removeEventListener = removeEventListener;
   });define("oasis/state",
   [],
   function() {
@@ -1545,9 +1757,11 @@ define("oasis",
 
     return new State;
   });define("oasis/util",
-  ["exports"],
-  function(__exports__) {
+  ["oasis/shims", "exports"],
+  function(__dependency1__, __exports__) {
     "use strict";
+    var o_create = __dependency1__.o_create;
+
     function assert(assertion, string) {
       if (!assertion) {
         throw new Error(string);
@@ -1577,7 +1791,7 @@ define("oasis",
         }
       }
 
-      OasisObject.prototype = Object.create(parent.prototype);
+      OasisObject.prototype = o_create(parent.prototype);
 
       for (var prop in object) {
         if (!object.hasOwnProperty(prop)) { continue; }
@@ -1587,16 +1801,31 @@ define("oasis",
       return OasisObject;
     }
 
+    function rsvpErrorHandler(error) {
+      if (typeof console === 'object' && console.assert && console.error) {
+        // chrome does not (yet) link the URLs in `console.assert`
+        console.error(error.stack);
+        console.assert(false, error.message);
+      } else {
+        setTimeout( function () {
+          throw error;
+        }, 1);
+      }
+      throw error;
+    }
+
     __exports__.assert = assert;
     __exports__.extend = extend;
     __exports__.mustImplement = mustImplement;
     __exports__.verifySandbox = verifySandbox;
+    __exports__.rsvpErrorHandler = rsvpErrorHandler;
   });define("oasis/webworker_adapter",
-  ["oasis/util", "oasis/ports", "rsvp", "oasis/logger", "oasis/base_adapter"],
-  function(__dependency1__, __dependency2__, RSVP, Logger, BaseAdapter) {
+  ["oasis/util", "oasis/shims", "oasis/ports", "rsvp", "oasis/logger", "oasis/base_adapter"],
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, BaseAdapter) {
     "use strict";
     var extend = __dependency1__.extend;
-    var handlers = __dependency2__.handlers;
+    var a_forEach = __dependency2__.a_forEach;
+    var handlers = __dependency3__.handlers;
 
 
 
@@ -1614,7 +1843,7 @@ define("oasis",
       },
 
       loadScripts: function (base, scriptURLs) {
-        scriptURLs.forEach(function (scriptURL) {
+        a_forEach.call(scriptURLs, function (scriptURL) {
           importScripts(base + scriptURL);
         });
       },
