@@ -1210,11 +1210,10 @@ define("oasis",
         // chrome does not (yet) link the URLs in `console.assert`
         console.error(error.stack);
         console.assert(false, error.message);
-      } else {
-        setTimeout( function () {
-          throw error;
-        }, 1);
       }
+      // throw an error upstream for tests & browsers without `console.assert`
+      setTimeout( function () { throw error; }, 1);
+      // also throw an error sync. to cascade promise failure
       throw error;
     }
 
