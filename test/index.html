@@ -13,19 +13,22 @@
 <body>
   <div id="qunit"></div>
   <script type="text/javascript">
-    $(document)
-    .ready(function(){
-        $('#qunit-tests').addClass('hidepass');
-    })
-    .delegate("#qunit-testrunner-toolbar", "DOMNodeInserted", function(e){
-        $('#qunit-tests').addClass('hidepass');
-        $("#qunit-filter-pass").attr("checked", true)
-    })
-    .delegate("#qunit-filter-pass", "click", function(e){
-        e.stopPropagation();
-        var newValue = $(this).is(":checked");
-        $('#qunit-tests').toggleClass('hidepass', newValue);
-    });
+    var n = 0;
+    // hacky setTimeout approach because of problems with jquery's delegate in
+    // ie8.
+    function hidePassedTestsByDefault() {
+      var qt = $('#qunit-tests'),
+          qfp = $('#qunit-filter-pass');
+
+      if (qt.length && qfp.length) {
+        qt.addClass('hidepass');
+        qfp.prop('checked', true);
+      } else if (++n < 10) {
+        setTimeout(hidePassedTestsByDefault, 100);
+      }
+    }
+
+    $(document).ready(hidePassedTestsByDefault);
   </script>
 </body>
 </html>
