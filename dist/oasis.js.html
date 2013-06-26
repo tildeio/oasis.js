@@ -903,12 +903,13 @@ define("oasis",
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
             iframe = document.createElement('iframe'),
-            oasisURL = this.oasisURL(sandbox);
+            oasisURL = this.oasisURL(sandbox),
+            iframeLoaded = false;
 
         iframe.name = sandbox.options.url;
         iframe.sandbox = 'allow-same-origin allow-scripts';
         iframe.seamless = true;
-        iframe.src = 'about:blank'
+        iframe.src = 'about:blank';
 
         // rendering-specific code
         if (options.width) {
@@ -921,14 +922,15 @@ define("oasis",
 
         return new RSVP.Promise(function (resolve, reject) {
           sandbox.iframeLoadHandler = function () {
-            if (iframe.contentWindow.location.href === 'about:blank') {
+            if (!iframeLoaded) {
+              iframeLoaded = true;
               Logger.log("iframe loading oasis");
               iframe.contentWindow.location.href = oasisURL;
             } else {
               Logger.log("iframe sandbox initialized");
               resolve(sandbox);
             }
-          }
+          };
           addEventListener(iframe, 'load', sandbox.iframeLoadHandler);
         });
       },

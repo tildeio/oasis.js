@@ -507,6 +507,39 @@ function suite(adapter, extras) {
 
       sandbox.start();
     });
+
+    test("Oasis' bootloader can be hosted on a separate domain", function() {
+      expect(2);
+      var destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
+
+      Oasis.register({
+        url: "fixtures/assertions.js",
+        capabilities: ['assertions']
+      });
+
+      stop();
+
+      var AssertionsService = Oasis.Service.extend({
+        initialize: function(port, capability) {
+          equal(capability, 'assertions', "precond - capability is the assertions service");
+
+          port.on('ok', function(data) {
+            start();
+            equal(data, 'success', "The card was able to communicate back");
+          });
+        }
+      });
+
+      createSandbox({
+        url: "fixtures/assertions.js",
+        services: {
+          assertions: AssertionsService
+        },
+        oasisURL: destinationUrl + '/vendor/oasis-custom-url.js.html'
+      });
+
+      sandbox.start();
+    });
   }
 
   test("When the shorthand form is used for events, they can send events", function() {
