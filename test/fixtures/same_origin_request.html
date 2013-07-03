@@ -6,10 +6,10 @@
   <script>
     _addEventListener(window, 'message', function (event) {
       if (event.data === "and to you") {
-        parent.postMessage("thanks", '*');
+        parent.postMessage("thanks", '*', []);
       }
     });
-    parent.postMessage("good morning", '*');
+    parent.postMessage("good morning", '*', []);
   </script>
 </head>
 <body>

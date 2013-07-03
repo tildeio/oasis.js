@@ -166,6 +166,7 @@ define("oasis",
 
             ports[capability] = port;
           });
+          adapter.didConnect();
         }
         addEventListener(receiver, 'message', initializeOasisSandbox);
       },
@@ -322,20 +323,36 @@ define("oasis",
           iframe.height = options.height;
         }
 
+        iframe.oasisLoadHandler = function () {
+          removeEventListener(iframe, 'load', iframe.oasisLoadHandler);
+
+          Logger.log("iframe loading oasis");
+          iframe.contentWindow.location.href = oasisURL;
+        };
+        addEventListener(iframe, 'load', iframe.oasisLoadHandler);
+
+        sandbox.promise = new RSVP.Promise( function(resolve, reject) {
+          iframe.initializationHandler = function (event) {
+            if( !event.data.isSandboxInitialized ) {return;}
+            removeEventListener(window, 'message', iframe.initializationHandler);
+
+            Logger.log("iframe sandbox initialized");
+            resolve(sandbox);
+          };
+          addEventListener(window, 'message', iframe.initializationHandler);
+        });
+
         sandbox.el = iframe;
 
         return new RSVP.Promise(function (resolve, reject) {
-          sandbox.iframeLoadHandler = function () {
-            if (!iframeLoaded) {
-              iframeLoaded = true;
-              Logger.log("iframe loading oasis");
-              iframe.contentWindow.location.href = oasisURL;
-            } else {
-              Logger.log("iframe sandbox initialized");
-              resolve(sandbox);
-            }
+          iframe.loadHandler = function (event) {
+            if( !event.data.isIframeLoaded ) {return;}
+            removeEventListener(window, 'message', iframe.loadHandler);
+
+            Logger.log("iframe sandbox loaded");
+            resolve(sandbox);
           };
-          addEventListener(iframe, 'load', sandbox.iframeLoadHandler);
+          addEventListener(window, 'message', iframe.loadHandler);
         });
       },
 
@@ -355,6 +372,10 @@ define("oasis",
         }
       },
 
+      didConnect: function() {
+        Window.postMessage(window.parent, {isSandboxInitialized: true}, '*', []);
+      },
+
       startSandbox: function(sandbox) {
         var head = document.head || document.documentElement.getElementsByTagName('head')[0];
         head.appendChild(sandbox.el);
@@ -363,8 +384,10 @@ define("oasis",
       terminateSandbox: function(sandbox) {
         var el = sandbox.el;
 
-        removeEventListener(el, 'load', sandbox.iframeLoadHandler);
         el.terminated = true;
+        removeEventListener(el, 'load', el.oasisLoadHandler);
+        removeEventListener(window, 'message', el.initializationHandler);
+        removeEventListener(window, 'message', el.loadHandler);
 
         if (el.parentNode) {
           el.parentNode.removeChild(el);
@@ -681,7 +704,7 @@ define("oasis",
       this.channels = {};
       this.options = options;
 
-      this.promise = adapter.initializeSandbox(this);
+      var loadPromise = adapter.initializeSandbox(this);
 
       a_forEach.call(this.capabilities, function(capability) {
         this.envPortDefereds[capability] = RSVP.defer();
@@ -689,7 +712,7 @@ define("oasis",
       }, this);
 
       var sandbox = this;
-      this.promise.then(function () {
+      loadPromise.then(function () {
         sandbox.createChannels();
         sandbox.connectPorts();
       }).then(null, rsvpErrorHandler);
@@ -808,8 +831,10 @@ define("oasis",
     function initializeSandbox () {
       if (typeof window !== 'undefined') {
         iframeAdapter.connectSandbox(ports);
+        Window.postMessage(window.parent, {isIframeLoaded: true}, '*', []);
       } else {
         webworkerAdapter.connectSandbox(ports);
+        postMessage({isWorkerLoaded: true}, []);
       }
     };
 
@@ -1006,8 +1031,8 @@ define("oasis",
     function removeEventListener(receiver, eventName, fn) {
       if (receiver.removeEventListener) {
         return receiver.removeEventListener(eventName, fn);
-      } else if (receiver.removeEvent) {
-        return receiver.removeEvent('on' + eventName, fn);
+      } else if (receiver.detachEvent) {
+        return receiver.detachEvent('on' + eventName, fn);
       }
     }
 
@@ -1230,6 +1255,8 @@ define("oasis",
     "use strict";
     var extend = __dependency1__.extend;
     var a_forEach = __dependency2__.a_forEach;
+    var addEventListener = __dependency2__.addEventListener;
+    var removeEventListener = __dependency2__.removeEventListener;
     var handlers = __dependency3__.handlers;
 
 
@@ -1239,11 +1266,27 @@ define("oasis",
         var oasisURL = this.oasisURL(sandbox);
         var worker = new Worker(oasisURL);
         sandbox.worker = worker;
-        return new RSVP.Promise(function (resolve, reject) {
-          setTimeout(function() {
-            Logger.log("webworker sandbox initialized");
+
+        sandbox.promise = new RSVP.Promise( function(resolve, reject) {
+          worker.initializationHandler = function (event) {
+            if( !event.data.isSandboxInitialized ) {return;}
+            removeEventListener(worker, 'message', worker.initializationHandler);
+
+            Logger.log("worker sandbox initialized");
             resolve(sandbox);
-          });
+          };
+          addEventListener(worker, 'message', worker.initializationHandler);
+        });
+
+        return new RSVP.Promise(function (resolve, reject) {
+          worker.loadHandler = function (event) {
+            if( !event.data.isWorkerLoaded ) {return;}
+            removeEventListener(worker, 'message', worker.loadHandler);
+
+            Logger.log("worker sandbox initialized");
+            resolve(sandbox);
+          };
+          addEventListener(worker, 'message', worker.loadHandler);
         });
       },
 
@@ -1253,12 +1296,20 @@ define("oasis",
         });
       },
 
+      didConnect: function() {
+        postMessage({isSandboxInitialized: true}, []);
+      },
+
       startSandbox: function(sandbox) { },
 
       terminateSandbox: function(sandbox) {
+        var worker = sandbox.worker;
+
+        removeEventListener(worker, 'message', worker.loadHandler);
+        removeEventListener(worker, 'message', worker.initializationHandler);
         sandbox.worker.terminate();
       },
-  
+
       connectPorts: function(sandbox, ports) {
         var rawPorts = ports.map(function(port) { return port.port; }),
             message = this.createInitializationMessage(sandbox);

@@ -20,18 +20,19 @@ new Oasis.RSVP.Promise(function (resolve, reject) {
           tag = document.createElement('iframe');
 
       tag.src = origin + "/fixtures/same_origin_request.html";
-      document.body.appendChild(tag);
 
       _addEventListener(window, "message", function (event) {
         switch (event.data) {
           case "good morning":
-            frames[0].postMessage("and to you", origin);
+            frames[0].postMessage("and to you", origin, []);
             break;
           case "thanks":
             assertions.send('result', 'success');
             break;
         }
       });
+
+      document.body.appendChild(tag);
     }).then(null, function (error) {
       setTimeout( function () {
         throw error;
