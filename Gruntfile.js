@@ -29,17 +29,19 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
 
     connect: {
+      options: {
+        base: 'tmp/tests'
+      },
+
       server: {
         options: {
-          port: 8000,
-          base: 'tmp/tests'
+          port: 8000
         }
       },
 
       otherDomain: {
         options: {
-          port: 8001,
-          base: 'tmp/tests/'
+          port: 8001
         }
       }
     },
