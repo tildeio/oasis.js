@@ -595,18 +595,14 @@ define("rsvp",
   });
 
 define("oasis",
-  ["oasis/util", "oasis/message_channel", "oasis/ports", "oasis/connect", "rsvp", "oasis/logger", "oasis/state", "oasis/config", "oasis/sandbox", "oasis/sandbox_init", "oasis/service", "oasis/iframe_adapter", "oasis/webworker_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, RSVP, Logger, State, configuration, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
+  ["oasis/util", "oasis/connect", "rsvp", "oasis/logger", "oasis/state", "oasis/config", "oasis/sandbox", "oasis/sandbox_init", "oasis/service", "oasis/iframe_adapter", "oasis/webworker_adapter"],
+  function(__dependency1__, __dependency2__, RSVP, Logger, State, configuration, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var verifySandbox = __dependency1__.verifySandbox;
-    var OasisPort = __dependency2__.OasisPort;
-    var PostMessagePort = __dependency2__.PostMessagePort;
-    var handlers = __dependency3__.handlers;
-    var ports = __dependency3__.ports;
-    var registerHandler = __dependency4__.registerHandler;
-    var connect = __dependency4__.connect;
-    var portFor = __dependency4__.portFor;
+    var registerHandler = __dependency2__.registerHandler;
+    var connect = __dependency2__.connect;
+    var portFor = __dependency2__.portFor;
 
 
 
@@ -889,23 +885,20 @@ define("oasis",
     __exports__.connect = connect;
     __exports__.portFor = portFor;
   });define("oasis/iframe_adapter",
-  ["oasis/util", "oasis/shims", "oasis/ports", "rsvp", "oasis/logger", "oasis/base_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, BaseAdapter) {
+  ["oasis/util", "oasis/shims", "rsvp", "oasis/logger", "oasis/base_adapter"],
+  function(__dependency1__, __dependency2__, RSVP, Logger, BaseAdapter) {
     "use strict";
     var extend = __dependency1__.extend;
     var addEventListener = __dependency2__.addEventListener;
     var removeEventListener = __dependency2__.removeEventListener;
     var a_map = __dependency2__.a_map;
-    var handlers = __dependency3__.handlers;
-
 
 
     var IframeAdapter = extend(BaseAdapter, {
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
             iframe = document.createElement('iframe'),
-            oasisURL = this.oasisURL(sandbox),
-            iframeLoaded = false;
+            oasisURL = this.oasisURL(sandbox);
 
         iframe.name = sandbox.options.url;
         iframe.sandbox = 'allow-same-origin allow-scripts';
@@ -1905,15 +1898,13 @@ define("oasis",
     __exports__.verifySandbox = verifySandbox;
     __exports__.rsvpErrorHandler = rsvpErrorHandler;
   });define("oasis/webworker_adapter",
-  ["oasis/util", "oasis/shims", "oasis/ports", "rsvp", "oasis/logger", "oasis/base_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, BaseAdapter) {
+  ["oasis/util", "oasis/shims", "rsvp", "oasis/logger", "oasis/base_adapter"],
+  function(__dependency1__, __dependency2__, RSVP, Logger, BaseAdapter) {
     "use strict";
     var extend = __dependency1__.extend;
     var a_forEach = __dependency2__.a_forEach;
     var addEventListener = __dependency2__.addEventListener;
     var removeEventListener = __dependency2__.removeEventListener;
-    var handlers = __dependency3__.handlers;
-
 
 
     var WebworkerAdapter = extend(BaseAdapter, {
