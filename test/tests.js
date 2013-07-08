@@ -210,7 +210,7 @@ function suite(adapter, extras) {
   });
 
   test("service - when closing a port, no messages are received", function() {
-    expect(0);
+    expect(1);
 
     var testPort;
 
@@ -222,17 +222,21 @@ function suite(adapter, extras) {
     stop();
 
     var CloseService = Oasis.Service.extend({
-      initialize: function(port) {
-        port.close();
-
-        setTimeout( function() {
-          start();
-        }, 200);
-      },
-
       events: {
-        ok: function(data) {
-          ok(false, "The port should be closed");
+        sandboxInitialized: function(data) {
+          ok(true, "sandbox initialized");
+
+          this.send('ping');
+          this.port.close();
+
+          // We try to test the lack of message
+          setTimeout( function() {
+            start();
+          }, 200);
+        },
+
+        pong: function() {
+          ok(false, "Succesfully sent events from event shorthand function");
         }
       }
     });

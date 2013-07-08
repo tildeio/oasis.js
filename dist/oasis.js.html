@@ -2741,7 +2741,7 @@ define("oasis",
         // we will not receive and process events in the correct order
         setTimeout( function() {
           self.log('draining ' + self._messageQueue.length + ' queued messages');
-          while( (event = self._messageQueue.shift()) ) {
+          while( self._messageQueueEnabled && (event = self._messageQueue.shift()) ) {
             self.dispatchEvent( event );
           }
         });
@@ -2806,7 +2806,7 @@ define("oasis",
       removeEventListener: function( type, listener) {
         if (this._listeners[type] instanceof Array){
           var listeners = this._listeners[type];
-          for (var i=0, len=listeners.length; i < len; i++){
+          for (var i=0; i < listeners.length; i++){
             if (listeners[i] === listener){
               listeners.splice(i, 1);
               break;
@@ -2818,7 +2818,7 @@ define("oasis",
       dispatchEvent: function( event ) {
         var listeners = this._listeners.message;
         if( listeners ) {
-          for (var i=0, len=listeners.length; i < len; i++){
+          for (var i=0; i < listeners.length; i++){
             listeners[i].call(this, event);
           }
         }
@@ -2840,9 +2840,7 @@ define("oasis",
 
         var port = loadPort(portClone.uuid);
         port._entangledPortUuid = portClone._entangledPortUuid;
-        if( port._entangledPortUuid ) {
-          port._getEntangledPort()._entangledPortUuid = port.uuid;
-        }
+        port._getEntangledPort()._entangledPortUuid = port.uuid;
         port._currentTarget =  messageEvent.source || messageEvent.currentTarget || self;
         if( messageEvent.origin === "null" ) {
           port.destinationUrl = "*";
@@ -3167,6 +3165,9 @@ define("oasis",
       Window.postMessage = function( otherWindow, message, targetOrigin, ports ) {
         var data, entangledPort;
 
+        // Internet Explorer requires the `ports` parameter
+        ports = ports || [];
+
         data = MessageChannel.encodeEvent( message, ports, false );
 
         if( ports ) {
@@ -3175,7 +3176,7 @@ define("oasis",
           // See `MessageChannel.propagateEvent`
           for( var i=0 ; i<ports.length ; i++) {
             entangledPort = ports[i]._getEntangledPort();
-            if( entangledPort && !entangledPort._currentTarget ) {
+            if( !entangledPort._currentTarget ) {
               entangledPort._currentTarget = otherWindow;
               entangledPort.destinationUrl = targetOrigin;
             }
@@ -3220,9 +3221,7 @@ define("oasis",
 
         for( var i=0 ; i<transferList.length ; i++) {
           entangledPort = transferList[i]._getEntangledPort();
-          if( entangledPort ) {
-            entangledPort._currentTarget = worker;
-          }
+          entangledPort._currentTarget = worker;
         }
 
         MessageChannel.log(transferList, "handshake worker", worker);
@@ -3232,6 +3231,8 @@ define("oasis",
   } else {
     if( Window ) {
       Window.postMessage = function( source, message, targetOrigin, ports ) {
+        // Internet Explorer requires the `ports` parameter
+        ports = ports || [];
         source.postMessage( message, targetOrigin, ports );
       };
     } else {

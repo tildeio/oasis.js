@@ -1,3 +1,7 @@
 Oasis.connect('close', function(port) {
-  port.send('ok');
+  port.on('ping', function() {
+    port.send('pong');
+  });
+
+  port.send('sandboxInitialized');
 });
