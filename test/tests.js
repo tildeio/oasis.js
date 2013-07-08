@@ -14,11 +14,6 @@ var sharedAdapter, sandbox;
 function createSandbox(options) {
   if (options.adapter === undefined) { options.adapter = Oasis.adapters[sharedAdapter]; }
   sandbox = Oasis.createSandbox(options);
-
-  stop();
-  sandbox.promise.then(function () {
-    start();
-  });
 }
 
 function suite(adapter, extras) {
@@ -65,7 +60,6 @@ function suite(adapter, extras) {
 
     var DataService = Oasis.Service.extend({
       initialize: function(port, capability) {
-        start();
         equal(this.sandbox, sandbox);
         equal(capability, 'testData');
       }
@@ -76,6 +70,10 @@ function suite(adapter, extras) {
       services: {
         testData: DataService
       }
+    });
+
+    sandbox.promise.then( function() {
+      start();
     });
 
     sandbox.start();
