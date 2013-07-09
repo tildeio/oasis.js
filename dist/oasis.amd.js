@@ -105,6 +105,9 @@ define("oasis",
     }
 
     function BaseAdapter() {
+      this.oasisLoadedMessage =  "oasisSandboxLoaded";
+
+      this.sandboxInitializedMessage =  "oasisSandboxInitialized";
     }
 
     BaseAdapter.prototype = {
@@ -165,6 +168,8 @@ define("oasis",
           adapter.didConnect();
         }
         addEventListener(receiver, 'message', initializeOasisSandbox);
+
+        adapter.oasisLoaded();
       },
 
       createInitializationMessage: function (sandbox) {
@@ -319,6 +324,8 @@ define("oasis",
         iframe.oasisLoadHandler = function () {
           removeEventListener(iframe, 'load', iframe.oasisLoadHandler);
 
+          sandbox.iframeLoaded = true;
+
           Logger.log("iframe loading oasis");
           iframe.contentWindow.location.href = oasisURL;
         };
@@ -326,8 +333,11 @@ define("oasis",
 
         sandbox.promise = new RSVP.Promise( function(resolve, reject) {
           iframe.initializationHandler = function (event) {
-            if( !event.data.isSandboxInitialized ) {return;}
+            if( event.data !== sandbox.adapter.sandboxInitializedMessage ) {return;}
+            if( !sandbox.iframeLoaded ) {return;}
+            if( event.source !== iframe.contentWindow ) {return;}
             removeEventListener(window, 'message', iframe.initializationHandler);
+
 
             Logger.log("iframe sandbox initialized");
             resolve(sandbox);
@@ -339,7 +349,9 @@ define("oasis",
 
         return new RSVP.Promise(function (resolve, reject) {
           iframe.loadHandler = function (event) {
-            if( !event.data.isIframeLoaded ) {return;}
+            if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
+            if( !sandbox.iframeLoaded ) {return;}
+            if( event.source !== iframe.contentWindow ) {return;}
             removeEventListener(window, 'message', iframe.loadHandler);
 
             Logger.log("iframe sandbox loaded");
@@ -365,8 +377,12 @@ define("oasis",
         }
       },
 
+      oasisLoaded: function() {
+        window.parent.postMessage(this.oasisLoadedMessage, '*', []);
+      },
+
       didConnect: function() {
-        Window.postMessage(window.parent, {isSandboxInitialized: true}, '*', []);
+        window.parent.postMessage(this.sandboxInitializedMessage, '*', []);
       },
 
       startSandbox: function(sandbox) {
@@ -876,10 +892,8 @@ define("oasis",
     function initializeSandbox () {
       if (typeof window !== 'undefined') {
         iframeAdapter.connectSandbox(ports);
-        Window.postMessage(window.parent, {isIframeLoaded: true}, '*', []);
       } else {
         webworkerAdapter.connectSandbox(ports);
-        postMessage({isWorkerLoaded: true}, []);
       }
     };
 
@@ -1319,7 +1333,7 @@ define("oasis",
 
         sandbox.promise = new RSVP.Promise( function(resolve, reject) {
           worker.initializationHandler = function (event) {
-            if( !event.data.isSandboxInitialized ) {return;}
+            if( event.data !== sandbox.adapter.sandboxInitializedMessage ) {return;}
             removeEventListener(worker, 'message', worker.initializationHandler);
 
             Logger.log("worker sandbox initialized");
@@ -1330,7 +1344,7 @@ define("oasis",
 
         return new RSVP.Promise(function (resolve, reject) {
           worker.loadHandler = function (event) {
-            if( !event.data.isWorkerLoaded ) {return;}
+            if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
             removeEventListener(worker, 'message', worker.loadHandler);
 
             Logger.log("worker sandbox initialized");
@@ -1349,8 +1363,12 @@ define("oasis",
         importScripts.apply(undefined, hrefs);
       },
 
+      oasisLoaded: function() {
+        postMessage(this.oasisLoadedMessage, []);
+      },
+
       didConnect: function() {
-        postMessage({isSandboxInitialized: true}, []);
+        postMessage(this.sandboxInitializedMessage, []);
       },
 
       startSandbox: function(sandbox) { },

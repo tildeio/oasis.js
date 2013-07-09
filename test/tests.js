@@ -889,6 +889,59 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
+  test("Multiple sandboxes can be created in the same environment", function() {
+    expect(2);
+    var sandbox1, sandbox2;
+
+    Oasis.register({
+      url: "fixtures/multiple_url_1.js",
+      capabilities: ['assertions']
+    });
+
+    Oasis.register({
+      url: "fixtures/multiple_url_2.js",
+      capabilities: ['assertions2']
+    });
+
+    stop();
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok1: function() {
+          ok(true, "First event was fired");
+
+          sandbox2.start();
+        },
+
+        ok2: function() {
+          ok(true, "Second event was fired");
+
+          sandbox1.promise.then( function() {
+            sandbox1.terminate();
+            start();
+          });
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/multiple_url_1.js',
+      services: {
+        assertions: AssertionsService,
+      }
+    });
+    sandbox1 = sandbox;
+
+    createSandbox({
+      url: "fixtures/multiple_url_2.js",
+      services: {
+        assertions2: AssertionsService
+      }
+    });
+    sandbox2 = sandbox;
+
+    sandbox1.start();
+  });
 }
 
 suite('iframe', function() {
@@ -942,6 +995,22 @@ suite('iframe', function() {
     });
 
     sandbox.start();
+  });
+
+  test("does not generate exception when not in the DOM", function() {
+    Oasis.register({
+      url: "fixtures/index.js",
+      capabilities: []
+    });
+
+    createSandbox({
+      url: "fixtures/index.js"
+    });
+
+    window.postMessage(Oasis.adapters.iframe.sandboxInitializedMessage, '*', []);
+    window.postMessage(Oasis.adapters.iframe.oasisLoadedMessage, '*', []);
+
+    ok(true, "The iframe sandbox listener does not raise an exception");
   });
 
   test("Sandboxes ignore secondary initialization messages", function() {
