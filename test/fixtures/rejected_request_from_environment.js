@@ -1,8 +1,8 @@
-Oasis.connect('promisepong', function(port) {
-  port.onRequest('ping', function() {
+Oasis.connect('pong', function(port) {
+  port.onRequest('ping', function () {
     return new Oasis.RSVP.Promise(function (resolve, reject) {
       setTimeout( function () {
-        resolve('pong');
+        reject('badpong');
       }, 1);
     });
   });

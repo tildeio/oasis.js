@@ -1,6 +1,6 @@
 {
   "name": "oasis.js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Oasis.js is a pleasant API for safe communication with untrusted code in sandboxed iframes.",
   "main": "index.js",
   "scripts": {

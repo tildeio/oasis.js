@@ -249,6 +249,78 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
+  test("Oasis.connect's promise rejects when connecting to a service not provided in the initiliazation message", function() {
+    expect(1);
+    stop();
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        promiseRejected: function () {
+          start();
+          ok(true, "Oasis.connect to unprovided capability resulted in a promise rejection.");
+        }
+      }
+    });
+
+    createSandbox({
+      url: "fixtures/connect_failed.js",
+      capabilities: ['assertions'],
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("Oasis.connect invokes error callback for services not provided in the initialization message", function() {
+    expect(1);
+    stop();
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        errorCallbackInvoked: function () {
+          start();
+          ok(true, "Oasis.connect to unprovided capability resulted in the error callback being invoked.");
+        }
+      }
+    });
+
+    createSandbox({
+      url: "fixtures/connect_failed_callback.js",
+      capabilities: ['assertions'],
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("Oasis.connect invokes `error` on consumers that could not connect", function() {
+    expect(1);
+    stop();
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        consumerErrorInvoked: function () {
+          start();
+          ok(true, "Oasis.connect to unprovided capability resulted in consumer.error being invoked.");
+        }
+      }
+    });
+
+    createSandbox({
+      url: "fixtures/connect_failed_consumer.js",
+      capabilities: ['assertions'],
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
   test("shorthand - card can communicate with the environment through a port", function() {
     expect(1);
     stop();
@@ -337,6 +409,238 @@ function suite(adapter, extras) {
   test("environment can request a value from a sandbox", function() {
     expect(1);
     Oasis.register({
+      url: "fixtures/simple_value.js",
+      capabilities: ['pong']
+    });
+
+    stop();
+
+    var PingPongService = Oasis.Service.extend({
+      initialize: function(port, capability) {
+        port.request('ping').then(function(data) {
+          start();
+
+          equal(data, 'pong', "promise was resolved with expected value");
+        });
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/simple_value.js',
+      services: {
+        pong: PingPongService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("environment can request a value from a sandbox with arguments", function() {
+    expect(1);
+    Oasis.register({
+      url: "fixtures/simple_value_with_args.js",
+      capabilities: ['pong']
+    });
+
+    stop();
+
+    var PingPongService = Oasis.Service.extend({
+      initialize: function(port) {
+        port.request('ping', "first", "second").then(function(data) {
+          start();
+
+          equal(data, 'pong', "promise was resolved with expected value");
+        });
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/simple_value_with_args.js',
+      services: {
+        pong: PingPongService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("sandbox can request a value from the environment", function() {
+    expect(1);
+    Oasis.register({
+      url: "fixtures/request_from_sandbox.js",
+      capabilities: ['pong']
+    });
+
+    stop();
+
+    var PingPongService = Oasis.Service.extend({
+      requests: {
+        ping: function() {
+          return 'pong';
+        }
+      },
+
+      events: {
+        testResolvedToSatisfaction: function() {
+          start();
+          ok(true, "test was resolved to sandbox's satisfaction");
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/request_from_sandbox.js',
+      services: {
+        pong: PingPongService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("sandbox can request a value from the environment with arguments", function() {
+    expect(1);
+
+    Oasis.register({
+      url: "fixtures/request_from_sandbox_with_args.js",
+      capabilities: ['pong']
+    });
+
+    stop();
+
+    var PingPongService = Oasis.Service.extend({
+      requests: {
+        ping: function(firstArg, secondArg) {
+          if (firstArg === 'first' && secondArg === 'second') {
+            return 'pong';
+          }
+        }
+      },
+
+      events: {
+        testResolvedToSatisfaction: function() {
+          start();
+          ok(true, "test was resolved to sandbox's satisfaction");
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/request_from_sandbox_with_args.js',
+      services: {
+        pong: PingPongService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  // Note: experimental API
+  test("environment can fail a request with an exception", function() {
+    expect(1);
+    Oasis.register({
+      url: "fixtures/request_from_sandbox.js",
+      capabilities: ['pong']
+    });
+
+    stop();
+
+    var PingPongService = Oasis.Service.extend({
+      requests: {
+        ping: function() {
+          throw new Error('badpong');
+        }
+      },
+
+      events: {
+        testResolvedToSatisfaction: function() {
+          start();
+          ok(true, "test was resolved to sandbox's satisfaction");
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/request_from_sandbox.js',
+      services: {
+        pong: PingPongService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  // Note: experimental API
+  test("sandbox can fail a requst with an exception", function() {
+    expect(1);
+    Oasis.register({
+      url: "fixtures/simple_error.js",
+      capabilities: ['pong']
+    });
+
+    stop();
+
+    var PingPongService = Oasis.Service.extend({
+      initialize: function(port, capability) {
+        port.request('ping').then(null, function(error) {
+          start();
+
+          equal(error, 'badpong', "promise was rejected with expected error");
+        });
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/simple_error.js',
+      services: {
+        pong: PingPongService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("environment can respond to a sandbox request with a promise that resolves", function() {
+    expect(1);
+    Oasis.register({
+      url: "fixtures/request_from_sandbox.js",
+      capabilities: ['pong']
+    });
+
+    stop();
+
+    var PingPongPromiseService = Oasis.Service.extend({
+      requests: {
+        ping: function() {
+          return new Oasis.RSVP.Promise(function (resolve, reject) {
+            setTimeout( function () {
+              resolve('pong');
+            }, 1);
+          });
+        }
+      },
+
+      events: {
+        testResolvedToSatisfaction: function() {
+          start();
+          ok(true, "test was resolved to sandbox's satisfaction");
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/request_from_sandbox.js',
+      services: {
+        pong: PingPongPromiseService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("sandbox can respond to an environment request with a promise that resolves", function() {
+    expect(1);
+    Oasis.register({
       url: "fixtures/promise.js",
       capabilities: ['promisepong']
     });
@@ -363,102 +667,67 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
-  test("environment can request a value from a sandbox with arguments", function() {
+  test("environment can respond to a sandbox request with a promise that rejects", function() {
     expect(1);
     Oasis.register({
-      url: "fixtures/promise_with_args.js",
-      capabilities: ['promisepong']
+      url: "fixtures/request_from_sandbox.js",
+      capabilities: ['pong']
+    });
+
+    stop();
+
+    var PingPongPromiseService = Oasis.Service.extend({
+      requests: {
+        ping: function() {
+          return new Oasis.RSVP.Promise(function (resolve, reject) {
+            setTimeout( function () {
+              reject('badpong');
+            }, 1);
+          });
+        }
+      },
+
+      events: {
+        testResolvedToSatisfaction: function() {
+          start();
+          ok(true, "test was resolved to sandbox's satisfaction");
+        }
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/request_from_sandbox.js',
+      services: {
+        pong: PingPongPromiseService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("the sandbox can respond to an environment request with a promise that rejects", function() {
+    expect(1);
+    Oasis.register({
+      url: "fixtures/rejected_request_from_environment.js",
+      capabilities: ['pong']
     });
 
     stop();
 
     var PingPongPromiseService = Oasis.Service.extend({
       initialize: function(port, capability) {
-        port.request('ping', "first", "second").then(function(data) {
+        port.request('ping').then(null, function(error) {
           start();
 
-          equal(data, 'pong', "promise was resolved with expected value");
+          equal(error, 'badpong', "promise was rejected with expected error");
         });
       }
     });
 
     createSandbox({
-      url: 'fixtures/promise_with_args.js',
+      url: 'fixtures/rejected_request_from_environment.js',
       services: {
-        promisepong: PingPongPromiseService
-      }
-    });
-
-    sandbox.start();
-  });
-
-  test("sandbox can request a value from the environment", function() {
-    expect(1);
-    Oasis.register({
-      url: "fixtures/promise_request_from_environment.js",
-      capabilities: ['promisepong']
-    });
-
-    stop();
-
-    var PingPongPromiseService = Oasis.Service.extend({
-      requests: {
-        ping: function(promise) {
-          promise.resolve('pong');
-        }
-      },
-
-      events: {
-        testResolvedToSatisfaction: function() {
-          start();
-          ok(true, "test was resolved to sandbox's satisfaction");
-        }
-      }
-    });
-
-    createSandbox({
-      url: 'fixtures/promise_request_from_environment.js',
-      services: {
-        promisepong: PingPongPromiseService
-      }
-    });
-
-    sandbox.start();
-  });
-
-  test("sandbox can request a value from the environment with arguments", function() {
-    expect(1);
-
-    Oasis.register({
-      url: "fixtures/promise_request_from_environment_with_args.js",
-      capabilities: ['promisepong']
-    });
-
-    stop();
-
-    var PingPongPromiseService = Oasis.Service.extend({
-      requests: {
-        ping: function(promise, firstArg, secondArg) {
-          if (firstArg === 'first' && secondArg === 'second') {
-            promise.resolve('pong');
-          } else {
-            promise.reject("Did not receive expected arguments.");
-          }
-        }
-      },
-
-      events: {
-        testResolvedToSatisfaction: function() {
-          start();
-          ok(true, "test was resolved to sandbox's satisfaction");
-        }
-      }
-    });
-
-    createSandbox({
-      url: 'fixtures/promise_request_from_environment_with_args.js',
-      services: {
-        promisepong: PingPongPromiseService
+        pong: PingPongPromiseService
       }
     });
 
@@ -479,8 +748,8 @@ function suite(adapter, extras) {
 
       var InceptionService = Oasis.Service.extend({
         initialize: function(port) {
-          port.onRequest('kick', function(promise) {
-            promise.resolve('kick');
+          port.onRequest('kick', function() {
+            return 'kick';
           });
 
           port.on('workPlacement', function() {
@@ -512,9 +781,9 @@ function suite(adapter, extras) {
 
       var InceptionService = Oasis.Service.extend({
         requests: {
-          kick: function(promise) {
-            promise.resolve('kick');
+          kick: function() {
             ok(this instanceof InceptionService, "The callback gets the service instance as `this`");
+            return 'kick';
           }
         },
 
@@ -971,9 +1240,9 @@ suite('iframe', function() {
 
     var OriginService = Oasis.Service.extend({
       requests: {
-        origin: function (promise) {
+        origin: function () {
           ok(true, "Sandbox requested origin.");
-          promise.resolve(location.protocol + '//' + location.host);
+          return location.protocol + '//' + location.host;
         }
       }
     });

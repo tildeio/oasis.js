@@ -4,8 +4,8 @@ var AssertionsConsumer = Oasis.Consumer.extend({
   },
 
   requests: {
-    ping: function(promise) {
-      promise.resolve("pong");
+    ping: function() {
+      return 'pong';
     }
   },
 
