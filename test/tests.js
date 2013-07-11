@@ -903,23 +903,26 @@ function suite(adapter, extras) {
       capabilities: ['assertions2']
     });
 
-    stop();
+    stop(2);
 
     var AssertionsService = Oasis.Service.extend({
       events: {
         ok1: function() {
           ok(true, "First event was fired");
 
+          start();
+
           sandbox2.start();
+
+          sandbox1.promise.then( function() {
+            sandbox1.terminate();
+          });
         },
 
         ok2: function() {
           ok(true, "Second event was fired");
 
-          sandbox1.promise.then( function() {
-            sandbox1.terminate();
-            start();
-          });
+          start();
         }
       }
     });
