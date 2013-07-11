@@ -1247,19 +1247,14 @@ suite('iframe', function() {
   });
 
   test("Sandboxes can post messages to their own nested (non-Oasis) iframes", function() {
+    var destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1),
+        sandboxUrl = destinationUrl +  "/fixtures/same_origin.js";
+
     Oasis.register({
-      url: "fixtures/same_origin.js",
-      capabilities: ['origin', 'assertions']
+      url: sandboxUrl,
+      capabilities: ['assertions']
     });
 
-    var OriginService = Oasis.Service.extend({
-      requests: {
-        origin: function () {
-          ok(true, "Sandbox requested origin.");
-          return location.protocol + '//' + location.host;
-        }
-      }
-    });
     var AssertionService = Oasis.Service.extend({
       events: {
         result: function (result) {
@@ -1272,12 +1267,12 @@ suite('iframe', function() {
     stop();
 
     createSandbox({
-      url: "fixtures/same_origin.js",
+      url: sandboxUrl,
       dependencies: ['fixtures/shims.js'],
       services: {
-        origin: OriginService,
         assertions: AssertionService
-      }
+      },
+      oasisURL: destinationUrl + '/vendor/oasis-custom-url.js.html'
     });
 
     sandbox.start();
