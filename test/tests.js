@@ -572,7 +572,7 @@ function suite(adapter, extras) {
 
   // Note: experimental API
   test("sandbox can fail a requst with an exception", function() {
-    expect(1);
+    expect(errorsHaveStacks ? 2 : 1);
     Oasis.register({
       url: "fixtures/simple_error.js",
       capabilities: ['pong']
@@ -585,7 +585,10 @@ function suite(adapter, extras) {
         port.request('ping').then(null, function(error) {
           start();
 
-          equal(error, 'badpong', "promise was rejected with expected error");
+          equal(error.message, 'badpong', "promise was rejected with expected error");
+          if (errorsHaveStacks) {
+            equal(typeof error.stack, 'string', "promise was rejected with error that included stack");
+          }
         });
       }
     });
@@ -681,7 +684,11 @@ function suite(adapter, extras) {
         ping: function() {
           return new Oasis.RSVP.Promise(function (resolve, reject) {
             setTimeout( function () {
-              reject('badpong');
+              try {
+                throw new Error('badpong');
+              } catch (error) {
+                reject(error);
+              }
             }, 1);
           });
         }
@@ -705,8 +712,8 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
-  test("the sandbox can respond to an environment request with a promise that rejects", function() {
-    expect(1);
+  test("sandbox can respond to an environment request with a promise that rejects", function() {
+    expect(errorsHaveStacks ? 2 : 1);
     Oasis.register({
       url: "fixtures/rejected_request_from_environment.js",
       capabilities: ['pong']
@@ -719,7 +726,11 @@ function suite(adapter, extras) {
         port.request('ping').then(null, function(error) {
           start();
 
-          equal(error, 'badpong', "promise was rejected with expected error");
+          equal(error.message, 'badpong', "promise was rejected with expected error");
+
+          if (errorsHaveStacks) {
+            equal(typeof error.stack, 'string', "promise was rejected with error that included stack");
+          }
         });
       }
     });

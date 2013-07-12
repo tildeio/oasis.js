@@ -10,16 +10,17 @@
 #### Experimental APIs
 
 - Request handlers may throw errors to indicate values could not be returned.
-  The message of any error thrown will be passed to the rejection handler of the
-  corresponding promise.  The stack trace is not passed along.
+  The message and stack of any error thrown will be passed to the rejection
+  handler of the corresponding promise in a simple object.
 
   Example:
     ```js
     // environment
     port.request('data').then(
       function(data) { /* ... */ },
-      function(errorMessage) {
-        console.error(errorMessage);
+      function(error) {
+        console.error(error.message);
+        console.log(error.stack);
       });
 
     // sandbox

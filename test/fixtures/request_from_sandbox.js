@@ -4,7 +4,7 @@ Oasis.connect('pong', function(port) {
       port.send('testResolvedToSatisfaction');
     }
   }, function (error) {
-    if (error === 'badpong') {
+    if (error.message === 'badpong') {
       port.send('testResolvedToSatisfaction');
     }
   });
