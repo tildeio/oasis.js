@@ -571,7 +571,7 @@ function suite(adapter, extras) {
   });
 
   // Note: experimental API
-  test("sandbox can fail a requst with an exception", function() {
+  test("sandbox can fail a request with an exception", function() {
     expect(errorsHaveStacks ? 2 : 1);
     Oasis.register({
       url: "fixtures/simple_error.js",
@@ -582,14 +582,7 @@ function suite(adapter, extras) {
 
     var PingPongService = Oasis.Service.extend({
       initialize: function(port, capability) {
-        port.request('ping').then(null, function(error) {
-          start();
-
-          equal(error.message, 'badpong', "promise was rejected with expected error");
-          if (errorsHaveStacks) {
-            equal(typeof error.stack, 'string', "promise was rejected with error that included stack");
-          }
-        });
+        this.sandbox.pingPongPort = port;
       }
     });
 
@@ -598,6 +591,16 @@ function suite(adapter, extras) {
       services: {
         pong: PingPongService
       }
+    });
+
+    sandbox.promise.then( function() {
+      sandbox.pingPongPort.request('ping').then(null, function(error) {
+        equal(error.message, 'badpong', "promise was rejected with expected error");
+        if (errorsHaveStacks) {
+          equal(typeof error.stack, 'string', "promise was rejected with error that included stack");
+        }
+        start();
+      });
     });
 
     sandbox.start();
