@@ -1263,6 +1263,76 @@ function suite(adapter, extras) {
 
     sandbox1.start();
   });
+
+  test("sandbox event callbacks can be wrapped", function() {
+    expect(2);
+    stop();
+    stop();
+
+    createSandbox({
+      url: 'fixtures/sandbox_wrapped_event_callbacks.js',
+      capabilities: ['wrappedEvents'],
+      services: {
+        wrappedEvents: Oasis.Service.extend({
+          initialize: function (port) {
+            this.sandbox.port = port;
+          },
+          events: {
+            wiretapResult: function (result) {
+              start();
+              ok(result, "Sandbox wiretap event handler was wrapped");
+            },
+            eventResult: function (result) {
+              start();
+              ok(result, "Sandbox event handler was wrapped");
+            }
+          }
+        })
+      }
+    });
+
+    sandbox.promise.then(function (sandbox) {
+      sandbox.port.send('wrapMe');
+    });
+
+    sandbox.start();
+  });
+
+  test("environment event callbacks can be wrapped", function() {
+    var inWrapper = false;
+    expect(2);
+    stop();
+    stop();
+
+    Oasis.configure('eventCallback', function (callback) {
+      inWrapper = true;
+      callback();
+      inWrapper = false;
+    });
+
+    createSandbox({
+      url: 'fixtures/environment_wrapped_event_callbacks.js',
+      capabilities: ['wrappedEvents'],
+      services: {
+        wrappedEvents: Oasis.Service.extend({
+          initialize: function (port) {
+            port.all( function () {
+              start();
+              equal(inWrapper, true, "Environment wiretap event handler was wrapped");
+            }, this);
+          },
+          events: {
+            wrapMe: function () {
+              start();
+              equal(inWrapper, true, "Environment event handler was wrapped");
+            }
+          }
+        })
+      }
+    });
+
+    sandbox.start();
+  });
 }
 
 suite('iframe', function() {
