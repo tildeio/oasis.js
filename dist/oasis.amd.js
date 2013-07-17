@@ -688,7 +688,11 @@ define("oasis",
           var requestId = data.requestId,
               args = data.args,
               getResponse = new RSVP.Promise(function (resolve, reject) {
-                resolve(callback.apply(binding, data.args));
+                try {
+                  resolve(callback.apply(binding, data.args));
+                } catch (error) {
+                  reject(error);
+                }
               });
 
           getResponse.then(function (value) {
