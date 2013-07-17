@@ -9,10 +9,14 @@ test("Assert not file://", function() {
   ok(window.location.protocol !== 'file:', "Please run the tests using a web server of some sort, not file://");
 });
 
-var sharedAdapter, sandbox;
+var sharedAdapter, sandbox,
+    destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
 
 function createSandbox(options) {
   if (options.adapter === undefined) { options.adapter = Oasis.adapters[sharedAdapter]; }
+  if( options.adapter === Oasis.adapters.iframe && !options.oasisURL ) {
+    options.oasisURL = destinationUrl + '/oasis.js.html';
+  }
   sandbox = Oasis.createSandbox(options);
 }
 
@@ -655,11 +659,7 @@ function suite(adapter, extras) {
 
     var PingPongPromiseService = Oasis.Service.extend({
       initialize: function(port, capability) {
-        port.request('ping').then(function(data) {
-          start();
-
-          equal(data, 'pong', "promise was resolved with expected value");
-        });
+        this.sandbox.pingPongPort = port;
       }
     });
 
@@ -668,6 +668,14 @@ function suite(adapter, extras) {
       services: {
         promisepong: PingPongPromiseService
       }
+    });
+
+    sandbox.promise.then( function() {
+      sandbox.pingPongPort.request('ping').then(function(data) {
+        start();
+
+        equal(data, 'pong', "promise was resolved with expected value");
+      });
     });
 
     sandbox.start();
@@ -864,7 +872,6 @@ function suite(adapter, extras) {
 
     test("Oasis' bootloader can be hosted on a separate domain", function() {
       expect(2);
-      var destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
 
       Oasis.register({
         url: "fixtures/assertions.js",
@@ -1247,19 +1254,13 @@ suite('iframe', function() {
   });
 
   test("Sandboxes can post messages to their own nested (non-Oasis) iframes", function() {
+    var sandboxUrl = destinationUrl +  "/fixtures/same_origin.js";
+
     Oasis.register({
-      url: "fixtures/same_origin.js",
-      capabilities: ['origin', 'assertions']
+      url: sandboxUrl,
+      capabilities: ['assertions']
     });
 
-    var OriginService = Oasis.Service.extend({
-      requests: {
-        origin: function () {
-          ok(true, "Sandbox requested origin.");
-          return location.protocol + '//' + location.host;
-        }
-      }
-    });
     var AssertionService = Oasis.Service.extend({
       events: {
         result: function (result) {
@@ -1272,12 +1273,12 @@ suite('iframe', function() {
     stop();
 
     createSandbox({
-      url: "fixtures/same_origin.js",
+      url: sandboxUrl,
       dependencies: ['fixtures/shims.js'],
       services: {
-        origin: OriginService,
         assertions: AssertionService
-      }
+      },
+      oasisURL: destinationUrl + '/vendor/oasis-custom-url.js.html'
     });
 
     sandbox.start();
