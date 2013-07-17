@@ -9,10 +9,14 @@ test("Assert not file://", function() {
   ok(window.location.protocol !== 'file:', "Please run the tests using a web server of some sort, not file://");
 });
 
-var sharedAdapter, sandbox;
+var sharedAdapter, sandbox,
+    destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
 
 function createSandbox(options) {
   if (options.adapter === undefined) { options.adapter = Oasis.adapters[sharedAdapter]; }
+  if( options.adapter === Oasis.adapters.iframe && !options.oasisURL ) {
+    options.oasisURL = destinationUrl + '/oasis.js.html';
+  }
   sandbox = Oasis.createSandbox(options);
 }
 
@@ -864,7 +868,6 @@ function suite(adapter, extras) {
 
     test("Oasis' bootloader can be hosted on a separate domain", function() {
       expect(2);
-      var destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
 
       Oasis.register({
         url: "fixtures/assertions.js",
@@ -1247,8 +1250,7 @@ suite('iframe', function() {
   });
 
   test("Sandboxes can post messages to their own nested (non-Oasis) iframes", function() {
-    var destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1),
-        sandboxUrl = destinationUrl +  "/fixtures/same_origin.js";
+    var sandboxUrl = destinationUrl +  "/fixtures/same_origin.js";
 
     Oasis.register({
       url: sandboxUrl,
