@@ -691,7 +691,7 @@ define("oasis",
                 resolve(callback.apply(binding, data.args));
               });
 
-          RSVP.resolve(getResponse).then(function (value) {
+          getResponse.then(function (value) {
             self.send('@response:' + eventName, {
               requestId: requestId,
               data: value
