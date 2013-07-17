@@ -659,11 +659,7 @@ function suite(adapter, extras) {
 
     var PingPongPromiseService = Oasis.Service.extend({
       initialize: function(port, capability) {
-        port.request('ping').then(function(data) {
-          start();
-
-          equal(data, 'pong', "promise was resolved with expected value");
-        });
+        this.sandbox.pingPongPort = port;
       }
     });
 
@@ -672,6 +668,14 @@ function suite(adapter, extras) {
       services: {
         promisepong: PingPongPromiseService
       }
+    });
+
+    sandbox.promise.then( function() {
+      sandbox.pingPongPort.request('ping').then(function(data) {
+        start();
+
+        equal(data, 'pong', "promise was resolved with expected value");
+      });
     });
 
     sandbox.start();
