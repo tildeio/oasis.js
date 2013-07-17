@@ -48,8 +48,8 @@ module.exports = function(grunt) {
     },
 
     watch: {
-      files: ['lib/**', 'vendor/*', 'test/tests/*'],
-      tasks: []
+      files: ['lib/**', 'test/tests.js'],
+      tasks: ['shell', 'copy']
     },
 
     copy: {
@@ -76,6 +76,12 @@ module.exports = function(grunt) {
           testInterval: 5000
         }
       }
+    },
+
+    shell: {
+      build: {
+        command: 'bundle exec rakep build'
+      }
     }
   });
 
@@ -84,8 +90,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-saucelabs');
+  grunt.loadNpmTasks('grunt-shell');
 
-  grunt.registerTask('test', ['copy', 'connect', 'saucelabs-qunit:all']);
-	grunt.registerTask('default', ['test']);
-	grunt.registerTask('server', ['copy', 'connect', 'watch']);
+  grunt.registerTask('saucelabs', ['copy', 'connect', 'saucelabs-qunit:all']);
+  grunt.registerTask('default', ['server']);
+  grunt.registerTask('server', ['copy', 'connect', 'watch']);
 };

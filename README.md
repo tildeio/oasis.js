@@ -200,11 +200,11 @@ directory:
 # Testing Oasis.js
 
 ```
-bundle exec rakep server
+grunt server
 ```
 
 Then point your browser to
 
 ```
-http://localhost:9292/index.html
+http://localhost:8000/index.html
 ```

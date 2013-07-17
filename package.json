@@ -4,7 +4,7 @@
   "description": "Oasis.js is a pleasant API for safe communication with untrusted code in sandboxed iframes.",
   "main": "index.js",
   "scripts": {
-    "test": "grunt"
+    "test": "grunt saucelabs"
   },
   "repository": {
     "type": "git",
@@ -18,6 +18,7 @@
     "grunt-saucelabs": "~4.0.4",
     "grunt-contrib-connect": "~0.3.0",
     "grunt-contrib-watch": "~0.4.4",
-    "grunt-contrib-copy": "~0.4.1"
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-shell": "~0.3.1"
   }
 }
