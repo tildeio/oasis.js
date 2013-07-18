@@ -1286,7 +1286,11 @@ define("oasis",
               args = data.args,
               getResponse = new RSVP.Promise(function (resolve, reject) {
                 try {
-                  resolve(callback.apply(binding, data.args));
+                  var value = callback.apply(binding, data.args);
+                  if (undefined === value) {
+                    reject("@request:" + eventName + " [" + data.requestId + "] did not return a value.  If you want to return a literal `undefined` return `RSVP.resolve(undefined)`");
+                  }
+                  resolve(value);
                 } catch (error) {
                   reject(error);
                 }
