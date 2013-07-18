@@ -993,7 +993,9 @@ define("oasis",
 
     function initializeSandbox () {
       if (typeof window !== 'undefined') {
-        iframeAdapter.connectSandbox(ports);
+        if (window.parent && window.parent !== window) {
+          iframeAdapter.connectSandbox(ports);
+        }
       } else {
         webworkerAdapter.connectSandbox(ports);
       }
