@@ -291,7 +291,6 @@ define("oasis",
           var consumer = new Consumer(port);
           State.consumers[name] = consumer;
           consumer.initialize(port, name);
-          port.start();
         };
       }
 
@@ -328,6 +327,7 @@ define("oasis",
         promise: defered.promise,
         setupCapability: function(port) {
           defered.resolve(port);
+          return defered.promise;
         },
         rejectCapability: function () {
           defered.reject();
@@ -344,8 +344,9 @@ define("oasis",
         if (handler) {
           Logger.log("Invoking handler for '" + capability + "'");
 
-          handler.setupCapability(port);
-          port.start();
+          RSVP.resolve(handler.setupCapability(port)).then(function () {
+            port.start();
+          });
         }
 
         ports[capability] = port;
