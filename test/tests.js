@@ -799,12 +799,12 @@ function suite(adapter, extras) {
       var InceptionService = Oasis.Service.extend({
         initialize: function(port) {
           port.onRequest('kick', function() {
-            return 'kick';
+            return 'kick1';
           });
 
-          port.on('workPlacement', function() {
+          port.on('workPlacement', function(value) {
             start();
-            ok(true, "messages between deeply nested sandboxes are sent");
+            equal(value, 'kick1', "messages between deeply nested sandboxes are sent");
           });
         }
       });
@@ -833,14 +833,14 @@ function suite(adapter, extras) {
         requests: {
           kick: function() {
             ok(this instanceof InceptionService, "The callback gets the service instance as `this`");
-            return 'kick';
+            return 'kick2';
           }
         },
 
         events: {
-          workPlacement: function() {
+          workPlacement: function(value) {
             start();
-            ok(true, "messages between deeply nested sandboxes are sent");
+            equal(value, 'kick2', "messages between deeply nested sandboxes are sent");
             ok(this instanceof InceptionService, "The callback gets the service instance as `this`");
           }
         }
