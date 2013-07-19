@@ -1266,8 +1266,7 @@ function suite(adapter, extras) {
 
   test("sandbox event callbacks can be wrapped", function() {
     expect(2);
-    stop();
-    stop();
+    stop(2);
 
     createSandbox({
       url: 'fixtures/sandbox_wrapped_event_callbacks.js',

@@ -146,12 +146,13 @@ define("oasis",
         function initializeOasisSandbox(event) {
           if (!event.data.isOasisInitialization) { return; }
 
+          removeEventListener(receiver, 'message', initializeOasisSandbox);
+
           configuration.eventCallback(function () {
             Logger.log("Sandbox initializing.");
 
             configuration.oasisURL = event.data.oasisURL;
 
-            removeEventListener(receiver, 'message', initializeOasisSandbox);
             adapter.loadScripts(event.data.base, event.data.scriptURLs);
 
             connectCapabilities(event.data.capabilities, event.ports);
@@ -420,9 +421,9 @@ define("oasis",
         }
 
         iframe.oasisLoadHandler = function () {
-          configuration.eventCallback(function () {
-            removeEventListener(iframe, 'load', iframe.oasisLoadHandler);
+          removeEventListener(iframe, 'load', iframe.oasisLoadHandler);
 
+          configuration.eventCallback(function () {
             sandbox.iframeLoaded = true;
 
             Logger.log("iframe loading oasis");
@@ -711,10 +712,11 @@ define("oasis",
               args = data.args,
               getResponse = new RSVP.Promise(function (resolve, reject) {
                 var value = callback.apply(binding, data.args);
-                if (undefined === value) {
+                if (undefined !== value) {
+                  resolve(value);
+                } else {
                   reject("@request:" + eventName + " [" + data.requestId + "] did not return a value.  If you want to return a literal `undefined` return `RSVP.resolve(undefined)`");
                 }
-                resolve(value);
               });
 
           getResponse.then(function (value) {
