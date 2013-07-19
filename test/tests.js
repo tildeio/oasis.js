@@ -799,12 +799,12 @@ function suite(adapter, extras) {
       var InceptionService = Oasis.Service.extend({
         initialize: function(port) {
           port.onRequest('kick', function() {
-            return 'kick';
+            return 'kick1';
           });
 
-          port.on('workPlacement', function() {
+          port.on('workPlacement', function(value) {
             start();
-            ok(true, "messages between deeply nested sandboxes are sent");
+            equal(value, 'kick1', "messages between deeply nested sandboxes are sent");
           });
         }
       });
@@ -833,14 +833,14 @@ function suite(adapter, extras) {
         requests: {
           kick: function() {
             ok(this instanceof InceptionService, "The callback gets the service instance as `this`");
-            return 'kick';
+            return 'kick2';
           }
         },
 
         events: {
-          workPlacement: function() {
+          workPlacement: function(value) {
             start();
-            ok(true, "messages between deeply nested sandboxes are sent");
+            equal(value, 'kick2', "messages between deeply nested sandboxes are sent");
             ok(this instanceof InceptionService, "The callback gets the service instance as `this`");
           }
         }
@@ -1262,6 +1262,76 @@ function suite(adapter, extras) {
     sandbox2 = sandbox;
 
     sandbox1.start();
+  });
+
+  test("sandbox event callbacks can be wrapped", function() {
+    expect(2);
+    stop();
+    stop();
+
+    createSandbox({
+      url: 'fixtures/sandbox_wrapped_event_callbacks.js',
+      capabilities: ['wrappedEvents'],
+      services: {
+        wrappedEvents: Oasis.Service.extend({
+          initialize: function (port) {
+            this.sandbox.port = port;
+          },
+          events: {
+            wiretapResult: function (result) {
+              start();
+              ok(result, "Sandbox wiretap event handler was wrapped");
+            },
+            eventResult: function (result) {
+              start();
+              ok(result, "Sandbox event handler was wrapped");
+            }
+          }
+        })
+      }
+    });
+
+    sandbox.promise.then(function (sandbox) {
+      sandbox.port.send('wrapMe');
+    });
+
+    sandbox.start();
+  });
+
+  test("environment event callbacks can be wrapped", function() {
+    var inWrapper = false;
+    expect(2);
+    stop();
+    stop();
+
+    Oasis.configure('eventCallback', function (callback) {
+      inWrapper = true;
+      callback();
+      inWrapper = false;
+    });
+
+    createSandbox({
+      url: 'fixtures/environment_wrapped_event_callbacks.js',
+      capabilities: ['wrappedEvents'],
+      services: {
+        wrappedEvents: Oasis.Service.extend({
+          initialize: function (port) {
+            port.all( function () {
+              start();
+              equal(inWrapper, true, "Environment wiretap event handler was wrapped");
+            }, this);
+          },
+          events: {
+            wrapMe: function () {
+              start();
+              equal(inWrapper, true, "Environment event handler was wrapped");
+            }
+          }
+        })
+      }
+    });
+
+    sandbox.start();
   });
 }
 
