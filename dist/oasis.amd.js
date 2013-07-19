@@ -710,15 +710,11 @@ define("oasis",
           var requestId = data.requestId,
               args = data.args,
               getResponse = new RSVP.Promise(function (resolve, reject) {
-                try {
-                  var value = callback.apply(binding, data.args);
-                  if (undefined === value) {
-                    reject("@request:" + eventName + " [" + data.requestId + "] did not return a value.  If you want to return a literal `undefined` return `RSVP.resolve(undefined)`");
-                  }
-                  resolve(value);
-                } catch (error) {
-                  reject(error);
+                var value = callback.apply(binding, data.args);
+                if (undefined === value) {
+                  reject("@request:" + eventName + " [" + data.requestId + "] did not return a value.  If you want to return a literal `undefined` return `RSVP.resolve(undefined)`");
                 }
+                resolve(value);
               });
 
           getResponse.then(function (value) {
