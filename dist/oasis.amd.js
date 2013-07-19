@@ -14,9 +14,7 @@ define("oasis",
 
     var Oasis = {};
 
-    //Logger.enable();
-
-    //verifySandbox();
+    // Logger.enable();
 
     Oasis.adapters = {
       iframe: iframeAdapter,
@@ -1425,15 +1423,6 @@ define("oasis",
       }
     }
 
-    function verifySandbox() {
-      var iframe = document.createElement('iframe');
-
-      iframe.sandbox = 'allow-scripts';
-      assert(iframe.getAttribute('sandbox') === 'allow-scripts', "The current version of Oasis requires Sandboxed iframes, which are not supported on your current platform. See http://caniuse.com/#feat=iframe-sandbox");
-
-      assert(typeof MessageChannel !== 'undefined', "The current version of Oasis requires MessageChannel, which is not supported on your current platform. A near-future version of Oasis will polyfill MessageChannel using the postMessage API");
-    }
-
     function mustImplement(className, name) {
       return function() {
         throw new Error("Subclasses of " + className + " must implement " + name);
@@ -1473,7 +1462,6 @@ define("oasis",
     __exports__.assert = assert;
     __exports__.extend = extend;
     __exports__.mustImplement = mustImplement;
-    __exports__.verifySandbox = verifySandbox;
     __exports__.rsvpErrorHandler = rsvpErrorHandler;
   });define("oasis/webworker_adapter",
   ["oasis/util", "oasis/config", "oasis/shims", "rsvp", "oasis/logger", "oasis/base_adapter"],
