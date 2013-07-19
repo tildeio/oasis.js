@@ -784,6 +784,39 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
+  test("sandboxes have access to ports & services via `sandbox.ports`", function() {
+    expect(2);
+    stop(2);
+
+    createSandbox({
+      url: 'fixtures/sandbox_ports.js',
+      capabilities: ['assertions', 'something', 'somethingElse'],
+      services: {
+        assertions: Oasis.Service.extend({
+          events: {
+            somethingOkay: function () {
+              start();
+              ok(true, "sandbox.ports could be used to send messages to named services");
+            },
+            somethingElseOkay: function () {
+              start();
+              ok(true, "sandbox.ports could be used to send messages to named services");
+            }
+          }
+        }),
+        something: Oasis.Service,
+        somethingElse: Oasis.Service
+      }
+    });
+
+    sandbox.promise.then(function () {
+      sandbox.ports.something.send('go');
+      sandbox.ports.somethingElse.send('go');
+    });
+
+    sandbox.start();
+  });
+
   // TODO: Get inception adapters working in web workers
   if (adapter === 'iframe') {
     test("ports sent to a sandbox can be passed to its child sandboxes", function() {
