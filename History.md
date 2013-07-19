@@ -1,5 +1,11 @@
 ### 0.2.0
 
+- Users may supply wrappers around event handlers via `Oasis.configure`.  The
+  default wrapper simply invokes the callback directly.
+```js
+Oasis.configure('eventHandler', function (callback) { callback(); });
+```
+
 #### Breaking Changes
 
 - Request handlers may not directly return literal `undefined` values.  Such
