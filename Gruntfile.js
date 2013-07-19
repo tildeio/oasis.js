@@ -72,7 +72,7 @@ module.exports = function(grunt) {
 					concurrency: 3,
 					browsers: browsers,
 					testname: "Oasis.js qunit tests",
-          testTimeout: 60 * 1000,
+          testTimeout: 3 * 60 * 1000,
           testInterval: 5000
         }
       }
