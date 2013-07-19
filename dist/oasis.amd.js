@@ -872,6 +872,7 @@ define("oasis",
       this.envPortDefereds = {};
       this.sandboxPortDefereds = {};
       this.channels = {};
+      this.ports = {};
       this.options = options;
 
       var loadPromise = adapter.initializeSandbox(this);
@@ -961,6 +962,7 @@ define("oasis",
             // Law of Demeter violation
             port = sandboxPort;
 
+            this.ports[capability] = environmentPort;
             this.envPortDefereds[capability].resolve(environmentPort);
           }
 
