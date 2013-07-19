@@ -756,6 +756,34 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
+  test("requests whose values are undefined are treated as failures", function() {
+    Oasis.register({
+      url: "fixtures/request_value_is_undefined.js",
+      capabilities: ['pong']
+    });
+
+    stop();
+
+    var PingPongService = Oasis.Service.extend({
+      initialize: function(port, capability) {
+        port.request('ping').then(null, function(error) {
+          start();
+
+          ok(/did not return a value/.test(error), "undefined request values are treated as errors");
+        });
+      }
+    });
+
+    createSandbox({
+      url: 'fixtures/request_value_is_undefined.js',
+      services: {
+        pong: PingPongService
+      }
+    });
+
+    sandbox.start();
+  });
+
   // TODO: Get inception adapters working in web workers
   if (adapter === 'iframe') {
     test("ports sent to a sandbox can be passed to its child sandboxes", function() {

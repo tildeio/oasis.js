@@ -2,6 +2,13 @@
 
 #### Breaking Changes
 
+- Request handlers may not directly return literal `undefined` values.  Such
+  return values are treated as errors to catch the common case of accidentally
+  failing to return a promise for asynchronous requests.  If you actually want
+  to return a literal `undefined` in a request handler do the following:
+  ```js
+    return RSVP.resolve(undefined);
+  ```
 - Request handlers are no longer passed a resolver.  Instead they may return
   values directly or return promises if the values need to be retrieved
   asynchronously.  Returned promises may reject, which will cause promise

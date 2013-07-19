@@ -291,7 +291,6 @@ define("oasis",
           var consumer = new Consumer(port);
           State.consumers[name] = consumer;
           consumer.initialize(port, name);
-          port.start();
         };
       }
 
@@ -328,6 +327,7 @@ define("oasis",
         promise: defered.promise,
         setupCapability: function(port) {
           defered.resolve(port);
+          return defered.promise;
         },
         rejectCapability: function () {
           defered.reject();
@@ -344,8 +344,9 @@ define("oasis",
         if (handler) {
           Logger.log("Invoking handler for '" + capability + "'");
 
-          handler.setupCapability(port);
-          port.start();
+          RSVP.resolve(handler.setupCapability(port)).then(function () {
+            port.start();
+          });
         }
 
         ports[capability] = port;
@@ -689,7 +690,11 @@ define("oasis",
               args = data.args,
               getResponse = new RSVP.Promise(function (resolve, reject) {
                 try {
-                  resolve(callback.apply(binding, data.args));
+                  var value = callback.apply(binding, data.args);
+                  if (undefined === value) {
+                    reject("@request:" + eventName + " [" + data.requestId + "] did not return a value.  If you want to return a literal `undefined` return `RSVP.resolve(undefined)`");
+                  }
+                  resolve(value);
                 } catch (error) {
                   reject(error);
                 }
@@ -992,7 +997,22 @@ define("oasis",
 
     function initializeSandbox () {
       if (typeof window !== 'undefined') {
-        iframeAdapter.connectSandbox(ports);
+        if (/PhantomJS/.test(navigator.userAgent)) {
+          // We don't support phantomjs for several reasons, including
+          //  - window.constructor vs Window
+          //  - postMessage must not have ports (but recall in IE postMessage must
+          //    have ports)
+          //  - because of the above we need to polyfill, but we fail to do so
+          //    because we see MessageChannel in global object
+          //  - we erroneously try to decode the oasis load message; alternatively
+          //    we should just encode the init message
+          //  - all the things we haven't noticed yet
+          return;
+        }
+
+        if (window.parent && window.parent !== window) {
+          iframeAdapter.connectSandbox(ports);
+        }
       } else {
         webworkerAdapter.connectSandbox(ports);
       }
