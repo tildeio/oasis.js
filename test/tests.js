@@ -784,7 +784,7 @@ function suite(adapter, extras) {
     sandbox.start();
   });
 
-  test("sandboxes have access to ports & services via `sandbox.ports`", function() {
+  test("sandboxes have access to ports & services via `sandbox.capabilities`", function() {
     expect(2);
     stop(2);
 
@@ -796,11 +796,11 @@ function suite(adapter, extras) {
           events: {
             somethingOkay: function () {
               start();
-              ok(true, "sandbox.ports could be used to send messages to named services");
+              ok(true, "sandbox.capabilities could be used to send messages to named services");
             },
             somethingElseOkay: function () {
               start();
-              ok(true, "sandbox.ports could be used to send messages to named services");
+              ok(true, "sandbox.capabilities could be used to send messages to named services");
             }
           }
         }),
@@ -810,8 +810,38 @@ function suite(adapter, extras) {
     });
 
     sandbox.promise.then(function () {
-      sandbox.ports.something.send('go');
-      sandbox.ports.somethingElse.send('go');
+      sandbox.capabilities.something.send('go');
+      sandbox.capabilities.somethingElse.send('go');
+    });
+
+    sandbox.start();
+  });
+
+  test("sandboxes have access to services via `sandbox.capabilities`", function() {
+    expect(2);
+    stop();
+
+    var LocalService = Oasis.Service.extend({ }),
+        adapter = Oasis.adapters[sharedAdapter],
+        channel = adapter.createChannel(),
+        port = channel.port2;
+
+    createSandbox({
+      url: 'fixtures/index.js',
+      capabilities: ['serviceCapability', 'portCapability'],
+      services: {
+        serviceCapability: LocalService,
+        portCapability: port
+      }
+    });
+
+    sandbox.promise.then(function () {
+      var capabilities = sandbox.capabilities;
+
+      ok(capabilities.serviceCapability instanceof LocalService, "The capability has an associated service");
+      equal(capabilities.portCapability, port, "The capability has an associated port");
+
+      start();
     });
 
     sandbox.start();
