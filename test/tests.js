@@ -1237,6 +1237,7 @@ function suite(adapter, extras) {
 
   test("Sandboxes can ask for ports directly via portFor", function() {
     expect(3);
+    stop(2);
 
     var AssertionService = Oasis.Service.extend({
       events: {
@@ -1263,9 +1264,6 @@ function suite(adapter, extras) {
         assertions: AssertionService
       }
     });
-
-    stop();
-    stop();
 
     sandbox.start();
   });
@@ -1336,9 +1334,6 @@ function suite(adapter, extras) {
       capabilities: ['wrappedEvents'],
       services: {
         wrappedEvents: Oasis.Service.extend({
-          initialize: function (port) {
-            this.sandbox.port = port;
-          },
           events: {
             wiretapResult: function (result) {
               start();
@@ -1354,7 +1349,7 @@ function suite(adapter, extras) {
     });
 
     sandbox.promise.then(function (sandbox) {
-      sandbox.port.send('wrapMe');
+      sandbox.capabilities.wrappedEvents.send('wrapMe');
     });
 
     sandbox.start();
@@ -1363,8 +1358,7 @@ function suite(adapter, extras) {
   test("environment event callbacks can be wrapped", function() {
     var inWrapper = false;
     expect(2);
-    stop();
-    stop();
+    stop(2);
 
     Oasis.configure('eventCallback', function (callback) {
       inWrapper = true;
@@ -1409,11 +1403,11 @@ suite('iframe', function() {
     });
 
     ok(sandbox.el instanceof window.HTMLIFrameElement, "A new iframe was returned");
-
-    sandbox.start();
   });
 
   test("Sandboxes can post messages to their own nested (non-Oasis) iframes", function() {
+    stop();
+
     var sandboxUrl = destinationUrl +  "/fixtures/same_origin.js";
 
     Oasis.register({
@@ -1429,8 +1423,6 @@ suite('iframe', function() {
         }
       }
     });
-
-    stop();
 
     createSandbox({
       url: sandboxUrl,
@@ -1463,11 +1455,11 @@ suite('iframe', function() {
   test("Sandboxes ignore secondary initialization messages", function() {
     // If the second initialization message runs, two 'ok' events will be sent.
     expect(1);
+    stop();
 
     var AssertionsService = Oasis.Service.extend({
       events: {
         ok: function (data) {
-          start();
           equal(data, 'success', "Sandbox communicated.");
 
           sandbox.el.contentWindow.postMessage({
@@ -1476,6 +1468,8 @@ suite('iframe', function() {
             base: getBase(),
             scriptURLs: ['fixtures/assertions.js']
           }, '*');
+
+          start();
         }
       }
     });
@@ -1488,7 +1482,6 @@ suite('iframe', function() {
       }
     });
 
-    stop();
     sandbox.start();
   });
 });
