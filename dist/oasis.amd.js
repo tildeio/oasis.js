@@ -169,7 +169,7 @@ define("oasis",
 
         return {
           isOasisInitialization: true,
-          capabilities: sandbox.capabilities,
+          capabilities: sandbox._capabilitiesToConnect,
           base: getBase(),
           scriptURLs: scriptURLs,
           oasisURL: this.oasisURL(sandbox)
@@ -866,16 +866,16 @@ define("oasis",
 
       var adapter = this.adapter = options.adapter || iframeAdapter;
 
-      this.capabilities = capabilities;
+      this._capabilitiesToConnect = capabilities;
       this.envPortDefereds = {};
       this.sandboxPortDefereds = {};
       this.channels = {};
-      this.ports = {};
+      this.capabilities = {};
       this.options = options;
 
       var loadPromise = adapter.initializeSandbox(this);
 
-      a_forEach.call(this.capabilities, function(capability) {
+      a_forEach.call(capabilities, function(capability) {
         this.envPortDefereds[capability] = RSVP.defer();
         this.sandboxPortDefereds[capability] = RSVP.defer();
       }, this);
@@ -904,7 +904,7 @@ define("oasis",
         var sandbox = this,
             services = this.options.services || {},
             channels = this.channels;
-        a_forEach.call(this.capabilities, function (capability) {
+        a_forEach.call(this._capabilitiesToConnect, function (capability) {
 
           Logger.log("Will create port for '" + capability + "'");
           var service = services[capability],
@@ -916,6 +916,7 @@ define("oasis",
           // TODO: This should probably be an OasisPort if possible
           if (service instanceof OasisPort) {
             port = this.adapter.proxyPort(this, service);
+            this.capabilities[capability] = service;
           } else {
             channel = channels[capability] = this.adapter.createChannel();
 
@@ -955,12 +956,12 @@ define("oasis",
               service = new service(environmentPort, this);
               service.initialize(environmentPort, capability);
               State.services.push(service);
+              this.capabilities[capability] = service;
             }
 
             // Law of Demeter violation
             port = sandboxPort;
 
-            this.ports[capability] = environmentPort;
             this.envPortDefereds[capability].resolve(environmentPort);
           }
 
@@ -980,7 +981,7 @@ define("oasis",
       connectPorts: function () {
         var sandbox = this;
 
-        var allSandboxPortPromises = a_reduce.call(this.capabilities, function (accumulator, capability) {
+        var allSandboxPortPromises = a_reduce.call(this._capabilitiesToConnect, function (accumulator, capability) {
           return accumulator.concat(sandbox.sandboxPortDefereds[capability].promise);
         }, []);
 
