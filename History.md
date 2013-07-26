@@ -4,7 +4,7 @@
 ```js
   sandbox.promise.then(function () {
     // This only works for non-transfered ports
-    sandbox.ports.someCapability.send('something');
+    sandbox.capabilities.someCapability.send('something');
   });
 ```
 - Users may supply wrappers around event handlers via `Oasis.configure`.  The
