@@ -1,6 +1,6 @@
 (function() {
 
-QUnit.config.testTimeout = 15000;
+QUnit.config.testTimeout = 60 * 1000;
 
 module("Oasis");
 
