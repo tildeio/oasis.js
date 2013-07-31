@@ -3,7 +3,6 @@ define("oasis",
   function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, State, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
-    var verifySandbox = __dependency1__.verifySandbox;
     var configuration = __dependency2__.configuration;
     var configure = __dependency2__.configure;
     var registerHandler = __dependency3__.registerHandler;
@@ -188,9 +187,11 @@ define("oasis",
       - `oasisURL` - the default URL to use for sandboxes.
       - `eventCallback` - a function that wraps `message` event handlers.  By
         default the event hanlder is simply invoked.
+      - `allowSameOrigin` - a card can be hosted on the same domain
     */
     var configuration = {
-      eventCallback: function (callback) { callback(); }
+      eventCallback: function (callback) { callback(); },
+      allowSameOrigin: false
     };
 
     function configure(name, value) {
@@ -400,11 +401,29 @@ define("oasis",
     var a_map = __dependency3__.a_map;
 
 
+    function verifySandbox(sandboxUrl) {
+      var iframe = document.createElement('iframe'),
+          link;
+
+      if( !configuration.allowSameOrigin && iframe.sandbox === undefined ) {
+        // The sandbox attribute isn't supported,
+        // we need to make sure the sandbox is loaded from a separate domain
+        link = document.createElement('a');
+        link.href = sandboxUrl;
+
+        if( !link.host || (link.protocol === window.location.protocol && link.host === window.location.host) ) {
+          throw "Loading an iframe from the same host is a potential security breach";
+        }
+      }
+    }
+
     var IframeAdapter = extend(BaseAdapter, {
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
             iframe = document.createElement('iframe'),
             oasisURL = this.oasisURL(sandbox);
+
+        verifySandbox( oasisURL );
 
         iframe.name = sandbox.options.url;
         iframe.sandbox = 'allow-scripts';
