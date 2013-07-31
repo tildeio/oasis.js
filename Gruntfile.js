@@ -40,9 +40,15 @@ module.exports = function(grunt) {
         }
       },
 
-      otherDomain: {
+      childServer: {
         options: {
           port: 8001
+        }
+      },
+
+      grandChildServer: {
+        options: {
+          port: 8003
         }
       }
     },
