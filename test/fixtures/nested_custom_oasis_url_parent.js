@@ -1,3 +1,5 @@
+Oasis.config.allowSameOrigin = true;
+
 Oasis.connect('assertions', function(port) {
   Oasis.register({
     url: 'fixtures/nested_custom_oasis_url_child.js',

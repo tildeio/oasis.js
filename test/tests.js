@@ -23,6 +23,7 @@ function suite(adapter, extras) {
   module("Oasis.createSandbox (for the " + adapter + " adapter)", {
     setup: function() {
       sharedAdapter = adapter;
+      Oasis.config.allowSameOrigin = false;
     },
 
     teardown: function() {
@@ -952,7 +953,7 @@ function suite(adapter, extras) {
         services: {
           assertions: AssertionService
         },
-        oasisURL: '/vendor/oasis-custom-url.js.html'
+        oasisURL: destinationUrl + '/vendor/oasis-custom-url.js.html'
       });
 
       stop();
@@ -1402,6 +1403,18 @@ suite('iframe', function() {
     });
 
     ok(sandbox.el instanceof window.HTMLIFrameElement, "A new iframe was returned");
+  });
+
+  test("A card can be loaded from the same domain with `Oasis.config.allowSameOrigin` sets to true", function() {
+    Oasis.config.allowSameOrigin = true;
+
+    createSandbox({
+      url: "fixtures/index.js",
+      capabilities: [],
+      oasisURL: "/oasis.js.html"
+    });
+
+    ok(true, "Oasis can be loaded from the same domain");
   });
 
   test("Sandboxes can post messages to their own nested (non-Oasis) iframes", function() {
