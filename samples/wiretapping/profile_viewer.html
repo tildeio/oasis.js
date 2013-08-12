@@ -13,6 +13,8 @@
       Oasis.connect('account').then(function(port) {
         port.request('profile').then(function(profile) {
           $("#email").html(profile.email);
+
+          port.send('thanks');
         });
       });
     </script>

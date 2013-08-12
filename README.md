@@ -17,18 +17,19 @@ Here is what your application would look like:
 
 <html>
   <head>
-    <script src="http://example.com/oasis-environment.js"></script>
+    <script src="http://example.com/oasis.js.html"></script>
   </head>
   <body>
     <script>
       var sandbox = Oasis.createSandbox({
         url: 'http://example.com/profile_viewer.html',
+        type: 'html',
         capabilities: [ 'account' ]
       });
 
       sandbox.connect('account').then(function(port) {
-        port.fulfill('profile', function(promise) {
-          promise.resolve({ email: 'wycats@gmail.com' });
+        port.onRequest('profile', function () {
+          return { email: 'wycats@gmail.com' };
         });
       });
 
@@ -47,7 +48,7 @@ or a third-party's domain):
 <html>
   <head>
     <script src="http://example.com/jquery.js"></script>
-    <script src="http://example.com/oasis-sandbox.js"></script>
+    <script src="http://example.com/oasis.js.html"></script>
   </head>
   <body>
     <div>
@@ -64,147 +65,238 @@ or a third-party's domain):
 </html>
 ```
 
-# Features
+# API
 
-Oasis uses the web's sandboxing mechanism to isolate untrusted code from
-an application.
+## Creating Sandboxes
 
-Using the Oasis API, you can expose capabilities that allow the sandboxed
-code and your application to communicate in a predictable and secure way.
+Sandboxed applications or widgets can be hosted as JavaScript or HTML.  Both can
+be sandboxed inside an iframe, but Oasis can also sandbox JavaScript widgets
+inside a web worker.
 
-You can send a message from your application to the sandbox:
+Sandboxes are created via the `createSandbox` API.
 
-```javascript
-sandbox.connect('person').then(function(port) {
-  port.send('person', {
-    firstName: "Tom",
-    lastName: "Dale"
-  });
+Here is an example of creating an iframe sandbox for a JavaScript widget:
+```js
+Oasis.createSandbox({
+  url: 'http://example.com/profile_viewer.js',
+  capabilities: [ 'account' ]
 });
 ```
 
-You can send a message from the sandbox to the application:
+When creating JavaScript sandboxes it is necessary to host Oasis on the same
+domain as the sandboxed JavaScript (see [Browser Support](#Browser_Support)).
 
-```javascript
-Oasis.connect('person').then(function(port) {
-  port.send('updatePerson', {
-    firstName: "Scumbag",
-    lastName: "Dale"
-  });
+Here is an example of creating an iframe sandbox for an HTML widget:
+```js
+Oasis.createSandbox({
+  url: 'http://example.com/profile_viewer.html',
+  type: 'html',
+  capabilities: [ 'account' ]
 });
 ```
 
-You can also request information that the other side of the channel can resolve asynchronously. In the sandbox, we chain the promises together for simplicity:
+When creating HTML sandboxes, it is the sandbox's responsibility to load Oasis
+(typically via a script tag in the head element).
 
-```javascript
-// application
-sandbox.connect('data').then(function(port) {
-  return port.receive('data'), function(promise) {
-    promise.resolve({
-      firstName: "Tom",
-      lastName: "Dale"
+Sandboxed widgets that require no UI can be loaded as web workers:
+```js
+  url: 'http://example.com/profile_information.js',
+  capabilities: [ 'account' ],
+  adapter: Oasis.adapters.webworker
+```
+
+## Connecting to Ports Directly
+
+For simple applications it can be convenient to connect directly to ports for
+a provided capability.
+
+When doing so, you can send messages via `send`.  Messages can be sent in either
+direction.
+```js
+  // in the environment
+  sandbox.connect('account').then(function(port) {
+    port.send('greeting', 'Hello World!')
+  });
+
+  // in the sandbox
+  Oasis.connect('account').then(function(port) {
+    port.on('greeting', function (message) {
+      document.body.innerHTML = '<strong>' + message + '</strong>';
     });
   });
-});
-
-// sandbox
-Oasis.connect('data').then(function(port) {
-  return port.request('data');
-}).then(function(data) {
-  var html = personTemplate(data);
-  document.body.innerHTML = html;
-});
 ```
 
-Oasis aims to streamline the process for communicating with sandboxed
-code. As the web platform's support for sandboxed code continues to mature,
-Oasis will provide a consistent interface that takes advantage of native
-platform support. We will also extend a large subset of those features
-to older browsers using the same interface.
+You can also request data via `request` and respond to data via `onRequest`.
+```js
+  // in the environment
+  sandbox.connect('account').then(function(port) {
+    port.onRequest('profile', function () {
+      return { name: 'Yehuda Katz' };
+    })
+  });
 
-While Oasis will eventually support browsers as old as IE8, we will not
-support older browsers without `postMessage` support.
+  // in the sandbox
+  Oasis.connect('account').then(function(port) {
+    port.request('profile').then( function (name) {
+      document.body.innerHTML = 'Hello ' + name;
+    });
+  });
+```
 
-# Requirements
+You can also respond to requests with promises, in case you need to retrieve the
+data asynchronously.  This example uses
+[rsvp](http://github.com/tildeio/rsvp.js), but any
+[Promises/A+](http://promises-aplus.github.com/promises-spec/) implementation is
+supported.
+```js
+  // in the environment
+  sandbox.connect('account').then(function(port) {
+    port.onRequest('profile', function () {
+      return new Oasis.RSVP.Promise( function (resolve, reject) {
+        setTimeout( function () {
+          // Here we're using `setTimeout`, but a more realistic case would
+          // involve XMLHttpRequest, IndexedDB, FileSystem &c.
+          resolve({ name: 'Yehuda Katz' });
+        }, 1);
+      });
+    })
+  });
 
-Oasis.js is designed to take advantage of current and upcoming features
-in modern browsers.
+  // in the sandbox
+  Oasis.connect('account').then(function(port) {
+    // the sandbox code remains unchanged
+    port.request('profile').then( function (name) {
+      document.body.innerHTML = 'Hello ' + name;
+    });
+  });
+```
 
-* `<iframe sandbox>`: An HTML5 feature that allows strict sandboxing of
-  content, even served on the same domain. Available in all Evergreen
-  browsers and IE10+.
-* `<iframe seamless>`: An HTML5 feature that allows embedding resizable
-  content in a page, as well as inheriting CSS styles from its
-  environment. This is not strictly required, but Oasis does not yet
-  provide any resizing support for embedded content. This feature is
-  not yet in any stable browser.
-* `MessageChannel`: An HTML5 feature that allows granular communication
-  between iframes. It replaces the need to do cumbersome multiplexing
-  over a single `postMessage` channel. Available in all Evergreen
-  browsers (and IE10+) with the notable exception of Firefox.
-* `postMessage` structured data: An HTML5 feature that allows sending
-  structured data, not just strings, over `postMessage`
+## Using Services and Consumers
 
-Moving forward, we plan to minimally polyfill these features so that
-Oasis can be used in older browsers.
+You can provide services for a sandbox's capabilities to take advantage of a
+shorthand for specifying events and request handlers.
 
-For resizing, we plan to provide a built-in service that sandboxes can
-use to communicate their appropriate size for browsers that do not
-support seamless iframes.
+```js
+  var AccountService = Oasis.Service.extend();
+  var sandbox = Oasis.createSandbox({
+    url: 'http://example.com/profile_viewer.js',
+    capabilities: [ 'account' ],
+    services: {
+      account: AccountService
+    }
+  });
+```
 
-For `MessageChannel`, we plan to provide a minimal polyfill based on
-multiplexing `postMessage`.
+This functionality is available within the sandbox as well: simply specify
+consumers when connecting, rather than connecting to each port individually.
 
-For `<iframe sandbox>`, we plan to provide a way to use generated
-subdomains to sandbox content. *Note that sandboxes are not required for
-content already hosted on a separate domain from the containing
-environment.*
+```js
+var AccountConsumer = Oasis.Consumer.extend();
+Oasis.connect({
+  consumers: {
+    account: AccountConsumer
+  }
+})
+```
 
-For structured data, we plan to use the existing `postMessage` API but
-serialize and deserialize the structured data. 
+Services and Consumers can use an `events` shorthand for conveniently defining
+event handlers:
+```js
+  var AccountService = Oasis.Service.extend({
+    events: {
+      updatedName: function(newName) {
+        user.set('name', newName);
+      }
+    }
+  });
+```
 
-You should expect Oasis to gain support for IE8+, Safari 6, stable
-Firefox, stable Chrome, and stable Opera in the future.
+They can also use a `requests` shorthand for easily defining request handlers.
+```js
+  var UserService = Oasis.Service.extend({
+    requests: {
+      basicInformation: function(user) {
+        switch (user) {
+          case 'wycats':
+            return { name: 'Yehuda Katz' };
+          case 'hjdivad':
+            return { name: 'David J. Hamilton' };
+        }
+      },
 
-## TODO
+      // The `requests` shorthand also supports asynchronous responses via
+      // promises.
+      extraInformation: function(user) {
+        return new Oasis.RSVP.Promise( function (resolve, reject) {
+          // if `loadExtraInformationAsynchronously` returned a promise we could
+          // return it directly, as with jQuery's `ajax`.
+          loadExtraInformationAsynchronously( function(userInformation) {
+            resolve(userInformation);
+          });
+        });
+      }
+    }
+  });
+```
 
-* Rename (or alias) `capabilities` to `services`
+## Wiretapping Sandboxes
+
+Sometimes it's helpful to listen to many, or even all, messages sent to or
+received from, a sandbox.  This can be particularly useful in testing.
+
+```js
+  sandbox.wiretap( function(capability, message) {
+    console.log(capability, message.type, message.data, message.direction);
+  });
+```
+
+# Requirements & Browser Support
+
+Oasis.js is designed to take advantage of current and upcoming features in
+modern browsers.
+
+- `<iframe sandbox>`: An HTML5 feature that allows strict sandboxing of content,
+  even served on the same domain.  Available in all Evergreen browsers and
+  IE10+.
+- `MessageChannel`: An HTML5 feature that allows granular communication between
+  iframes.  It replaces the need to do cumbersome multiplexing over a single
+  `postMessage` channel.  Available in all Evergreen browsers (and IE10+) with
+  the exception of Firefox.
+- `postMessage` structured data: An HTML5 feature that allows sending structured
+  data, not just strings, over `postMessage`.
+
+Oasis.js supports Chrome, Firefox, Safari 6, and Internet Explorer 8+.  Support
+for older browsers depends on polyfills.
+
+- [MessageChannel.js](https://github.com/tildeio/MessageChannel.js) polyfills
+  `MessageChannel` where it is unavailable (IE8, IE9 and Firefox).
+- [Kamino.js](https://github.com/tildeio/kamino.js) polyfills `postMessage`
+  structured data for Internet Explorer.
+
+Support for IE8 and IE9 depends on the sandboxes being hosted on an origin that
+differs from the environment, as these versions of IE do not support `<iframe
+sandbox>`.  Oasis.js will refuse to create a sandbox if the sandbox attribute is
+not supported and the domains are the same.
 
 # Building Oasis.js
 
-Oasis uses [Rake::Pipeline](1) and [JsModuleTranspiler](2) to use the
-same source to create two builds of the library: one for use as a
-traditional browser library, and another for AMD users.
-
-[1]: https://github.com/livingsocial/rake-pipeline
-[2]: https://github.com/wycats/js_module_transpiler
-
-To build Oasis, first install the dependencies:
-
+Make sure you have node and grunt installed.  Then, run:
+```sh
+npm install
+grunt build
 ```
-bundle
-```
-
-Then, run the `build` Rake task:
-
-```
-bundle exec rake build
-```
-
-After this command completes, you'll find two files inside the `dist`
-directory:
-
-* `oasis.js`, which exports the library as the global variable `Oasis`
-* `oasis.amd.js`, for use with an AMD loader like require.js
 
 # Testing Oasis.js
 
-```
+To run the Oasis.js test, run:
+```sh
 grunt server
 ```
 
-Then point your browser to
+Then navigate to `http://localhost:8000`
 
-```
-http://localhost:8000/index.html
-```
+
+# Samples
+
+The easiest way to see the samples is to run the test server and navigate to
+`http://localhost:8000/samples`.
