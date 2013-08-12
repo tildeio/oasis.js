@@ -3,9 +3,7 @@
   "version": "0.2.0",
   "description": "Oasis.js is a pleasant API for safe communication with untrusted code in sandboxed iframes.",
   "main": "index.js",
-  "scripts": {
-    "test": "grunt saucelabs"
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/tildeio/oasis.js.git"
@@ -19,6 +17,17 @@
     "grunt-contrib-connect": "~0.3.0",
     "grunt-contrib-watch": "~0.4.4",
     "grunt-contrib-copy": "~0.4.1",
-    "grunt-shell": "~0.3.1"
+    "grunt-shell": "~0.3.1",
+    "matchdep": "~0.1.2",
+    "grunt-es6-module-transpiler": "git://github.com/stefanpenner/grunt-es6-module-transpiler.git",
+    "grunt-contrib-jshint": "~0.6.2",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-uglify": "~0.2.2",
+    "lockfile": "~0.4.0",
+    "grunt-contrib-symlink": "~0.2.0"
+  },
+  "dependencies": {
+    "rsvp": "~2.0.1"
   }
 }
