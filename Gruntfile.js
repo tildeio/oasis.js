@@ -1,104 +1,46 @@
 module.exports = function(grunt) {
-	var browsers = [{
-		browserName: 'chrome',
-		version: '27',
-		platform: 'Windows 8'
-	},{
-		browserName: 'firefox',
-		version: '21',
-		platform: 'Windows 8'
-	},{
-		browserName: 'safari',
-		version: '6',
-		platform: 'OS X 10.8'
-	},{
-		browserName: 'internet explorer',
-		version: '10',
-		platform: 'Windows 8'
-	},{
-		browserName: 'internet explorer',
-		version: '9',
-		platform: 'Windows 7'
-	},{
-		browserName: 'internet explorer',
-		version: '8',
-		platform: 'Windows 7'
-	}];
+  require('matchdep').
+    filterDev('grunt-*').
+    filter(function(name){ return name !== 'grunt-cli'; }).
+      forEach(grunt.loadNpmTasks);
+
+  grunt.loadTasks('tasks');
+
+  function config(configFileName) {
+    return require('./configurations/' + configFileName);
+  }
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    env: process.env,
 
-    connect: {
-      options: {
-        base: 'tmp/tests',
-        hostname: '*'
-      },
+    clean: ["tmp", "dist/*"],
 
-      server: {
-        options: {
-          port: 8000
-        }
-      },
+    transpile: config('transpile'),
+    jshint: config('jshint'),
+    concat: config('concat'),
+    uglify: config('uglify'),
+    copy: config('copy'),
+    symlink: config('symlink'),
 
-      childServer: {
-        options: {
-          port: 8001
-        }
-      },
+    'saucelabs-qunit': config('saucelabs-qunit'),
 
-      grandChildServer: {
-        options: {
-          port: 8003
-        }
-      }
-    },
-
-    watch: {
-      files: ['lib/**', 'test/**'],
-      tasks: ['shell', 'copy']
-    },
-
-    copy: {
-      main: {
-        files: [
-          {expand: true, cwd: 'dist/', src: ['**'], dest: 'tmp/tests/'}, // includes files in path
-          {expand: true, cwd: 'test/', src: ['**'], dest: 'tmp/tests/'} // includes files in path
-        ]
-      }
-    },
-
-    'saucelabs-qunit': {
-      all: {
-        options: {
-          urls: [
-            'http://localhost:8000/index.html'
-          ],
-          tunnelTimeout: 5,
-					build: process.env.TRAVIS_BUILD_NUMBER,
-					concurrency: 3,
-					browsers: browsers,
-					testname: "Oasis.js qunit tests",
-          testTimeout: 3 * 60 * 1000,
-          testInterval: 5000
-        }
-      }
-    },
-
-    shell: {
-      build: {
-        command: 'bundle exec rakep build'
-      }
-    }
+    connect: config('connect'),
+    watch: config('watch'),
   });
 
-  // Load tasks from npm
-  grunt.loadNpmTasks('grunt-contrib-connect');
-  grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-contrib-copy');
-  grunt.loadNpmTasks('grunt-saucelabs');
-  grunt.loadNpmTasks('grunt-shell');
+  grunt.registerTask("jsframe", function(){
+    var fs = require('fs'),
+        jsf = require('jsframe'),
+        out = fs.openSync('dist/oasis.js.html', 'w'),
+        outMin = fs.openSync('dist/oasis.min.js.html', 'w');
 
-  grunt.registerTask('saucelabs', ['copy', 'connect', 'saucelabs-qunit:all']);
-  grunt.registerTask('default', ['server']);
-  grunt.registerTask('server', ['copy', 'connect', 'watch']);
+    jsf.process('tmp/oasis.js', out);
+    jsf.process('tmp/oasis.min.js', outMin);
+  });
+  grunt.registerTask('build', ['transpile', 'jshint', 'concat', 'uglify', 'jsframe', 'copy', 'symlink']);
+
+  grunt.registerTask('default', ['build']);
+  grunt.registerTask('server', ['connect', 'watch']);
+  grunt.registerTask('test:ci', ['build', 'connect', 'saucelabs-qunit:all']);
 };
