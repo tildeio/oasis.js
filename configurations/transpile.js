@@ -5,7 +5,12 @@ module.exports = {
       expand: true,
       cwd: 'lib/',
       src: ['**/*.js'],
-      dest: 'tmp/oasis'
+      dest: 'tmp/amd/'
+    }, {
+      expand: true,
+      cwd: 'tmp/',
+      src: ['oasis/**/*.js'],
+      dest: 'tmp/amd/'
     }]
   },
 

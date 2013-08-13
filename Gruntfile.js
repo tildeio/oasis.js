@@ -1,4 +1,6 @@
 module.exports = function(grunt) {
+  var path = require('path');
+
   require('matchdep').
     filterDev('grunt-*').
     filter(function(name){ return name !== 'grunt-cli'; }).
@@ -29,6 +31,16 @@ module.exports = function(grunt) {
     watch: config('watch'),
   });
 
+  grunt.registerTask("jst", function () {
+    grunt.file.expand({ cwd: 'template/' }, '**/*.jst').forEach(function(templatePath) {
+      var dir = path.dirname(templatePath),
+          base = path.basename(templatePath, path.extname(templatePath));
+
+      grunt.file.mkdir(path.join('tmp', dir));
+      grunt.file.write(path.join('tmp', dir, base + '.js'), grunt.template.process(grunt.file.read('template/' + templatePath)));
+    });
+  });
+
   grunt.registerTask("jsframe", function(){
     var fs = require('fs'),
         jsf = require('jsframe'),
@@ -38,7 +50,7 @@ module.exports = function(grunt) {
     jsf.process('tmp/oasis.js', out);
     jsf.process('tmp/oasis.min.js', outMin);
   });
-  grunt.registerTask('build', ['transpile', 'jshint', 'concat', 'uglify', 'jsframe', 'copy', 'symlink']);
+  grunt.registerTask('build', ['jst', 'transpile', 'jshint', 'concat', 'uglify', 'jsframe', 'copy', 'symlink']);
 
   grunt.registerTask('default', ['build']);
   grunt.registerTask('server', ['connect', 'watch']);

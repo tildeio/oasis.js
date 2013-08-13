@@ -1,6 +1,6 @@
 module.exports = {
   amd: {
-    src: ['tmp/oasis/**/*.js'],
+    src: ['tmp/amd/**/*.js'],
     dest: 'tmp/oasis.amd.js'
   },
 

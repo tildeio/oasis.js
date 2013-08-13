@@ -1968,8 +1968,8 @@ define("rsvp",
 function UUID(){}UUID.generate=function(){var a=UUID._gri,b=UUID._ha;return b(a(32),8)+"-"+b(a(16),4)+"-"+b(16384|a(12),4)+"-"+b(32768|a(14),4)+"-"+b(a(48),12)};UUID._gri=function(a){return 0>a?NaN:30>=a?0|Math.random()*(1<<a):53>=a?(0|1073741824*Math.random())+1073741824*(0|Math.random()*(1<<a-30)):NaN};UUID._ha=function(a,b){for(var c=a.toString(16),d=b-c.length,e="0";0<d;d>>>=1,e+=e)d&1&&(c=e+c);return c};
 
 define("oasis",
-  ["oasis/util","oasis/config","oasis/connect","rsvp","oasis/logger","oasis/state","oasis/sandbox","oasis/sandbox_init","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, State, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
+  ["oasis/util","oasis/config","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/state","oasis/sandbox","oasis/sandbox_init","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter"],
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, Version, State, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var configuration = __dependency2__.configuration;
@@ -1981,6 +1981,8 @@ define("oasis",
 
 
     var Oasis = {};
+
+    Oasis.Version = Version;
 
     // Logger.enable();
 
@@ -3475,10 +3477,18 @@ define("oasis/util",
     }
 
 
+
     __exports__.assert = assert;
-    __exports__.extend = extend;
     __exports__.mustImplement = mustImplement;
+    __exports__.extend = extend;
     __exports__.rsvpErrorHandler = rsvpErrorHandler;
+  });
+define("oasis/version",
+  [],
+  function() {
+    "use strict";
+
+    return '0.2.1';
   });
 define("oasis/webworker_adapter",
   ["oasis/util","oasis/config","oasis/shims","rsvp","oasis/logger","oasis/base_adapter"],
