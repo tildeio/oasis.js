@@ -1,6 +1,6 @@
 define("oasis",
-  ["oasis/util","oasis/config","oasis/connect","rsvp","oasis/logger","oasis/state","oasis/sandbox","oasis/sandbox_init","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, State, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
+  ["oasis/util","oasis/config","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/state","oasis/sandbox","oasis/sandbox_init","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter"],
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, Version, State, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var configuration = __dependency2__.configuration;
@@ -12,6 +12,8 @@ define("oasis",
 
 
     var Oasis = {};
+
+    Oasis.Version = Version;
 
     // Logger.enable();
 
@@ -1506,10 +1508,18 @@ define("oasis/util",
     }
 
 
+
     __exports__.assert = assert;
-    __exports__.extend = extend;
     __exports__.mustImplement = mustImplement;
+    __exports__.extend = extend;
     __exports__.rsvpErrorHandler = rsvpErrorHandler;
+  });
+define("oasis/version",
+  [],
+  function() {
+    "use strict";
+
+    return '0.2.1';
   });
 define("oasis/webworker_adapter",
   ["oasis/util","oasis/config","oasis/shims","rsvp","oasis/logger","oasis/base_adapter"],
