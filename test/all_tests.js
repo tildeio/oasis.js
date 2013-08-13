@@ -1,7 +1,10 @@
-(function() {
+import Oasis from "oasis";
+import { getBase, a_indexOf, errorsHaveStacks } from "test/test_helpers";
 
 QUnit.config.testTimeout = 60 * 1000;
 
+// TODO: fixtures as modules (import oasis &c.)
+// TODO: split tests into modules
 module("Oasis");
 
 test("Assert not file://", function() {
@@ -953,7 +956,7 @@ function suite(adapter, extras) {
         services: {
           assertions: AssertionService
         },
-        oasisURL: destinationUrl + '/vendor/oasis-custom-url.js.html'
+        oasisURL: destinationUrl + '/oasis-custom-url.js.html'
       });
 
       stop();
@@ -987,7 +990,7 @@ function suite(adapter, extras) {
         services: {
           assertions: AssertionsService
         },
-        oasisURL: destinationUrl + '/vendor/oasis-custom-url.js.html'
+        oasisURL: destinationUrl + '/oasis-custom-url.js.html'
       });
 
       sandbox.start();
@@ -1309,7 +1312,7 @@ function suite(adapter, extras) {
     createSandbox({
       url: 'fixtures/multiple_url_1.js',
       services: {
-        assertions: AssertionsService,
+        assertions: AssertionsService
       }
     });
     sandbox1 = sandbox;
@@ -1442,7 +1445,7 @@ suite('iframe', function() {
       services: {
         assertions: AssertionService
       },
-      oasisURL: destinationUrl + '/vendor/oasis-custom-url.js.html'
+      oasisURL: destinationUrl + '/oasis-custom-url.js.html'
     });
 
     sandbox.start();
@@ -1501,5 +1504,3 @@ suite('iframe', function() {
 if (typeof Worker !== 'undefined') {
   suite('webworker');
 }
-
-})();

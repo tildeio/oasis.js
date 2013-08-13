@@ -1,4 +1,6 @@
-function getBase () {
+/*jshint eqeqeq:false */
+
+export function getBase () {
   var link = document.createElement("a");
   link.href = "!";
   var base = link.href.slice(0, -1);
@@ -11,8 +13,7 @@ function isNativeFunc(func) {
   return func && Function.prototype.toString.call(func).indexOf('[native code]') > -1;
 }
 
-var a_indexOf = isNativeFunc(Array.prototype.indexOf) ? Array.prototype.indexOf : function (searchElement /*, fromIndex */ ) {
-  "use strict";
+export var a_indexOf = isNativeFunc(Array.prototype.indexOf) ? Array.prototype.indexOf : function (searchElement /*, fromIndex */ ) {
   if (this == null) {
     throw new TypeError();
   }

@@ -4,6 +4,7 @@ node_js:
 - 0.1
 before_script:
 - npm install -g grunt-cli
+script: grunt test:ci
 env:
   global:
   - secure: ! 'CNgN1/u5oWg7gUwkC5V6rty8iRyWmG9vrC0CFSjLP7A9d+TWvHeGZFG4lRE3

@@ -3,12 +3,10 @@
 <head>
   <meta charset="utf-8">
   <title>QUnit Example</title>
-  <link rel="stylesheet" href="qunit.css">
-  <script src="/oasis.js.html"></script>
-  <script src="qunit.js"></script>
+  <link rel="stylesheet" href="vendor/qunit.css">
+  <script src="vendor/qunit.js"></script>
   <script src="vendor/jquery-1.9.1.js"></script>
-  <script src="test_helpers.js"></script>
-  <script src="tests.js"></script>
+  <script src="test.js"></script>
 </head>
 <body>
   <div id="qunit"></div>
@@ -27,8 +25,16 @@
         setTimeout(hidePassedTestsByDefault, 100);
       }
     }
-
     $(document).ready(hidePassedTestsByDefault);
+
+    // load all tests
+    for (var moduleName in define.registry) {
+      if (!define.registry.hasOwnProperty(moduleName)) { continue; }
+    
+      if (/_tests$/.test(moduleName)) {
+        requireModule(moduleName);
+      }
+    }
   </script>
 </body>
 </html>
