@@ -173,6 +173,36 @@ test("Sandboxes ignore secondary initialization messages", function() {
       assertions: AssertionsService
     }
   });
+  
+  sandbox.start();
+});
+
+test("HTML Sandboxes can be loaded directly", function() {
+  expect(1);
+  stop();
+
+  var sandbox = createSandbox({
+    url: 'fixtures/html_sandbox.html',
+    type: 'html',
+    capabilities: ['user', 'assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        events: {
+          gotTitle: function (title) {
+            equal(title, "High Lord of Winterfell" , "HTML Sandbox was loaded");
+            start();
+          }
+        }
+      }),
+      user: Oasis.Service.extend({
+        requests: {
+          title: function () {
+            return 'High Lord of Winterfell';
+          }
+        }
+      })
+    }
+  });
 
   sandbox.start();
 });
