@@ -1,3 +1,5 @@
+/*global _addEventListener */
+
 // TODO: ie8, ie9 synchronous dependencies
 new Oasis.RSVP.Promise(function (resolve, reject) {
   var n = 0;

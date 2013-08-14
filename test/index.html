@@ -27,6 +27,10 @@
     }
     $(document).ready(hidePassedTestsByDefault);
 
+    QUnit.config.testTimeout = 500;
+    // uncomment for debugging
+    //QUnit.config.testTimeout = 60 * 1000;
+
     // load all tests
     for (var moduleName in define.registry) {
       if (!define.registry.hasOwnProperty(moduleName)) { continue; }
