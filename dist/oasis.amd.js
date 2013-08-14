@@ -142,7 +142,7 @@ define("oasis/base_adapter",
       connectSandbox: function (receiver, ports) {
         var adapter = this;
 
-        Logger.log("Listening for initialization message");
+        Logger.log("Sandbox listening for initialization message");
 
         function initializeOasisSandbox(event) {
           if (!event.data.isOasisInitialization) { return; }
@@ -150,7 +150,7 @@ define("oasis/base_adapter",
           removeEventListener(receiver, 'message', initializeOasisSandbox);
 
           configuration.eventCallback(function () {
-            Logger.log("Sandbox initializing.");
+            Logger.log("Sandbox received initialization message.");
 
             configuration.oasisURL = event.data.oasisURL;
 
@@ -168,7 +168,8 @@ define("oasis/base_adapter",
 
       createInitializationMessage: function (sandbox) {
         var sandboxURL = sandbox.options.url,
-            scriptURLs = [sandboxURL].concat(sandbox.dependencies || []);
+            dependencies = sandbox.dependencies || [],
+            scriptURLs = sandbox.type === 'js' ?  [sandboxURL].concat(dependencies) : dependencies;
 
         return {
           isOasisInitialization: true,
@@ -409,6 +410,7 @@ define("oasis/iframe_adapter",
   ["oasis/util","oasis/config","oasis/shims","rsvp","oasis/logger","oasis/base_adapter"],
   function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, BaseAdapter) {
     "use strict";
+    var assert = __dependency1__.assert;
     var extend = __dependency1__.extend;
     var configuration = __dependency2__.configuration;
     var addEventListener = __dependency3__.addEventListener;
@@ -435,6 +437,9 @@ define("oasis/iframe_adapter",
     }
 
     var IframeAdapter = extend(BaseAdapter, {
+      //-------------------------------------------------------------------------
+      // Environment API
+
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
             iframe = document.createElement('iframe'),
@@ -445,7 +450,6 @@ define("oasis/iframe_adapter",
         iframe.name = sandbox.options.url;
         iframe.sandbox = 'allow-scripts';
         iframe.seamless = true;
-        iframe.src = 'about:blank';
 
         // rendering-specific code
         if (options.width) {
@@ -454,27 +458,26 @@ define("oasis/iframe_adapter",
           iframe.height = options.height;
         }
 
-        iframe.oasisLoadHandler = function () {
-          removeEventListener(iframe, 'load', iframe.oasisLoadHandler);
+        switch (sandbox.type) {
+          case 'js':
+            this._setupIFrameBootstrap(iframe, sandbox, oasisURL);
+            break;
+          case 'html':
+            iframe.src = sandbox.options.url;
+            break;
+          default:
+            assert(false, "IFrame Adapter only supports sandbox types `js` and `html`, not `" + sandbox.type + "`");
+        }
 
-          configuration.eventCallback(function () {
-            sandbox.iframeLoaded = true;
-
-            Logger.log("iframe loading oasis");
-            iframe.contentWindow.location.href = oasisURL;
-          });
-        };
-        addEventListener(iframe, 'load', iframe.oasisLoadHandler);
-
+        // Promise that sandbox is loaded and capabilities are connected
         sandbox.promise = new RSVP.Promise( function(resolve, reject) {
           iframe.initializationHandler = function (event) {
             if( event.data !== sandbox.adapter.sandboxInitializedMessage ) {return;}
-            if( !sandbox.iframeLoaded ) {return;}
             if( event.source !== iframe.contentWindow ) {return;}
             removeEventListener(window, 'message', iframe.initializationHandler);
 
             configuration.eventCallback(function () {
-              Logger.log("iframe sandbox initialized");
+              Logger.log("container: iframe sandbox has initialized (capabilities connected)");
               resolve(sandbox);
             });
           };
@@ -483,20 +486,63 @@ define("oasis/iframe_adapter",
 
         sandbox.el = iframe;
 
+        // Promise that sandbox is loaded; capabilities not connected
         return new RSVP.Promise(function (resolve, reject) {
-          iframe.loadHandler = function (event) {
+          iframe.oasisLoadHandler = function (event) {
             if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
-            if( !sandbox.iframeLoaded ) {return;}
             if( event.source !== iframe.contentWindow ) {return;}
-            removeEventListener(window, 'message', iframe.loadHandler);
+            removeEventListener(window, 'message', iframe.oasisLoadHandler);
 
             configuration.eventCallback(function () {
-              Logger.log("iframe sandbox loaded");
+              Logger.log("container: iframe sandbox has loaded Oasis");
               resolve(sandbox);
             });
           };
-          addEventListener(window, 'message', iframe.loadHandler);
+          addEventListener(window, 'message', iframe.oasisLoadHandler);
         });
+      },
+
+      startSandbox: function(sandbox) {
+        var head = document.head || document.documentElement.getElementsByTagName('head')[0];
+        head.appendChild(sandbox.el);
+      },
+
+      terminateSandbox: function(sandbox) {
+        var el = sandbox.el;
+
+        sandbox.terminated = true;
+        removeEventListener(el, 'load', el.loadHandler);
+        removeEventListener(window, 'message', el.initializationHandler);
+        removeEventListener(window, 'message', el.oasisLoadHandler);
+
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+
+        sandbox.el = null;
+      },
+
+      connectPorts: function(sandbox, ports) {
+        var rawPorts = a_map.call(ports, function(port) { return port.port; }),
+            message = this.createInitializationMessage(sandbox);
+
+        if (sandbox.terminated) { return; }
+        Window.postMessage(sandbox.el.contentWindow, message, '*', rawPorts);
+      },
+
+      //-------------------------------------------------------------------------
+      // Sandbox API
+
+      connectSandbox: function(ports) {
+        return BaseAdapter.prototype.connectSandbox.call(this, window, ports);
+      },
+
+      oasisLoaded: function() {
+        window.parent.postMessage(this.oasisLoadedMessage, '*', []);
+      },
+
+      didConnect: function() {
+        window.parent.postMessage(this.sandboxInitializedMessage, '*', []);
       },
 
       loadScripts: function (base, scriptURLs) {
@@ -515,44 +561,20 @@ define("oasis/iframe_adapter",
         }
       },
 
-      oasisLoaded: function() {
-        window.parent.postMessage(this.oasisLoadedMessage, '*', []);
-      },
+      //-------------------------------------------------------------------------
+      // private
 
-      didConnect: function() {
-        window.parent.postMessage(this.sandboxInitializedMessage, '*', []);
-      },
+      _setupIFrameBootstrap: function (iframe, sandbox, oasisURL) {
+        iframe.src = 'about:blank';
+        iframe.loadHandler = function () {
+          removeEventListener(iframe, 'load', iframe.loadHandler);
 
-      startSandbox: function(sandbox) {
-        var head = document.head || document.documentElement.getElementsByTagName('head')[0];
-        head.appendChild(sandbox.el);
-      },
-
-      terminateSandbox: function(sandbox) {
-        var el = sandbox.el;
-
-        sandbox.terminated = true;
-        removeEventListener(el, 'load', el.oasisLoadHandler);
-        removeEventListener(window, 'message', el.initializationHandler);
-        removeEventListener(window, 'message', el.loadHandler);
-
-        if (el.parentNode) {
-          el.parentNode.removeChild(el);
-        }
-
-        sandbox.el = null;
-      },
-
-      connectPorts: function(sandbox, ports) {
-        var rawPorts = a_map.call(ports, function(port) { return port.port; }),
-            message = this.createInitializationMessage(sandbox);
-
-        if (sandbox.terminated) { return; }
-        Window.postMessage(sandbox.el.contentWindow, message, '*', rawPorts);
-      },
-
-      connectSandbox: function(ports) {
-        return BaseAdapter.prototype.connectSandbox.call(this, window, ports);
+          configuration.eventCallback(function () {
+            Logger.log("iframe loading oasis");
+            iframe.contentWindow.location.href = oasisURL;
+          });
+        };
+        addEventListener(iframe, 'load', iframe.loadHandler);
       }
     });
 
@@ -906,6 +928,7 @@ define("oasis/sandbox",
       this.dependencies = options.dependencies || pkg.dependencies;
 
       var adapter = this.adapter = options.adapter || iframeAdapter;
+      this.type = options.type || 'js';
 
       this._capabilitiesToConnect = capabilities;
       this.envPortDefereds = {};
@@ -1454,6 +1477,7 @@ define("oasis/state",
       this.services = [];
 
       configuration.eventCallback = function (callback) { callback(); };
+      configuration.allowSameOrigin = false;
     };
 
 
@@ -1525,6 +1549,7 @@ define("oasis/webworker_adapter",
   ["oasis/util","oasis/config","oasis/shims","rsvp","oasis/logger","oasis/base_adapter"],
   function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, BaseAdapter) {
     "use strict";
+    var assert = __dependency1__.assert;
     var extend = __dependency1__.extend;
     var configuration = __dependency2__.configuration;
     var a_forEach = __dependency3__.a_forEach;
@@ -1535,7 +1560,12 @@ define("oasis/webworker_adapter",
 
 
     var WebworkerAdapter = extend(BaseAdapter, {
+      //-------------------------------------------------------------------------
+      // Environment API
+
       initializeSandbox: function(sandbox) {
+        assert(sandbox.type !== 'html', "Webworker adapter only supports type `js` sandboxes, but type `html` was requested.");
+
         var oasisURL = this.oasisURL(sandbox);
         var worker = new Worker(oasisURL);
         sandbox.worker = worker;
@@ -1567,23 +1597,6 @@ define("oasis/webworker_adapter",
         });
       },
 
-      loadScripts: function (base, scriptURLs) {
-        var hrefs = [];
-        a_forEach.call(scriptURLs, function (scriptURL) {
-          hrefs.push( base + scriptURL );
-        });
-
-        importScripts.apply(undefined, hrefs);
-      },
-
-      oasisLoaded: function() {
-        postMessage(this.oasisLoadedMessage, []);
-      },
-
-      didConnect: function() {
-        postMessage(this.sandboxInitializedMessage, []);
-      },
-
       startSandbox: function(sandbox) { },
 
       terminateSandbox: function(sandbox) {
@@ -1603,6 +1616,26 @@ define("oasis/webworker_adapter",
 
       connectSandbox: function(ports) {
         return BaseAdapter.prototype.connectSandbox.call(this, self, ports);
+      },
+
+      //-------------------------------------------------------------------------
+      // Sandbox API
+
+      loadScripts: function (base, scriptURLs) {
+        var hrefs = [];
+        a_forEach.call(scriptURLs, function (scriptURL) {
+          hrefs.push( base + scriptURL );
+        });
+
+        importScripts.apply(undefined, hrefs);
+      },
+
+      oasisLoaded: function() {
+        postMessage(this.oasisLoadedMessage, []);
+      },
+
+      didConnect: function() {
+        postMessage(this.sandboxInitializedMessage, []);
       }
     });
 

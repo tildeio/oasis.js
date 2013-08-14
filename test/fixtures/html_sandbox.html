@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>HTML Sandbox</title>
+  <script src="/oasis.js.html"></script>
+  <script>
+  Oasis.connect({
+    consumers: {
+      assertions: Oasis.Consumer,
+      user: Oasis.Consumer.extend({
+        initialize: function () {
+          this.request('title').then(function(title) {
+            Oasis.consumers.assertions.send('gotTitle', title);
+          });
+        }
+      })
+    }
+  });
+  </script>
+</head>
+<body>
+</body>
+</html>
