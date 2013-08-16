@@ -88,8 +88,8 @@ define("oasis",
     return Oasis;
   });
 define("oasis/base_adapter",
-  ["oasis/util","oasis/shims","oasis/config","oasis/globals","oasis/connect","oasis/message_channel","oasis/logger"],
-  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __dependency6__, Logger) {
+  ["oasis/util","oasis/shims","oasis/config","oasis/globals","oasis/connect","oasis/message_channel","rsvp","oasis/logger"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __dependency6__, RSVP, Logger) {
     "use strict";
     var mustImplement = __dependency1__.mustImplement;
     var addEventListener = __dependency2__.addEventListener;
@@ -98,6 +98,7 @@ define("oasis/base_adapter",
     var handlers = __dependency4__.handlers;
     var connectCapabilities = __dependency5__.connectCapabilities;
     var PostMessageMessageChannel = __dependency6__.PostMessageMessageChannel;
+
 
 
     function getBase () {
@@ -109,9 +110,6 @@ define("oasis/base_adapter",
     }
 
     function BaseAdapter() {
-      this.oasisLoadedMessage =  "oasisSandboxLoaded";
-
-      this.sandboxInitializedMessage =  "oasisSandboxInitialized";
     }
 
     BaseAdapter.prototype = {
@@ -178,7 +176,11 @@ define("oasis/base_adapter",
           scriptURLs: scriptURLs,
           oasisURL: this.oasisURL(sandbox)
         };
-      }
+      },
+
+      // protected
+      oasisLoadedMessage: "oasisSandboxLoaded",
+      sandboxInitializedMessage:  "oasisSandboxInitialized"
     };
 
 
@@ -474,7 +476,7 @@ define("oasis/iframe_adapter",
         Logger.log('Initializing sandbox ' + iframe.name);
 
         // Promise that sandbox is loaded and capabilities are connected
-        sandbox.promise = new RSVP.Promise( function(resolve, reject) {
+        sandbox._waitForLoadDeferral().resolve(new RSVP.Promise( function(resolve, reject) {
           iframe.initializationHandler = function (event) {
             if( event.data !== sandbox.adapter.sandboxInitializedMessage ) {return;}
             try {
@@ -493,7 +495,7 @@ define("oasis/iframe_adapter",
             });
           };
           addEventListener(window, 'message', iframe.initializationHandler);
-        });
+        }));
 
         sandbox.el = iframe;
 
@@ -964,7 +966,7 @@ define("oasis/sandbox",
 
       this.dependencies = options.dependencies || pkg.dependencies;
 
-      var adapter = this.adapter = options.adapter || iframeAdapter;
+      this.adapter = options.adapter || iframeAdapter;
       this.type = options.type || 'js';
 
       this._capabilitiesToConnect = capabilities;
@@ -974,21 +976,23 @@ define("oasis/sandbox",
       this.capabilities = {};
       this.options = options;
 
-      var loadPromise = adapter.initializeSandbox(this);
-
       a_forEach.call(capabilities, function(capability) {
         this.envPortDefereds[capability] = RSVP.defer();
         this.sandboxPortDefereds[capability] = RSVP.defer();
       }, this);
 
       var sandbox = this;
-      loadPromise.then(function () {
+      this.adapter.initializeSandbox(this).then(function () {
         sandbox.createChannels();
         sandbox.connectPorts();
       }).then(null, rsvpErrorHandler);
     };
 
     OasisSandbox.prototype = {
+      waitForLoad: function () {
+        return this._waitForLoadDeferral().promise;
+      },
+
       wiretap: function(callback) {
         this.wiretaps.push(callback);
       },
@@ -1112,6 +1116,17 @@ define("oasis/sandbox",
           delete State.services[index];
         }
         State.services = [];
+      },
+
+      // Oasis internal
+
+      _waitForLoadDeferral: function () {
+        if (!this._loadDeferral) {
+          // the adapter will resolve this
+          this._loadDeferral = RSVP.defer();
+        }
+
+        return this._loadDeferral;
       }
     };
 
@@ -1580,7 +1595,7 @@ define("oasis/version",
   function() {
     "use strict";
 
-    return '0.2.1';
+    return '0.3.0';
   });
 define("oasis/webworker_adapter",
   ["oasis/util","oasis/config","oasis/shims","rsvp","oasis/logger","oasis/base_adapter"],
@@ -1607,7 +1622,7 @@ define("oasis/webworker_adapter",
         var worker = new Worker(oasisURL);
         sandbox.worker = worker;
 
-        sandbox.promise = new RSVP.Promise( function(resolve, reject) {
+        sandbox._waitForLoadDeferral().resolve(new RSVP.Promise( function(resolve, reject) {
           worker.initializationHandler = function (event) {
             configuration.eventCallback(function () {
               if( event.data !== sandbox.adapter.sandboxInitializedMessage ) {return;}
@@ -1618,7 +1633,7 @@ define("oasis/webworker_adapter",
             });
           };
           addEventListener(worker, 'message', worker.initializationHandler);
-        });
+        }));
 
         return new RSVP.Promise(function (resolve, reject) {
           worker.loadHandler = function (event) {
