@@ -2400,7 +2400,9 @@ define("oasis/iframe_adapter",
         link.href = sandboxUrl;
 
         if( !link.host || (link.protocol === window.location.protocol && link.host === window.location.host) ) {
-          throw "Loading an iframe from the same host is a potential security breach";
+          throw new Error("Security: iFrames from the same host cannot be sandboxed in older browsers and is disallowed.  " +
+                          "You can override this behaviour with `Oasis.configure('allowSameOrigin', true)`, but please be " +
+                          "absolutely sure you know this is safe for your environment before doing so.");
         }
       }
     }
@@ -2681,8 +2683,9 @@ define("oasis/message_channel",
 
         @param {String} requestName the name of the request
         @return {Promise} a promise that will be resolved with the value
-          provided by the other side of the connection. The fulfillment value
-          must be structured data.
+          provided by the other side of the connection, or rejected if the other
+          side indicates retrieving the value resulted in an error. The fulfillment
+          value must be structured data.
       */
       request: function(eventName) {
         var port = this;
@@ -2720,12 +2723,25 @@ define("oasis/message_channel",
         This method registers a callback to be called when a request is made
         by the other side of the connection.
 
-        The callback will be called with a promise, that the callback should fulfill.
+        The callback will be called with any arguments passed in the request.  It
+        may either return a value directly, or return a promise if the value must be
+        retrieved asynchronously.
 
-        Examples
+        Examples:
 
-          service.onRequest('name', function (promise) {
-            promise.resolve('David');
+          // This completes the request immediately.
+          service.onRequest('name', function () {
+            return 'David';
+          });
+
+
+          // This completely the request asynchronously.
+          service.onRequest('name', function () {
+            return new Oasis.RSVP.Promise(function (resolve, reject) {
+              setTimeout( function() {
+                resolve('David');
+              }, 200);
+            });
           });
 
         @param {String} requestName the name of the request

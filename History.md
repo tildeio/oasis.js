@@ -1,3 +1,7 @@
+### 0.2.1
+
+- HTML sandboxes are supported again.
+
 ### 0.2.0
 
 - Ports are saved on sandboxes.
