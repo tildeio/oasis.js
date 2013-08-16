@@ -6,6 +6,14 @@ module.exports = {
       src: ['oasis.js.html'],
       dest: 'tmp/public/',
       ext: '-custom-url.js.html'
-    }],
+    }]
+  },
+
+  samples: {
+    files: [{
+      expand: true,
+      src: ['samples/'],
+      dest: 'tmp/public/'
+    }]
   }
 };
