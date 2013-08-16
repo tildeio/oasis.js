@@ -7,21 +7,20 @@
   <body>
     <script>
       var AccountService = Oasis.Service.extend({
+        requests: {
+          profile: function () {
+            return { email: 'wycats@gmail.com' };
+          }
+        }
       });
 
       var sandbox = Oasis.createSandbox({
         url: '//localhost:8001/samples/profile_viewer/profile_viewer.html',
         type: 'html',
         capabilities: [ 'account' ],
-        // TODO: try services w/o capabilities
         services: {
+          account: AccountService
         }
-      });
-
-      sandbox.connect('account').then(function(port) {
-        port.onRequest('profile', function() {
-          return { email: 'wycats@gmail.com' };
-        });
       });
 
       document.body.appendChild(sandbox.el);
