@@ -16,7 +16,7 @@ function createSandbox(options) {
 }
 
 
-module('IFrame Sandboxes', {
+module('iframe Sandboxes', {
   setup: function () {
     Oasis.reset();
   },
