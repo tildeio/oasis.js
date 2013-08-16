@@ -1,0 +1,20 @@
+<!doctype html>
+
+<html>
+  <head>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.0/jquery.js"></script>
+    <script src="/oasis.js.html"></script>
+  </head>
+  <body>
+    <div>
+      <p>Email: <span id="email">loading...</span></p>
+    </div>
+    <script>
+      Oasis.connect('account').then(function(port) {
+        port.request('profile').then(function(profile) {
+          $("#email").html(profile.email);
+        });
+      });
+    </script>
+  </body>
+</html>
