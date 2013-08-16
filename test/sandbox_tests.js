@@ -43,7 +43,7 @@ commonTests('Sandbox', function (createSandbox, adapter) {
       }
     });
 
-    sandbox.promise.then(function () {
+    sandbox.waitForLoad().then(function () {
       sandbox.capabilities.something.send('go');
       sandbox.capabilities.somethingElse.send('go');
     });
@@ -68,7 +68,7 @@ commonTests('Sandbox', function (createSandbox, adapter) {
       }
     });
 
-    sandbox.promise.then(function () {
+    sandbox.waitForLoad().then(function () {
       var capabilities = sandbox.capabilities;
 
       ok(capabilities.serviceCapability instanceof LocalService, "The capability has an associated service");
@@ -108,7 +108,7 @@ commonTests('Sandbox', function (createSandbox, adapter) {
 
     stop();
 
-    sandbox.promise.then(function() {
+    sandbox.waitForLoad().then(function() {
       start();
 
       ok(sandbox.assertionsPort, "The promise was not resolved until the service has been initialized");
@@ -211,7 +211,7 @@ commonTests('Sandbox', function (createSandbox, adapter) {
 
           sandbox2.start();
 
-          sandbox1.promise.then( function() {
+          sandbox1.waitForLoad().then( function() {
             sandbox1.terminate();
           });
         },
