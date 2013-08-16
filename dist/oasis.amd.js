@@ -1,6 +1,6 @@
 define("oasis",
   ["oasis/util","oasis/config","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/state","oasis/sandbox","oasis/sandbox_init","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, Version, State, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, logger, Version, state, Sandbox, initializeSandbox, Service, iframeAdapter, webworkerAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var configuration = __dependency2__.configuration;
@@ -14,8 +14,7 @@ define("oasis",
     var Oasis = {};
 
     Oasis.Version = Version;
-
-    // Logger.enable();
+    Oasis.logger = logger;
 
     Oasis.adapters = {
       iframe: iframeAdapter,
@@ -43,11 +42,11 @@ define("oasis",
 
     Oasis.Service = Oasis.Consumer = Service;
 
-    var packages = State.packages;
+    var packages = state.packages;
     Oasis.reset = function() {
-      State.reset();
-      packages = State.packages;
-      Oasis.consumers = State.consumers;
+      state.reset();
+      packages = state.packages;
+      Oasis.consumers = state.consumers;
     };
     Oasis.reset();
 
@@ -619,6 +618,10 @@ define("oasis/logger",
     Logger.prototype = {
       enable: function () {
         this.enabled = true;
+      },
+
+      disable: function () {
+        this.enabled = false;
       },
 
       log: function () {

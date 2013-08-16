@@ -1,5 +1,8 @@
 ### 0.3.0
 
+- `Oasis.logger.enable()` will log some Oasis internals, especially around
+  sandbox initialization.  Specific output and output format subject to change.
+
 #### Breaking Changes
 
 - `sandbox.promise` changed to `sandbox.waitForLoad()`.
