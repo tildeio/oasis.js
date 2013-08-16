@@ -149,7 +149,7 @@ commonTests('Events', function (createSandbox) {
       }
     });
 
-    sandbox.promise.then(function (sandbox) {
+    sandbox.waitForLoad().then(function (sandbox) {
       sandbox.capabilities.wrappedEvents.send('wrapMe');
     });
 

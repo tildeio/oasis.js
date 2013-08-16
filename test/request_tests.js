@@ -192,7 +192,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    sandbox.promise.then( function() {
+    sandbox.waitForLoad().then( function() {
       sandbox.pingPongPort.request('ping').then(function(data) {
         start();
 
@@ -364,7 +364,7 @@ commonTests('EXPERIMENTAL API (Requests): ', function (createSandbox) {
       }
     });
 
-    sandbox.promise.then( function() {
+    sandbox.waitForLoad().then( function() {
       sandbox.pingPongPort.request('ping').then(null, function(error) {
         equal(error.message, 'badpong', "promise was rejected with expected error");
         if (errorsHaveStacks) {

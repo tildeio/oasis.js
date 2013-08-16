@@ -26,7 +26,7 @@ commonTests('Services', function (createSandbox) {
       }
     });
 
-    sandbox.promise.then( function() {
+    sandbox.waitForLoad().then( function() {
       start();
     });
 
@@ -58,7 +58,7 @@ commonTests('Services', function (createSandbox) {
 
     sandbox.start();
 
-    sandbox.promise.then( function() {
+    sandbox.waitForLoad().then( function() {
       sandbox.terminate();
       start();
     });

@@ -1,3 +1,9 @@
+### 0.3.0
+
+#### Breaking Changes
+
+- `sandbox.promise` changed to `sandbox.waitForLoad()`.
+
 ### 0.2.1
 
 - HTML sandboxes are supported again.
