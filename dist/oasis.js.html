@@ -2440,11 +2440,20 @@ define("oasis/iframe_adapter",
             assert(false, "IFrame Adapter only supports sandbox types `js` and `html`, not `" + sandbox.type + "`");
         }
 
+        Logger.log('Initializing sandbox ' + iframe.name);
+
         // Promise that sandbox is loaded and capabilities are connected
         sandbox.promise = new RSVP.Promise( function(resolve, reject) {
           iframe.initializationHandler = function (event) {
             if( event.data !== sandbox.adapter.sandboxInitializedMessage ) {return;}
-            if( event.source !== iframe.contentWindow ) {return;}
+            try {
+              // verify this message came from the expected sandbox; try/catch
+              // because ie8 will disallow reading contentWindow in the case of
+              // another sandbox's message
+              if( event.source !== iframe.contentWindow ) {return;}
+            } catch(e) {
+              return;
+            }
             removeEventListener(window, 'message', iframe.initializationHandler);
 
             configuration.eventCallback(function () {
@@ -2461,7 +2470,14 @@ define("oasis/iframe_adapter",
         return new RSVP.Promise(function (resolve, reject) {
           iframe.oasisLoadHandler = function (event) {
             if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
-            if( event.source !== iframe.contentWindow ) {return;}
+            try {
+              // verify this message came from the expected sandbox; try/catch
+              // because ie8 will disallow reading contentWindow in the case of
+              // another sandbox's message
+              if( event.source !== iframe.contentWindow ) {return;}
+            } catch(e) {
+              return;
+            }
             removeEventListener(window, 'message', iframe.oasisLoadHandler);
 
             configuration.eventCallback(function () {
@@ -2482,11 +2498,16 @@ define("oasis/iframe_adapter",
         var el = sandbox.el;
 
         sandbox.terminated = true;
-        removeEventListener(el, 'load', el.loadHandler);
+
+        if (el.loadHandler) {
+          // no load handler for HTML sandboxes
+          removeEventListener(el, 'load', el.loadHandler);
+        }
         removeEventListener(window, 'message', el.initializationHandler);
         removeEventListener(window, 'message', el.oasisLoadHandler);
 
         if (el.parentNode) {
+          Logger.log("Terminating sandbox ", sandbox.el.name);
           el.parentNode.removeChild(el);
         }
 
