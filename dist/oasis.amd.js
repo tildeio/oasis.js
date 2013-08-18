@@ -448,8 +448,6 @@ define("oasis/iframe_adapter",
             iframe = document.createElement('iframe'),
             oasisURL = this.oasisURL(sandbox);
 
-        verifySandbox( oasisURL );
-
         iframe.name = sandbox.options.url;
         iframe.sandbox = 'allow-scripts';
         iframe.seamless = true;
@@ -463,9 +461,11 @@ define("oasis/iframe_adapter",
 
         switch (sandbox.type) {
           case 'js':
+            verifySandbox( oasisURL );
             this._setupIFrameBootstrap(iframe, sandbox, oasisURL);
             break;
           case 'html':
+            verifySandbox( sandbox.options.url );
             iframe.src = sandbox.options.url;
             break;
           default:
