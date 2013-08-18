@@ -182,7 +182,7 @@ test("HTML Sandboxes can be loaded directly", function() {
   stop();
 
   var sandbox = createSandbox({
-    url: 'fixtures/html_sandbox.html',
+    url: destinationUrl + '/fixtures/html_sandbox.html',
     type: 'html',
     capabilities: ['user', 'assertions'],
     services: {
@@ -198,6 +198,30 @@ test("HTML Sandboxes can be loaded directly", function() {
         requests: {
           title: function () {
             return 'High Lord of Winterfell';
+          }
+        }
+      })
+    }
+  });
+
+  sandbox.start();
+});
+
+test("HTML Sandboxes do not verify the Oasis URL", function() {
+  expect(1);
+  stop();
+
+  var sandbox = createSandbox({
+    oasisURL: '/oasis.js.html',
+    url: destinationUrl + '/fixtures/simple_html_sandbox.html',
+    type: 'html',
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        events: {
+          ok: function () {
+            ok(true, "HTML sandbox loaded");
+            start();
           }
         }
       })
