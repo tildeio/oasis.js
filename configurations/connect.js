@@ -1,4 +1,6 @@
 // TODO: read lockfile
+var port = parseInt(process.env.PORT || 8000, 10);
+
 module.exports = {
   options: {
     base: 'tmp/public',
@@ -7,19 +9,19 @@ module.exports = {
 
   server: {
     options: {
-      port: 8000
+      port: port,
     }
   },
 
   childServer: {
     options: {
-      port: 8001
+      port: port + 1,
     }
   },
 
   grandChildServer: {
     options: {
-      port: 8003
+      port: port + 3,
     }
   }
 };
