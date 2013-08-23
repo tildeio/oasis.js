@@ -32,6 +32,7 @@
     "node" : false,
     "browser" : true,
     "es3": true,
+    "esnext": true,
 
     "boss" : true,
     "curly": false,
