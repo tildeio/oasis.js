@@ -33,7 +33,7 @@ Here is what your application would look like:
         });
       });
 
-      document.body.appendChild(sandbox);
+      document.body.appendChild(sandbox.el);
     </script>
   </body>
 </html>
