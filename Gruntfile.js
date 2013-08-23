@@ -28,7 +28,7 @@ module.exports = function(grunt) {
     'saucelabs-qunit': config('saucelabs-qunit'),
 
     connect: config('connect'),
-    watch: config('watch'),
+    watch: config('watch')
   });
 
   grunt.registerTask("jst", function () {
@@ -53,6 +53,6 @@ module.exports = function(grunt) {
   grunt.registerTask('build', ['jst', 'transpile', 'jshint', 'concat', 'uglify', 'jsframe', 'copy', 'symlink']);
 
   grunt.registerTask('default', ['build']);
-  grunt.registerTask('server', ['connect', 'watch']);
+  grunt.registerTask('server', ['build', 'connect', 'watch']);
   grunt.registerTask('test:ci', ['build', 'connect', 'saucelabs-qunit:all']);
 };
