@@ -475,7 +475,7 @@ define("oasis/iframe_adapter",
         Logger.log('Initializing sandbox ' + iframe.name);
 
         // Promise that sandbox is loaded and capabilities are connected
-        sandbox._waitForLoadDeferral().resolve(new RSVP.Promise( function(resolve, reject) {
+        sandbox._waitForLoadDeferred().resolve(new RSVP.Promise( function(resolve, reject) {
           iframe.initializationHandler = function (event) {
             if( event.data !== sandbox.adapter.sandboxInitializedMessage ) {return;}
             try {
@@ -993,7 +993,7 @@ define("oasis/sandbox",
 
     OasisSandbox.prototype = {
       waitForLoad: function () {
-        return this._waitForLoadDeferral().promise;
+        return this._waitForLoadDeferred().promise;
       },
 
       wiretap: function(callback) {
@@ -1123,13 +1123,13 @@ define("oasis/sandbox",
 
       // Oasis internal
 
-      _waitForLoadDeferral: function () {
-        if (!this._loadDeferral) {
+      _waitForLoadDeferred: function () {
+        if (!this._loadDeferred) {
           // the adapter will resolve this
-          this._loadDeferral = RSVP.defer();
+          this._loadDeferred = RSVP.defer();
         }
 
-        return this._loadDeferral;
+        return this._loadDeferred;
       }
     };
 
@@ -1625,7 +1625,7 @@ define("oasis/webworker_adapter",
         var worker = new Worker(oasisURL);
         sandbox.worker = worker;
 
-        sandbox._waitForLoadDeferral().resolve(new RSVP.Promise( function(resolve, reject) {
+        sandbox._waitForLoadDeferred().resolve(new RSVP.Promise( function(resolve, reject) {
           worker.initializationHandler = function (event) {
             configuration.eventCallback(function () {
               if( event.data !== sandbox.adapter.sandboxInitializedMessage ) {return;}
