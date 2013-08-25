@@ -1,4 +1,3 @@
----
 language: node_js
 node_js:
 - 0.1
@@ -7,13 +6,5 @@ before_script:
 script: grunt test:ci
 env:
   global:
-  - secure: ! 'CNgN1/u5oWg7gUwkC5V6rty8iRyWmG9vrC0CFSjLP7A9d+TWvHeGZFG4lRE3
-
-      dT2pyn+tJG+dBFPB8Xp/OpD9CY/OD7O7J+jy7julKs0er1CXxi68MHcpvleT
-
-      H4//vtpQWpieSIyTEggvNzbjpS4YgZD7Zvm0HhST2yfVprEs+L8='
-  - secure: ! 'h8e7lZzxSnKyjndsp4r370/vOSmOjQyvaH05Ga+igzJFVTYpxFLngLTJ9h32
-
-      YxSCn0gJ4kg2y+1JY0bkcX6h3TAeniYevBtqQ3Yn6MaBnkhGwWoDM/oKXRUz
-
-      nLWdI1OnLSy03zsAklCr7YbhdWu/k6MVLhExE757w7knIpLMtHg='
+  - secure: HKepBmkFySfHs6WZLPVEvD0WB+xOx9xQfLH/NOszwLBiTq8u7N4M3s7Osa0n9Tq1Kud5gF0EtJ39plOlHXsLLFBrK7G/89s6xn/Wn40DrgIdpnog2nQWgQkEyo+3bkljFTHNNG0MceGnNeiLy0u6EfU6E4q4lzZDZ+uz1yGc42I=
+  - secure: EuGz4UGlnq3pvFL3T92EHeUf4TVKC0wwnQEbnOgWbi+kPC2RYSC5rvHQj50GiFVJf1Ig5qIOg0+5WSOk9MALFqjWEfEJXOCnjj2JBzHamXBC83Ew12S34oaGt/B84qERueqCu567BkqtBP8jOKRyK5nbTXT1Xby0r3xrW22uAAg=
