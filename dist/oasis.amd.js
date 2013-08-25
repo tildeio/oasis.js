@@ -234,7 +234,7 @@ define("oasis/connect",
         if (options.promise) {
           options.promise.then(function() {
             port.start();
-          }).then(null, rsvpErrorHandler);
+          }).fail(RSVP.rethrow);
         } else {
           port.start();
         }
@@ -988,7 +988,7 @@ define("oasis/sandbox",
       this.adapter.initializeSandbox(this).then(function () {
         sandbox.createChannels();
         sandbox.connectPorts();
-      }).then(null, rsvpErrorHandler);
+      }).fail(RSVP.rethrow);
     };
 
     OasisSandbox.prototype = {
@@ -1096,7 +1096,7 @@ define("oasis/sandbox",
         RSVP.all(allSandboxPortPromises).then(function (ports) {
           Logger.log("All " + ports.length + " ports created.  Transferring them.");
           sandbox.adapter.connectPorts(sandbox, ports);
-        }).then(null, rsvpErrorHandler);
+        }).fail(RSVP.rethrow);
       },
 
       start: function(options) {
