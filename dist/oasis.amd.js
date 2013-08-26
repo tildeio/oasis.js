@@ -940,6 +940,17 @@ define("oasis/message_channel",
     __exports__.PostMessageMessageChannel = PostMessageMessageChannel;
     __exports__.PostMessagePort = PostMessagePort;
   });
+define("oasis/ports",
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    var ports = {};
+    var handlers = {};
+
+
+    __exports__.handlers = handlers;
+    __exports__.ports = ports;
+  });
 define("oasis/sandbox",
   ["oasis/util","oasis/shims","oasis/message_channel","oasis/config","rsvp","oasis/logger","oasis/state","oasis/iframe_adapter"],
   function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, RSVP, Logger, State, iframeAdapter) {
