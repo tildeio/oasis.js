@@ -29,7 +29,7 @@
 
     // 500 is a perfectly reasonable timeout for local testing.  We use the
     // larger value because the SauceLabs VMs can be slow.
-    QUnit.config.testTimeout = 5000;
+    QUnit.config.testTimeout = 60000;
 
     // uncomment for debugging
     //QUnit.config.testTimeout = 60 * 1000;
@@ -39,7 +39,7 @@
     // load all tests
     for (var moduleName in define.registry) {
       if (!define.registry.hasOwnProperty(moduleName)) { continue; }
-    
+
       if (/_tests$/.test(moduleName)) {
         requireModule(moduleName);
       }
