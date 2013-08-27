@@ -24,6 +24,7 @@ var browsers = [{
     platform: 'Windows 7'
   }];
 
+var testTimeout = 3 * 60 * 1000;
 
 module.exports = {
   all: {
@@ -31,12 +32,12 @@ module.exports = {
       urls: [
         'http://localhost:8000/index.html'
       ],
-      tunnelTimeout: 5,
+      tunnelTimeout: testTimeout + (1 * 60 * 1000),
       build: process.env.TRAVIS_BUILD_NUMBER,
       concurrency: 3,
       browsers: browsers,
       testname: "Oasis.js qunit tests",
-      testTimeout: 3 * 60 * 1000,
+      testTimeout: testTimeout,
       testInterval: 5000
     }
   }
