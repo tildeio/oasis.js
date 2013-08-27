@@ -417,7 +417,7 @@ define("oasis/iframe_adapter",
     var addEventListener = __dependency3__.addEventListener;
     var removeEventListener = __dependency3__.removeEventListener;
     var a_map = __dependency3__.a_map;
-    /*global Window */
+    /*global Window, UUID */
 
 
 
@@ -448,7 +448,7 @@ define("oasis/iframe_adapter",
             iframe = document.createElement('iframe'),
             oasisURL = this.oasisURL(sandbox);
 
-        iframe.name = sandbox.options.url;
+        iframe.name = sandbox.options.url + '?uuid=' + UUID.generate();
         iframe.sandbox = 'allow-scripts';
         iframe.seamless = true;
 
@@ -939,6 +939,17 @@ define("oasis/message_channel",
     __exports__.OasisPort = OasisPort;
     __exports__.PostMessageMessageChannel = PostMessageMessageChannel;
     __exports__.PostMessagePort = PostMessagePort;
+  });
+define("oasis/ports",
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    var ports = {};
+    var handlers = {};
+
+
+    __exports__.handlers = handlers;
+    __exports__.ports = ports;
   });
 define("oasis/sandbox",
   ["oasis/util","oasis/shims","oasis/message_channel","oasis/config","rsvp","oasis/logger","oasis/state","oasis/iframe_adapter"],
@@ -1610,7 +1621,7 @@ define("oasis/webworker_adapter",
     var a_forEach = __dependency3__.a_forEach;
     var addEventListener = __dependency3__.addEventListener;
     var removeEventListener = __dependency3__.removeEventListener;
-    /*global self, postMessage, importScripts */
+    /*global self, postMessage, importScripts, UUID */
 
 
 
@@ -1623,6 +1634,7 @@ define("oasis/webworker_adapter",
 
         var oasisURL = this.oasisURL(sandbox);
         var worker = new Worker(oasisURL);
+        worker.name = sandbox.options.url + '?uuid=' + UUID.generate();
         sandbox.worker = worker;
 
         sandbox._waitForLoadDeferred().resolve(new RSVP.Promise( function(resolve, reject) {

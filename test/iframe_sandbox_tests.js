@@ -25,19 +25,26 @@ module('iframe Sandboxes', {
   }
 });
 
-test("The iframes are named to improve debugging", function() {
+test("The iframes are uniquely named ( solve a problem with back button and improve debugging)", function() {
   Oasis.register({
     url: "fixtures/index.js",
     capabilities: []
   });
 
-  var sandbox = createSandbox({
+  var sandbox1, sandbox2;
+
+  sandbox1 = createSandbox({
     url: 'fixtures/index.js'
   });
+  sandbox1.start();
 
-  sandbox.start();
+  sandbox2 = createSandbox({
+    url: 'fixtures/index.js'
+  });
+  sandbox2.start();
 
-  equal( sandbox.el.name, 'fixtures/index.js', 'The iframe has a name' );
+  ok( sandbox1.el.name !== sandbox2.el.name, 'The iframes have a unique name');
+  ok( /fixtures\/index.js/.test( sandbox1.el.name ), 'The iframe name contains the url' );
 });
 
 test("Oasis' bootloader can be hosted on a separate domain", function() {
@@ -173,7 +180,7 @@ test("Sandboxes ignore secondary initialization messages", function() {
       assertions: AssertionsService
     }
   });
-  
+
   sandbox.start();
 });
 
