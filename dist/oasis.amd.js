@@ -113,6 +113,7 @@ define("oasis/base_adapter",
 
     BaseAdapter.prototype = {
       loadScripts: mustImplement('BaseAdapter', 'loadScripts'),
+      name: mustImplement('BaseAdapter', 'name'),
 
       oasisURL: function(sandbox) {
         return sandbox.options.oasisURL || configuration.oasisURL || 'oasis.js.html';
@@ -583,6 +584,10 @@ define("oasis/iframe_adapter",
           scriptElement.async = false;
           head.appendChild(scriptElement);
         }
+      },
+
+      name: function(sandbox) {
+        return sandbox.el.name;
       },
 
       //-------------------------------------------------------------------------
@@ -1130,6 +1135,10 @@ define("oasis/sandbox",
           delete State.services[index];
         }
         State.services = [];
+      },
+
+      name: function() {
+        return this.adapter.name(this);
       },
 
       // Oasis internal
@@ -1695,6 +1704,10 @@ define("oasis/webworker_adapter",
         });
 
         importScripts.apply(undefined, hrefs);
+      },
+
+      name: function(sandbox) {
+        return sandbox.worker.name;
       },
 
       oasisLoaded: function() {

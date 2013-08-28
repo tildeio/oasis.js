@@ -45,4 +45,19 @@ if( this.Worker ) {
     ok( sandbox1.worker.name !== sandbox2.worker.name, 'The workers have a unique name');
     ok( /fixtures\/index.js/.test( sandbox1.worker.name ), 'The worker name contains the url' );
   });
+
+  test("The sandbox returns the name of the worker", function() {
+    Oasis.register({
+      url: "fixtures/index.js",
+      capabilities: []
+    });
+
+    var sandbox = Oasis.createSandbox({
+      adapter: webworkerAdapter,
+      url: 'fixtures/index.js'
+    });
+    sandbox.start();
+
+    ok( sandbox.name(), sandbox.worker.name,'The sandbox returns the worker name');
+  });
 }
