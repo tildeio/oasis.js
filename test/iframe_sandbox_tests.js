@@ -47,6 +47,21 @@ test("The iframes are uniquely named ( solve a problem with back button and impr
   ok( /fixtures\/index.js/.test( sandbox1.el.name ), 'The iframe name contains the url' );
 });
 
+
+test("The sandbox returns the name of the iframe", function() {
+  Oasis.register({
+    url: "fixtures/index.js",
+    capabilities: []
+  });
+
+  var sandbox = createSandbox({
+    url: 'fixtures/index.js'
+  });
+  sandbox.start();
+
+  equal( sandbox.name(), sandbox.el.name, 'The sandbox returns the iframe name' );
+});
+
 test("Oasis' bootloader can be hosted on a separate domain", function() {
   expect(2);
 
