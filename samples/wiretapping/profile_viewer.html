@@ -10,7 +10,7 @@
       <p>Email: <span id="email">loading...</span></p>
     </div>
     <script>
-      Oasis.connect('account').then(function(port) {
+      oasis.connect('account').then(function(port) {
         port.request('profile').then(function(profile) {
           $("#email").html(profile.email);
 

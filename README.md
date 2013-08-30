@@ -21,7 +21,7 @@ Here is what your application would look like:
   </head>
   <body>
     <script>
-      var sandbox = Oasis.createSandbox({
+      var sandbox = oasis.createSandbox({
         url: 'http://example.com/profile_viewer.html',
         type: 'html',
         capabilities: [ 'account' ]
@@ -55,7 +55,7 @@ or a third-party's domain):
       <p>Email: <span id="email"><img src="loading.png"></span></p>
     </div>
     <script>
-      Oasis.connect('account').then(function(port) {
+      oasis.connect('account').then(function(port) {
         port.request('profile').then(function(profile) {
           $("#email").html(profile.email);
         });
@@ -77,7 +77,7 @@ Sandboxes are created via the `createSandbox` API.
 
 Here is an example of creating an iframe sandbox for a JavaScript widget:
 ```js
-Oasis.createSandbox({
+oasis.createSandbox({
   url: 'http://example.com/profile_viewer.js',
   capabilities: [ 'account' ]
 });
@@ -88,7 +88,7 @@ domain as the sandboxed JavaScript (see [Browser Support](#Browser_Support)).
 
 Here is an example of creating an iframe sandbox for an HTML widget:
 ```js
-Oasis.createSandbox({
+oasis.createSandbox({
   url: 'http://example.com/profile_viewer.html',
   type: 'html',
   capabilities: [ 'account' ]
@@ -102,7 +102,7 @@ Sandboxed widgets that require no UI can be loaded as web workers:
 ```js
   url: 'http://example.com/profile_information.js',
   capabilities: [ 'account' ],
-  adapter: Oasis.adapters.webworker
+  adapter: oasis.adapters.webworker
 ```
 
 ## Connecting to Ports Directly
@@ -119,7 +119,7 @@ direction.
   });
 
   // in the sandbox
-  Oasis.connect('account').then(function(port) {
+  oasis.connect('account').then(function(port) {
     port.on('greeting', function (message) {
       document.body.innerHTML = '<strong>' + message + '</strong>';
     });
@@ -136,7 +136,7 @@ You can also request data via `request` and respond to data via `onRequest`.
   });
 
   // in the sandbox
-  Oasis.connect('account').then(function(port) {
+  oasis.connect('account').then(function(port) {
     port.request('profile').then( function (name) {
       document.body.innerHTML = 'Hello ' + name;
     });
@@ -163,7 +163,7 @@ supported.
   });
 
   // in the sandbox
-  Oasis.connect('account').then(function(port) {
+  oasis.connect('account').then(function(port) {
     // the sandbox code remains unchanged
     port.request('profile').then( function (name) {
       document.body.innerHTML = 'Hello ' + name;
@@ -178,7 +178,7 @@ shorthand for specifying events and request handlers.
 
 ```js
   var AccountService = Oasis.Service.extend();
-  var sandbox = Oasis.createSandbox({
+  var sandbox = oasis.createSandbox({
     url: 'http://example.com/profile_viewer.js',
     capabilities: [ 'account' ],
     services: {
@@ -192,12 +192,18 @@ consumers when connecting, rather than connecting to each port individually.
 
 ```js
 var AccountConsumer = Oasis.Consumer.extend();
-Oasis.connect({
+oasis.connect({
   consumers: {
     account: AccountConsumer
   }
 })
 ```
+
+Note that `Oasis.Service` and `Oasis.Consumer` are class-like, so we refer to
+them via `Oasis`.  `oasis`, which we've been using for things like
+`createSandbox`, is an instance of `Oasis` created automatically.  You normally
+only need this implicit instance, but it's possible to have multiple groups of
+sandboxes isolated from each other, although this is an advanced feature.
 
 Services and Consumers can use an `events` shorthand for conveniently defining
 event handlers:

@@ -1,11 +1,14 @@
 ### 0.3.0
 
-- `Oasis.logger.enable()` will log some Oasis internals, especially around
+- `oasis.logger.enable()` will log some Oasis internals, especially around
   sandbox initialization.  Specific output and output format subject to change.
 
 #### Breaking Changes
 
 - `sandbox.promise` changed to `sandbox.waitForLoad()`.
+- `Oasis` global renamed to `oasis`.  This is part of a larger change that
+  allows multiple `Oasis` instances to coexist, which will help support an
+  inline adapter for trusted environments.
 
 ### 0.2.1
 
