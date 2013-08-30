@@ -8,6 +8,7 @@ module.exports = {
     src: [
       'vendor/loader.js',
       'vendor/**/*.js',
+      'node_modules/rsvp/dist/*.amd.js',
       'tmp/oasis.amd.js',
       'tmp/test/**/*.js'
     ],
@@ -18,6 +19,7 @@ module.exports = {
     src: [
       'vendor/loader.js',
       'vendor/**/*.js',
+      'node_modules/rsvp/dist/*.amd.js',
       'tmp/oasis.amd.js'
     ],
     dest: 'tmp/oasis.js',

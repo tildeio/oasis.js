@@ -326,7 +326,7 @@ define("oasis/connect",
 
           RSVP.resolve(handler.setupCapability(port)).then(function () {
             port.start();
-          });
+          }).then(null, rsvpErrorHandler);
         }
 
         oasis.ports[capability] = port;
