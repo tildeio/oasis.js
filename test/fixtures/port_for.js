@@ -1,12 +1,12 @@
 function winterIsComing() {
-  Oasis.portFor('assertions').send('whiteRaven', 'winter is coming');
+  oasis.portFor('assertions').send('whiteRaven', 'winter is coming');
 }
 
 function checkForNonExistentPort() {
-  var assertionsPort = Oasis.portFor('assertions');
+  var assertionsPort = oasis.portFor('assertions');
 
   try {
-    Oasis.portFor('whiteharbor');
+    oasis.portFor('whiteharbor');
   } catch (e) {
     if (/whiteharbor.*did not provide one/.test(e.message)) {
       assertionsPort.send('redRaven', "no such port");
@@ -16,7 +16,7 @@ function checkForNonExistentPort() {
   }
 }
 
-Oasis.connect('assertions').then(function (port) {
+oasis.connect('assertions').then(function (port) {
   port.send('blackRaven', 'dark words');
 
   setTimeout(winterIsComing, 10);

@@ -1,4 +1,4 @@
-Oasis.connect('assertions', function(port) {
+oasis.connect('assertions', function(port) {
   var href;
 
   if (typeof location !== 'undefined') {

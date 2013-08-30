@@ -1,6 +1,6 @@
 var assertions;
 
-Oasis.connect({
+oasis.connect({
   consumers: {
     assertions: Oasis.Consumer.extend({
       initialize: function () { assertions = this; }

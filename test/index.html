@@ -29,12 +29,16 @@
 
     // 500 is a perfectly reasonable timeout for local testing.  We use the
     // larger value because the SauceLabs VMs can be slow.
+    //QUnit.config.testTimeout = 500;
     QUnit.config.testTimeout = 60000;
 
     // uncomment for debugging
     //QUnit.config.testTimeout = 60 * 1000;
 
-    requireModule('oasis').logger.enable();
+    var Oasis = new requireModule('oasis'),
+        oasis = new Oasis();
+
+    oasis.logger.enable();
 
     // load all tests
     for (var moduleName in define.registry) {

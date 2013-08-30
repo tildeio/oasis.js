@@ -10,7 +10,7 @@ commonTests('Nested Sandbox', function (createSandbox, adapter) {
     test("ports sent to a sandbox can be passed to its child sandboxes", function() {
       expect(1);
 
-      Oasis.register({
+      oasis.register({
         url: "fixtures/inception_parent.js",
         capabilities: ['inception']
       });
@@ -43,7 +43,7 @@ commonTests('Nested Sandbox', function (createSandbox, adapter) {
     test("ports sent to a sandbox can be passed to its child sandboxes while supporting a shorthand", function() {
       expect(3);
 
-      Oasis.register({
+      oasis.register({
         url: "fixtures/inception_parent.js",
         capabilities: ['inception']
       });
