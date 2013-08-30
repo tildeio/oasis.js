@@ -12,7 +12,7 @@ commonTests('Sandbox', function (createSandbox, adapter) {
 
   test("assertion: must provide capabilities when registering a package", function() {
     raises(function() {
-      Oasis.register({
+      oasis.register({
         url: 'fixtures/index.js'
       });
     }, Error, "Registering a package without capabilities fails");
@@ -56,7 +56,7 @@ commonTests('Sandbox', function (createSandbox, adapter) {
     stop();
 
     var LocalService = Oasis.Service.extend({ }),
-        channel = adapter.createChannel(),
+        channel = adapter.createChannel(oasis),
         port = channel.port2;
 
     var sandbox = createSandbox({
@@ -83,7 +83,7 @@ commonTests('Sandbox', function (createSandbox, adapter) {
   test("Sandboxes should have promises that are resolved when the sandbox has finished initializing", function() {
     expect(3);
 
-    Oasis.register({
+    oasis.register({
       url: 'fixtures/index.js',
       capabilities: ['assertions']
     });
@@ -119,7 +119,7 @@ commonTests('Sandbox', function (createSandbox, adapter) {
   });
 
   test("Sandboxes can have multiple URLs whose sources are loaded synchronously", function() {
-    Oasis.register({
+    oasis.register({
       url: 'fixtures/multiple_url_1.js',
       dependencies: ['fixtures/multiple_url_2.js'],
       capabilities: ['assertions', 'assertions2']
@@ -190,12 +190,12 @@ commonTests('Sandbox', function (createSandbox, adapter) {
     expect(2);
     var sandbox1, sandbox2;
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/multiple_url_1.js",
       capabilities: ['assertions']
     });
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/multiple_url_2.js",
       capabilities: ['assertions2']
     });

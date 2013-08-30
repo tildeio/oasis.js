@@ -5,7 +5,7 @@ commonTests('Services', function (createSandbox) {
   test("service is notified about ports created for a sandbox", function() {
     expect(2);
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/index.js",
       capabilities: ['testData']
     });
@@ -36,7 +36,7 @@ commonTests('Services', function (createSandbox) {
   test("The `destroy` hook is called on each service when terminating the sandbox", function() {
     expect(1);
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/index.js",
       capabilities: ['assertions']
     });

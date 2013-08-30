@@ -16,7 +16,7 @@ var AssertionsConsumer = Oasis.Consumer.extend({
   }
 });
 
-Oasis.connect({
+oasis.connect({
   consumers: {
     assertions: AssertionsConsumer
   }
