@@ -3,9 +3,10 @@
 import Oasis from "oasis";
 import iframeAdapter from "oasis/iframe_adapter";
 
+import { a_forEach } from "oasis/shims";
 import { getBase } from "test/helpers/shims";
 
-var sandbox,
+var sandbox, sandboxes,
     destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
 
 function createSandbox(options) {
@@ -14,17 +15,23 @@ function createSandbox(options) {
     options.oasisURL = destinationUrl + '/oasis.js.html';
   }
   sandbox = oasis.createSandbox(options);
+  sandboxes.push(sandbox);
   return sandbox;
 }
 
+function teardown() {
+  a_forEach.call(sandboxes, function (sandbox) {
+    sandbox.terminate();
+  });
+  sandboxes = [];
+}
 
 module('iframe Sandboxes', {
   setup: function () {
+    sandboxes = [];
     oasis = new Oasis();
   },
-  teardown: function () {
-    if (sandbox) { sandbox.terminate(); }
-  }
+  teardown: teardown
 });
 
 test("The iframes are uniquely named ( solve a problem with back button and improve debugging)", function() {
@@ -48,7 +55,6 @@ test("The iframes are uniquely named ( solve a problem with back button and impr
   ok( sandbox1.el.name !== sandbox2.el.name, 'The iframes have a unique name');
   ok( /fixtures\/index.js/.test( sandbox1.el.name ), 'The iframe name contains the url' );
 });
-
 
 test("The sandbox returns the name of the iframe", function() {
   oasis.register({

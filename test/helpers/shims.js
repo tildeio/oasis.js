@@ -44,6 +44,14 @@ export var a_indexOf = isNativeFunc(Array.prototype.indexOf) ? Array.prototype.i
   return -1;
 };
 
+export function _addEventListener(receiver, eventName, fn) {
+  if (receiver.addEventListener) {
+    return receiver.addEventListener(eventName, fn);
+  } else if (receiver.attachEvent) {
+    return receiver.attachEvent('on' + eventName, fn);
+  }
+}
+
 var errorsHaveStacks = (function () {
   try {
     throw new Error("message");
