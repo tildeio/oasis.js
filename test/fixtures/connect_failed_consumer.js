@@ -1,5 +1,6 @@
-Oasis.connect('assertions').then(function (port) {
-  Oasis.connect({
+oasis.logger.enable();
+oasis.connect('assertions').then(function (port) {
+  oasis.connect({
     consumers: {
       unprovidedCapability: Oasis.Consumer.extend({
         events: {

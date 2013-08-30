@@ -5,7 +5,7 @@ import { commonTests } from "test/helpers/suite";
 commonTests('Requests', function (createSandbox) {
   test("environment can request a value from a sandbox", function() {
     expect(1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/simple_value.js",
       capabilities: ['pong']
     });
@@ -34,7 +34,7 @@ commonTests('Requests', function (createSandbox) {
 
   test("environment can request a value from a sandbox with arguments", function() {
     expect(1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/simple_value_with_args.js",
       capabilities: ['pong']
     });
@@ -63,7 +63,7 @@ commonTests('Requests', function (createSandbox) {
 
   test("sandbox can request a value from the environment", function() {
     expect(1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/request_from_sandbox.js",
       capabilities: ['pong']
     });
@@ -98,7 +98,7 @@ commonTests('Requests', function (createSandbox) {
   test("sandbox can request a value from the environment with arguments", function() {
     expect(1);
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/request_from_sandbox_with_args.js",
       capabilities: ['pong']
     });
@@ -134,7 +134,7 @@ commonTests('Requests', function (createSandbox) {
 
   test("environment can respond to a sandbox request with a promise that resolves", function() {
     expect(1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/request_from_sandbox.js",
       capabilities: ['pong']
     });
@@ -172,7 +172,7 @@ commonTests('Requests', function (createSandbox) {
 
   test("sandbox can respond to an environment request with a promise that resolves", function() {
     expect(1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/promise.js",
       capabilities: ['promisepong']
     });
@@ -205,7 +205,7 @@ commonTests('Requests', function (createSandbox) {
 
   test("environment can respond to a sandbox request with a promise that rejects", function() {
     expect(1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/request_from_sandbox.js",
       capabilities: ['pong']
     });
@@ -247,7 +247,7 @@ commonTests('Requests', function (createSandbox) {
 
   test("sandbox can respond to an environment request with a promise that rejects", function() {
     expect(errorsHaveStacks ? 2 : 1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/rejected_request_from_environment.js",
       capabilities: ['pong']
     });
@@ -279,7 +279,7 @@ commonTests('Requests', function (createSandbox) {
   });
 
   test("requests whose values are undefined are treated as failures", function() {
-    Oasis.register({
+    oasis.register({
       url: "fixtures/request_value_is_undefined.js",
       capabilities: ['pong']
     });
@@ -310,7 +310,7 @@ commonTests('Requests', function (createSandbox) {
 commonTests('EXPERIMENTAL API (Requests): ', function (createSandbox) {
   test("environment can fail a request with an exception", function() {
     expect(1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/request_from_sandbox.js",
       capabilities: ['pong']
     });
@@ -344,7 +344,7 @@ commonTests('EXPERIMENTAL API (Requests): ', function (createSandbox) {
 
   test("sandbox can fail a request with an exception", function() {
     expect(errorsHaveStacks ? 2 : 1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/simple_error.js",
       capabilities: ['pong']
     });

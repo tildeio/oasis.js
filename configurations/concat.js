@@ -22,7 +22,7 @@ module.exports = {
     ],
     dest: 'tmp/oasis.js',
     options: {
-      footer: "self.Oasis = requireModule('oasis');"
+      footer: "self.Oasis = requireModule('oasis'); self.oasis = new self.Oasis(); self.oasis.autoInitializeSandbox();"
     }
   }
 };

@@ -5,7 +5,7 @@ commonTests('Events', function (createSandbox) {
   test("service - card can communicate with the environment through a port with the environment shorthand for events", function() {
     expect(1);
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/assertions.js",
       capabilities: ['assertions']
     });
@@ -32,7 +32,7 @@ commonTests('Events', function (createSandbox) {
   test("service - card can communicate with the environment through a port with the card shorthand for events", function() {
     expect(2);
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/assertions_shorthand.js",
       capabilities: ['assertions']
     });
@@ -56,17 +56,19 @@ commonTests('Events', function (createSandbox) {
       }
     });
 
-    createSandbox({
+    var sandbox = createSandbox({
       url: "fixtures/assertions_shorthand.js",
       services: {
         assertions: AssertionsService
       }
-    }).start();
+    });
+    
+    sandbox.start();
   });
 
   test("When the shorthand form is used for events, they can send events", function() {
     expect(1);
-    Oasis.register({
+    oasis.register({
       url: "fixtures/peter_pong.js",
       capabilities: ['peterpong']
     });
@@ -98,7 +100,7 @@ commonTests('Events', function (createSandbox) {
   });
 
   test("When the shorthand form is used for events, they can send requests", function() {
-    Oasis.register({
+    oasis.register({
       url: "fixtures/peter_pong_request.js",
       capabilities: ['peterpong']
     });
@@ -161,7 +163,7 @@ commonTests('Events', function (createSandbox) {
     expect(2);
     stop(2);
 
-    Oasis.configure('eventCallback', function (callback) {
+    oasis.configure('eventCallback', function (callback) {
       inWrapper = true;
       callback();
       inWrapper = false;

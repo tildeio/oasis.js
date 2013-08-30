@@ -1,4 +1,4 @@
-Oasis.connect('pong', function(port) {
+oasis.connect('pong', function(port) {
   port.onRequest('ping', function() {
     return 'pong';
   });

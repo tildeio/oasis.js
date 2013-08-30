@@ -1,63 +1,66 @@
+/*global oasis:true */
+
 import Oasis from "oasis";
 import webworkerAdapter from "oasis/webworker_adapter";
 
-if( this.Worker ) {
-  module('Webworker Sandboxes', {
-    setup: function() {
-      Oasis.reset();
-    }
-  });
+if (!this.Worker) { return; }
 
-  test("throws an error if the sandbox type is html", function() {
-    raises(function() {
-      Oasis.createSandbox({
-        url: "fixtures/html_sandbox.html",
-        type: 'html',
-        adapter: webworkerAdapter,
-        capabilities: ['assertions'],
-        services: {
-          assertions: Oasis.Service
-        }
-      });
-    }, Error, "Creating a sandbox with type: html but adapter: webworker fails.");
-  });
 
-  test("The workers are uniquely named to improve debugging", function() {
-    Oasis.register({
-      url: "fixtures/index.js",
-      capabilities: []
-    });
+module('Webworker Sandboxes', {
+  setup: function() {
+    oasis = new Oasis();
+  }
+});
 
-    var sandbox1, sandbox2;
-
-    sandbox1 = Oasis.createSandbox({
+test("throws an error if the sandbox type is html", function() {
+  raises(function() {
+    oasis.createSandbox({
+      url: "fixtures/html_sandbox.html",
+      type: 'html',
       adapter: webworkerAdapter,
-      url: 'fixtures/index.js'
+      capabilities: ['assertions'],
+      services: {
+        assertions: Oasis.Service
+      }
     });
-    sandbox1.start();
+  }, Error, "Creating a sandbox with type: html but adapter: webworker fails.");
+});
 
-    sandbox2 = Oasis.createSandbox({
-      adapter: webworkerAdapter,
-      url: 'fixtures/index.js'
-    });
-    sandbox2.start();
-
-    ok( sandbox1.worker.name !== sandbox2.worker.name, 'The workers have a unique name');
-    ok( /fixtures\/index.js/.test( sandbox1.worker.name ), 'The worker name contains the url' );
+test("The workers are uniquely named to improve debugging", function() {
+  oasis.register({
+    url: "fixtures/index.js",
+    capabilities: []
   });
 
-  test("The sandbox returns the name of the worker", function() {
-    Oasis.register({
-      url: "fixtures/index.js",
-      capabilities: []
-    });
+  var sandbox1, sandbox2;
 
-    var sandbox = Oasis.createSandbox({
-      adapter: webworkerAdapter,
-      url: 'fixtures/index.js'
-    });
-    sandbox.start();
-
-    ok( sandbox.name(), sandbox.worker.name,'The sandbox returns the worker name');
+  sandbox1 = oasis.createSandbox({
+    adapter: webworkerAdapter,
+    url: 'fixtures/index.js'
   });
-}
+  sandbox1.start();
+
+  sandbox2 = oasis.createSandbox({
+    adapter: webworkerAdapter,
+    url: 'fixtures/index.js'
+  });
+  sandbox2.start();
+
+  ok( sandbox1.worker.name !== sandbox2.worker.name, 'The workers have a unique name');
+  ok( /fixtures\/index.js/.test( sandbox1.worker.name ), 'The worker name contains the url' );
+});
+
+test("The sandbox returns the name of the worker", function() {
+  oasis.register({
+    url: "fixtures/index.js",
+    capabilities: []
+  });
+
+  var sandbox = oasis.createSandbox({
+    adapter: webworkerAdapter,
+    url: 'fixtures/index.js'
+  });
+  sandbox.start();
+
+  ok( sandbox.name(), sandbox.worker.name,'The sandbox returns the worker name');
+});

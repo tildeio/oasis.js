@@ -13,7 +13,7 @@ new Oasis.RSVP.Promise(function (resolve, reject) {
   }
   waitForAsyncScript();
 }).then(function () {
-  Oasis.connect('assertions', function (port) {
+  oasis.connect('assertions', function (port) {
     var assertions = port,
         tag = document.createElement('iframe'),
         origin = window.location.protocol + "//" + window.location.host;

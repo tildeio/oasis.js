@@ -3,7 +3,8 @@ module.exports = {
     files: [
       'configurations/**',
       'lib/**',
-      'test/**'
+      'test/**',
+      'vendor/**'
     ],
     tasks: ['lock', 'build', 'unlock'],
     options: {

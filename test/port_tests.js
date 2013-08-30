@@ -5,7 +5,7 @@ commonTests('Ports', function (createSandbox) {
   test("sandbox can communicate with the environment through a port", function() {
     expect(2);
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/assertions.js",
       capabilities: ['assertions']
     });
@@ -57,7 +57,7 @@ commonTests('Ports', function (createSandbox) {
 
     var testPort;
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/close_service.js",
       capabilities: ['close']
     });
@@ -97,7 +97,7 @@ commonTests('Ports', function (createSandbox) {
   test("environment can communicate with the sandbox through a port", function() {
     expect(2);
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/to_environment.js",
       capabilities: ['pingpong']
     });
@@ -130,7 +130,7 @@ commonTests('Ports', function (createSandbox) {
   test("environment can communicate with the sandbox through a port with a shorthand", function() {
     expect(1);
 
-    Oasis.register({
+    oasis.register({
       url: "fixtures/to_environment.js",
       capabilities: ['pingpong']
     });

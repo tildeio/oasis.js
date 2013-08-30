@@ -1,7 +1,7 @@
-Oasis.connect('assertions', function(port) {
+oasis.connect('assertions', function(port) {
   port.send('receivedAssertion');
 });
 
-Oasis.connect('otherStuff', function(port) {
+oasis.connect('otherStuff', function(port) {
   port.send('receivedOther');
 });
