@@ -225,7 +225,6 @@ define("oasis/connect",
   function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, __exports__) {
     "use strict";
     var assert = __dependency1__.assert;
-    var rsvpErrorHandler = __dependency1__.rsvpErrorHandler;
     var a_forEach = __dependency2__.a_forEach;
     var PostMessagePort = __dependency3__.PostMessagePort;
 
@@ -240,7 +239,7 @@ define("oasis/connect",
         if (options.promise) {
           options.promise.then(function() {
             port.start();
-          }).then(null, rsvpErrorHandler);
+          }).fail(RSVP.rethrow);
         } else {
           port.start();
         }
@@ -326,7 +325,7 @@ define("oasis/connect",
 
           RSVP.resolve(handler.setupCapability(port)).then(function () {
             port.start();
-          });
+          }).fail(RSVP.rethrow);
         }
 
         oasis.ports[capability] = port;
@@ -659,7 +658,6 @@ define("oasis/message_channel",
     "use strict";
     var extend = __dependency1__.extend;
     var mustImplement = __dependency1__.mustImplement;
-    var rsvpErrorHandler = __dependency1__.rsvpErrorHandler;
     var configuration = __dependency2__.configuration;
 
     /**
@@ -949,7 +947,6 @@ define("oasis/sandbox",
   function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, RSVP, Logger, iframeAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
-    var rsvpErrorHandler = __dependency1__.rsvpErrorHandler;
     var a_forEach = __dependency2__.a_forEach;
     var a_reduce = __dependency2__.a_reduce;
     var OasisPort = __dependency3__.OasisPort;
@@ -994,7 +991,7 @@ define("oasis/sandbox",
       this.adapter.initializeSandbox(this).then(function () {
         sandbox.createChannels();
         sandbox.connectPorts();
-      }).then(null, rsvpErrorHandler);
+      }).fail(RSVP.rethrow);
     };
 
     OasisSandbox.prototype = {
@@ -1102,7 +1099,7 @@ define("oasis/sandbox",
         RSVP.all(allSandboxPortPromises).then(function (ports) {
           Logger.log("All " + ports.length + " ports created.  Transferring them.");
           sandbox.adapter.connectPorts(sandbox, ports);
-        }).then(null, rsvpErrorHandler);
+        }).fail(RSVP.rethrow);
       },
 
       start: function(options) {
@@ -1558,24 +1555,9 @@ define("oasis/util",
       return OasisObject;
     }
 
-    function rsvpErrorHandler(error) {
-      if (typeof console === 'object' && console.assert && console.error) {
-        // chrome does not (yet) link the URLs in `console.assert`
-        console.error(error.stack);
-        console.assert(false, error.message);
-      }
-      // throw an error upstream for tests & browsers without `console.assert`
-      setTimeout( function () { throw error; }, 1);
-      // also throw an error sync. to cascade promise failure
-      throw error;
-    }
-
-
-
     __exports__.assert = assert;
     __exports__.mustImplement = mustImplement;
     __exports__.extend = extend;
-    __exports__.rsvpErrorHandler = rsvpErrorHandler;
   });
 define("oasis/version",
   [],
