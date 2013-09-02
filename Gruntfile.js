@@ -23,6 +23,7 @@ module.exports = function(grunt) {
     concat: config('concat'),
     uglify: config('uglify'),
     copy: config('copy'),
+    shell: config('shell'),
     symlink: config('symlink'),
 
     'saucelabs-qunit': config('saucelabs-qunit'),
@@ -52,7 +53,7 @@ module.exports = function(grunt) {
   });
   grunt.registerTask('build', ['jst', 'transpile', 'jshint', 'concat', 'uglify', 'jsframe', 'copy', 'symlink']);
 
-  grunt.registerTask('default', ['build']);
-  grunt.registerTask('server', ['build', 'connect', 'watch']);
-  grunt.registerTask('test:ci', ['build', 'connect', 'saucelabs-qunit:all']);
+  grunt.registerTask('default', ['shell:npmInstall', 'build']);
+  grunt.registerTask('server', ['shell:npmInstall', 'build', 'connect', 'watch']);
+  grunt.registerTask('test:ci', ['shell:npmInstall', 'build', 'connect', 'saucelabs-qunit:all']);
 };
