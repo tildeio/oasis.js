@@ -30,6 +30,6 @@
     "grunt-contrib-jst": "~0.5.1"
   },
   "dependencies": {
-    "rsvp": "2.0.2"
+    "rsvp": "2.0.3"
   }
 }
