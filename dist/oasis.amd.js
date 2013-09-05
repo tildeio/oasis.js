@@ -118,7 +118,7 @@ define("oasis/base_adapter",
       name: mustImplement('BaseAdapter', 'name'),
 
       oasisURL: function(sandbox) {
-        return sandbox.options.oasisURL || sandbox.oasis.configuration.oasisURL;
+        return sandbox.options.oasisURL || sandbox.oasis.configuration.oasisURL || 'oasis.js.html';
       },
 
       createChannel: function(oasis) {
@@ -201,7 +201,6 @@ define("oasis/config",
       - `allowSameOrigin` - a card can be hosted on the same domain
     */
     function OasisConfiguration() {
-      this.oasisURL = 'oasis.js.html';
       this.eventCallback = function (callback) { callback(); };
       this.allowSameOrigin = false;
     }
