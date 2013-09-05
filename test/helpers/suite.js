@@ -21,6 +21,7 @@ function createSandboxFn(currentAdapter) {
 
 function setup() {
   window.oasis = new Oasis();
+  window.oasis.logger.enable();
 }
 
 function teardown() {
