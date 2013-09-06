@@ -31,6 +31,7 @@ define("oasis",
     Oasis.Version = Version;
     Oasis.Service = Oasis.Consumer = Service;
     Oasis.RSVP = RSVP;
+    Oasis.autoInitializeSandbox =  autoInitializeSandbox;
     Oasis.adapters = {
       iframe: iframeAdapter,
       webworker: webworkerAdapter
@@ -79,7 +80,6 @@ define("oasis",
       },
 
       configure: function(name, value) { this.configuration[name] = value; },
-      autoInitializeSandbox: autoInitializeSandbox,
 
       connect: connect,
       connectCapabilities: connectCapabilities,
@@ -1155,10 +1155,12 @@ define("oasis/sandbox_init",
         }
 
         if (window.parent && window.parent !== window) {
-          iframeAdapter.connectSandbox(this);
-        } 
+          self.oasis = new self.Oasis();
+          iframeAdapter.connectSandbox(self.oasis);
+        }
       } else {
-        webworkerAdapter.connectSandbox(this);
+        self.oasis = new self.Oasis();
+        webworkerAdapter.connectSandbox(self.oasis);
       }
     }
 

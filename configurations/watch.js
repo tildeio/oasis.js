@@ -6,7 +6,7 @@ module.exports = {
       'test/**',
       'vendor/**'
     ],
-    tasks: ['lock', 'build', 'unlock'],
+    tasks: ['clean', 'lock', 'build', 'unlock'],
     options: {
       debounceDelay: 200
     }
