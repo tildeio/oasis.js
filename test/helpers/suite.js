@@ -7,9 +7,9 @@ var sandboxes = [],
     destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
 
 function createSandboxFn(currentAdapter) {
-  return function createSandbox(options) {
+  return function createSandbox(options, skipOasisURL) {
     if (options.adapter === undefined) { options.adapter = currentAdapter; }
-    if( options.adapter === Oasis.adapters.iframe && !options.oasisURL ) {
+    if( options.adapter === Oasis.adapters.iframe && !options.oasisURL && !skipOasisURL ) {
       options.oasisURL = destinationUrl + '/oasis.js.html';
     }
 
@@ -21,6 +21,7 @@ function createSandboxFn(currentAdapter) {
 
 function setup() {
   window.oasis = new Oasis();
+  window.oasis.logger.enable();
 }
 
 function teardown() {

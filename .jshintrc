@@ -17,6 +17,7 @@
         "require",
         "equal",
         "test",
+        "asyncTest",
         "testBoth",
         "testWithDefault",
         "raises",

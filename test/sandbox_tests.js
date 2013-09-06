@@ -240,4 +240,36 @@ commonTests('Sandbox', function (createSandbox, adapter) {
 
     sandbox1.start();
   });
+
+  test("Oasis' bootloader can be loaded from a default URL", function() {
+    expect(2);
+
+    oasis.configure('allowSameOrigin', true);
+    oasis.register({
+      url: "fixtures/assertions.js",
+      capabilities: ['assertions']
+    });
+
+    stop();
+
+    var AssertionsService = Oasis.Service.extend({
+      initialize: function(port, capability) {
+        equal(capability, 'assertions', "precond - capability is the assertions service");
+
+        port.on('ok', function(data) {
+          start();
+          equal(data, 'success', "The sandbox was able to communicate back");
+        });
+      }
+    });
+
+    var sandbox = createSandbox({
+      url: "fixtures/assertions.js",
+      services: {
+        assertions: AssertionsService
+      }
+    }, true);
+
+    sandbox.start();
+  });
 });
