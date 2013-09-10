@@ -4,6 +4,7 @@ module.exports = {
       'configurations/**',
       'lib/**',
       'test/**',
+      'bower_components/**/*.js',
       'vendor/**'
     ],
     tasks: ['lock', 'build', 'unlock'],
