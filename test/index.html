@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <title>QUnit Example</title>
   <link rel="stylesheet" href="vendor/qunit.css">
+  <style type="text/css">
+  /* show all assertions for failed tests, even when hiding passed tests */
+  #qunit-tests.hidepass li.fail li.pass {
+    display: list-item;
+  }
+  </style>
   <script src="vendor/qunit.js"></script>
   <script src="vendor/jquery-1.9.1.js"></script>
   <script src="test.js"></script>
