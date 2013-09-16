@@ -1,3 +1,5 @@
+### next
+
 ### 0.3.0
 
 - `oasis.logger.enable()` will log some Oasis internals, especially around
@@ -73,6 +75,7 @@ Oasis.configure('eventHandler', function (callback) { callback(); });
     }
     ```
 
-### 0.1.0 / 9 July 2013
+### 0.1.0
+*9 July 2013*
 
 Initial version.
