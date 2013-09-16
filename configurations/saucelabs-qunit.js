@@ -1,3 +1,4 @@
+var exec = require('shelljs').exec;
 var browsers = [{
     browserName: 'chrome',
     version: '27',
@@ -24,7 +25,10 @@ var browsers = [{
     platform: 'Windows 7'
   }];
 
-var testTimeout = 3 * 60 * 1000;
+var testTimeout = 3 * 60 * 1000,
+    gitLabel = exec('git name-rev `git rev-parse HEAD`').output,
+    travisBuildNumber = process.env.TRAVIS_BUILD_NUMBER || '',
+    buildLabel = travisBuildNumber + " (" + gitLabel + ")";
 
 module.exports = {
   all: {
@@ -33,7 +37,7 @@ module.exports = {
         'http://localhost:8000/index.html'
       ],
       tunnelTimeout: testTimeout + (1 * 60 * 1000),
-      build: process.env.TRAVIS_BUILD_NUMBER,
+      build: buildLabel,
       concurrency: 3,
       browsers: browsers,
       testname: "Oasis.js qunit tests",

@@ -29,7 +29,8 @@
     "lockfile": "~0.4.0",
     "grunt-contrib-symlink": "~0.2.0",
     "jsframe": "~0.1.0-3",
-    "grunt-contrib-jst": "~0.5.1"
+    "grunt-contrib-jst": "~0.5.1",
+    "shelljs": "~0.2.5"
   },
   "dependencies": {
     "rsvp": "2.0.3",
