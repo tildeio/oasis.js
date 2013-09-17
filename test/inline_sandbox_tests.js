@@ -22,10 +22,12 @@ module('Inline Sandboxes', {
 });
 
 test("it exists", function() {
+  expect(1);
   ok(InlineAdapter, 'namespace is present');
 });
 
 test("throws an error if the sandbox type is html", function() {
+  expect(1);
   raises(function() {
     oasis.createSandbox({
       url: "fixtures/html_sandbox.html",
@@ -41,6 +43,7 @@ test("throws an error if the sandbox type is html", function() {
 
 if (typeof HTMLElement !== 'undefined') {
   test("can be created", function() {
+    expect(2);
     var sandbox = oasis.createSandbox({
       url: 'fixtures/simple_value.js',
       adapter: InlineAdapter,
