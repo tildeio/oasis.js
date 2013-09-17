@@ -21,5 +21,9 @@
   ],
   "dependencies": {
     "MessageChannel.js": "~0.1.3"
+  },
+  "devDependencies": {
+    "qunit": "git://github.com/lessmad/qunit#stop-names-test",
+    "jquery": "~1.9.1"
   }
 }

@@ -12,7 +12,7 @@
   }
   </style>
   <script src="vendor/qunit.js"></script>
-  <script src="vendor/jquery-1.9.1.js"></script>
+  <script src="vendor/jquery.js"></script>
   <script src="test.js"></script>
 </head>
 <body>
@@ -52,7 +52,7 @@
         console.log("TEST Start", details.module, details.name);
       });
       QUnit.testDone(function (details) {
-        console.log("TEST End (", details.runtime, "ms)", details.module, details.name);
+        console.log("TEST End (", details.duration, "ms)", details.module, details.name);
       });
     }
 
