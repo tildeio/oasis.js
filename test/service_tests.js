@@ -15,8 +15,8 @@ commonTests('Services', function (createSandbox) {
     var DataService = Oasis.Service.extend({
       initialize: function(port, capability) {
         start();
-        equal(this.sandbox, sandbox);
-        equal(capability, 'testData');
+        equal(this.sandbox, sandbox, "Data service had `sandbox` set correctly.");
+        equal(capability, 'testData', "Data service constructor is told what capability it fulfills.");
       }
     });
 
