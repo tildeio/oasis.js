@@ -14,6 +14,17 @@ module.exports = {
     dest: 'tmp/public/'
   },
 
+  testVendor: {
+    expand: true,
+    cwd: 'bower_components',
+    src: [
+      'qunit/qunit/*',
+      'jquery/jquery.js'
+    ],
+    flatten: true,
+    dest: 'tmp/public/vendor/'
+  },
+
   testOasis: {
     expand: true,
     cwd: 'dist',
