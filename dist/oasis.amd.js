@@ -1,11 +1,13 @@
 define("oasis",
-  ["oasis/util","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/config","oasis/sandbox","oasis/sandbox_init","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter"],
-  function(__dependency1__, __dependency2__, RSVP, logger, Version, OasisConfiguration, Sandbox, autoInitializeSandbox, Service, iframeAdapter, webworkerAdapter) {
+  ["oasis/util","oasis/xhr","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/config","oasis/sandbox","oasis/sandbox_init","oasis/events","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter"],
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, logger, Version, OasisConfiguration, Sandbox, autoInitializeSandbox, Events, Service, iframeAdapter, webworkerAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
-    var connect = __dependency2__.connect;
-    var connectCapabilities = __dependency2__.connectCapabilities;
-    var portFor = __dependency2__.portFor;
+    var delegate = __dependency1__.delegate;
+    var xhr = __dependency2__.xhr;
+    var connect = __dependency3__.connect;
+    var connectCapabilities = __dependency3__.connectCapabilities;
+    var portFor = __dependency3__.portFor;
 
 
 
@@ -25,6 +27,9 @@ define("oasis",
       this.receivedPorts = false;
 
       this.configuration = new OasisConfiguration();
+      this.events = new Events();
+
+      this.didCreate();
     }
 
     Oasis.Version = Version;
@@ -40,6 +45,14 @@ define("oasis",
       log: function () {
         this.logger.log.apply(this.logger, arguments);
       },
+
+      on: delegate('events', 'on'),
+      off: delegate('events', 'off'),
+      trigger: delegate('events', 'trigger'),
+
+      didCreate: function() {},
+
+      xhr: xhr,
 
       /**
         This is the entry point that allows the containing environment to create a
@@ -670,10 +683,10 @@ define("oasis/inline_adapter",
 
 
 
-    function fetchResource(url) {
+    function fetchResource(url, oasis) {
       return xhr(url, {
         dataType: 'text'
-      }).then(function (data) {
+      }, oasis).then(function (data) {
         return new Function("oasis", data);
       }).fail(RSVP.rethrow);
     }
@@ -739,7 +752,7 @@ define("oasis/inline_adapter",
 
       loadScripts: function (base, scriptURLs, oasis) {
         oasis._loadScripts = RSVP.all(a_map.call(scriptURLs, function (url) {
-          return fetchResource(url);
+          return fetchResource(url, oasis);
         })).then(function (dependencies) {
           a_forEach.call(dependencies, function (dependency) {
             dependency(oasis);
@@ -754,7 +767,7 @@ define("oasis/inline_adapter",
 
         function loadSandboxJS() {
           return new RSVP.Promise(function(resolve, reject) {
-            resolve(fetchResource(oasis.sandbox.options.url).then(applySandboxJS));
+            resolve(fetchResource(oasis.sandbox.options.url, oasis).then(applySandboxJS));
           });
         }
       }
@@ -1717,10 +1730,18 @@ define("oasis/util",
       return OasisObject;
     }
 
+    function delegate(delegateeProperty, delegatedMethod) {
+      return function () {
+        var delegatee = this[delegateeProperty];
+        return delegatee[delegatedMethod].apply(delegatee, arguments);
+      };
+    }
+
     __exports__.assert = assert;
     __exports__.noop = noop;
     __exports__.mustImplement = mustImplement;
     __exports__.extend = extend;
+    __exports__.delegate = delegate;
   });
 define("oasis/version",
   [],
@@ -1839,6 +1860,8 @@ define("oasis/xhr",
     /*global XDomainRequest */
 
 
+    var a_slice = Array.prototype.slice;
+
     function acceptsHeader(options) {
       var dataType = options.dataType;
 
@@ -1857,23 +1880,21 @@ define("oasis/xhr",
       return xhr.status;
     }
 
-
-    function xdrPreamble(xhr) {
-      // see http://social.msdn.microsoft.com/Forums/ie/en-US/30ef3add-767c-4436-b8a9-f1ca19b4812e
-      // see http://cypressnorth.com/programming/internet-explorer-aborting-ajax-requests-fixed/
-      //
-      // tl;dr specify all event hooks or requests will sometimes be erroneously
-      // aborted in IE9.
-      xhr.onprogress = noop;
-      xhr.ontimeout = noop;
-      xhr.timeout = 0;
-    }
-
     function xdrGetLoadStatus() {
       return 200;
     }
 
     function noop() { }
+    var NONE = {};
+
+    function trigger(event, oasis) {
+      if (!oasis) { return; }
+
+      var args = a_slice.call(arguments, 2);
+
+      args.unshift(event);
+      oasis.trigger.apply(oasis, args);
+    }
 
     var accepts = {
       "*": "*/*",
@@ -1883,30 +1904,36 @@ define("oasis/xhr",
       json: "application/json, text/javascript"
     };
 
-    var XHR, setRequestHeader, getLoadStatus, preamble, send;
+    var XHR, setRequestHeader, getLoadStatus, send;
 
     if ('withCredentials' in new XMLHttpRequest()) {
       XHR = XMLHttpRequest;
       setRequestHeader = xhrSetRequestHeader;
       getLoadStatus = xhrGetLoadStatus;
-      preamble = noop;
     } else if (typeof XDomainRequest !== 'undefined') {
       XHR = XDomainRequest;
       setRequestHeader = noop;
       getLoadStatus = xdrGetLoadStatus;
-      preamble = xdrPreamble;
     }
     // else inline adapter with cross-domain cards is not going to work
 
 
-    function xhr(url, options) {
+    function xhr(url, options, oasis) {
+      if (!oasis) { oasis = this; }
+      if (!options) { options = NONE; }
+
       return RSVP.Promise(function(resolve, reject){
         var xhr = new XHR();
         xhr.open("get", url, true);
         setRequestHeader(xhr, options);
-        preamble(xhr);
+
+        if (options.timeout) {
+          xhr.timeout = options.timeout;
+        }
 
         xhr.onload = function () {
+          trigger('xhr.load', oasis, url, options, xhr);
+
           var status = getLoadStatus(xhr);
           if (status >= 200 && status < 300) {
             resolve(xhr.responseText);
@@ -1915,10 +1942,18 @@ define("oasis/xhr",
           }
         };
 
-        xhr.onerror = function () {
+        xhr.onprogress = noop;
+        xhr.ontimeout = function () {
+          trigger('xhr.timeout', oasis, url, options, xhr);
           reject(xhr);
         };
 
+        xhr.onerror = function () {
+          trigger('xhr.error', oasis, url, options, xhr);
+          reject(xhr);
+        };
+
+        trigger('xhr.send', oasis, url, options, xhr);
         xhr.send();
       });
     }
