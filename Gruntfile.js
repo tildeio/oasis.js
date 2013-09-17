@@ -55,5 +55,8 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', ['shell:npmInstall', 'build']);
   grunt.registerTask('server', ['shell:npmInstall', 'build', 'connect', 'watch']);
-  grunt.registerTask('test:ci', ['shell:npmInstall', 'build', 'connect', 'saucelabs-qunit:all']);
+
+  grunt.registerTask('test:ci', ['shell:npmInstall', 'build', 'connect', 'saucelabs-qunit']);
+
+  grunt.registerTask('test:ie', ['shell:npmInstall', 'build', 'connect', 'saucelabs-qunit:ie']);
 };
