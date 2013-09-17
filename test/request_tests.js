@@ -279,6 +279,7 @@ commonTests('Requests', function (createSandbox) {
   });
 
   test("requests whose values are undefined are treated as failures", function() {
+    expect(1);
     oasis.register({
       url: "fixtures/request_value_is_undefined.js",
       capabilities: ['pong']

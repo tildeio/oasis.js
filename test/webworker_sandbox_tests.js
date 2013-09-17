@@ -13,6 +13,7 @@ module('Webworker Sandboxes', {
 });
 
 test("throws an error if the sandbox type is html", function() {
+  expect(1);
   raises(function() {
     oasis.createSandbox({
       url: "fixtures/html_sandbox.html",
@@ -27,6 +28,7 @@ test("throws an error if the sandbox type is html", function() {
 });
 
 test("The workers are uniquely named to improve debugging", function() {
+  expect(2);
   oasis.register({
     url: "fixtures/index.js",
     capabilities: []
@@ -51,6 +53,7 @@ test("The workers are uniquely named to improve debugging", function() {
 });
 
 test("The sandbox returns the name of the worker", function() {
+  expect(1);
   oasis.register({
     url: "fixtures/index.js",
     capabilities: []

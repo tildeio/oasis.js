@@ -3,6 +3,7 @@ import { commonTests } from "test/helpers/suite";
 
 commonTests('Consumer', function (createSandbox, adapter) {
   test("Consumers instances are saved on the Oasis global", function() {
+    expect(1);
     stop();
 
     oasis.register({
@@ -30,6 +31,7 @@ commonTests('Consumer', function (createSandbox, adapter) {
   });
 
   test("Consumers do not process events until connect() has been called", function() {
+    expect(1);
     oasis.register({
       url: 'fixtures/delayed_connect.js',
       capabilities: ['assertions']

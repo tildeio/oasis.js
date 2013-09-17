@@ -3,6 +3,7 @@ import { commonTests } from "test/helpers/suite";
 
 commonTests('Sandbox', function (createSandbox, adapter) {
   test("assertion: must register package", function() {
+    expect(1);
     raises(function() {
       createSandbox({
         url: "fixtures/index.js"
@@ -11,6 +12,7 @@ commonTests('Sandbox', function (createSandbox, adapter) {
   });
 
   test("assertion: must provide capabilities when registering a package", function() {
+    expect(1);
     raises(function() {
       oasis.register({
         url: 'fixtures/index.js'

@@ -100,6 +100,7 @@ commonTests('Events', function (createSandbox) {
   });
 
   test("When the shorthand form is used for events, they can send requests", function() {
+    expect(1);
     oasis.register({
       url: "fixtures/peter_pong_request.js",
       capabilities: ['peterpong']
