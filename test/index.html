@@ -46,6 +46,9 @@
         oasis = null;
 
     requireModule('test/helpers/async').watchAsync(Oasis);
+    Oasis.RSVP.configure('onerror', function (error) {
+      ok(false, "Unhandled RSVP error " + error);
+    });
 
     if (window.console && window.console.log) {
       QUnit.testStart(function (details) {
