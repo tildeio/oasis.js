@@ -5,7 +5,7 @@
   "main": [
     "dist/oasis.js.html",
     "dist/oasis.amd.js"
-  ]
+  ],
   "authors": [
     "Tilde, inc."
   ],
