@@ -84,7 +84,7 @@ oasis.createSandbox({
 ```
 
 When creating JavaScript sandboxes it is necessary to host Oasis on the same
-domain as the sandboxed JavaScript (see [Browser Support](#Browser_Support)).
+domain as the sandboxed JavaScript (see [Browser Support](#requirements--browser-support)).
 
 Here is an example of creating an iframe sandbox for an HTML widget:
 ```js
