@@ -3,7 +3,9 @@
   "version": "0.3.0",
   "description": "Oasis.js is a pleasant API for safe communication with untrusted code in sandboxed iframes.",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "postinstall": "bower install"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/tildeio/oasis.js.git"
@@ -27,9 +29,11 @@
     "lockfile": "~0.4.0",
     "grunt-contrib-symlink": "~0.2.0",
     "jsframe": "~0.1.0-3",
-    "grunt-contrib-jst": "~0.5.1"
+    "grunt-contrib-jst": "~0.5.1",
+    "shelljs": "~0.2.5"
   },
   "dependencies": {
-    "rsvp": "2.0.3"
+    "rsvp": "2.0.3",
+    "bower": "~1.2.6"
   }
 }

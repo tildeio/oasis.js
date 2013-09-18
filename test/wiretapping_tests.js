@@ -4,6 +4,7 @@ import { commonTests } from "test/helpers/suite";
 
 commonTests('Wiretapping', function (createSandbox, adapter) {
   test("Sandboxes can be wiretapped to listen to events being sent and received", function() {
+    expect(4);
     oasis.register({
       url: 'fixtures/wiretapping.js',
       capabilities: ['assertions', 'otherStuff']
@@ -29,10 +30,7 @@ commonTests('Wiretapping', function (createSandbox, adapter) {
       }
     });
 
-    stop();
-    stop();
-    stop();
-    stop();
+    stop(4);
 
     var expectedEvents = ['sentAssertion', 'sentOther', 'receivedAssertion', 'receivedOther'];
 

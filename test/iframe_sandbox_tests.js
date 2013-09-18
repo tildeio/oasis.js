@@ -3,9 +3,10 @@
 import Oasis from "oasis";
 import iframeAdapter from "oasis/iframe_adapter";
 
+import { a_forEach } from "oasis/shims";
 import { getBase } from "test/helpers/shims";
 
-var sandbox,
+var sandbox, sandboxes,
     destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
 
 function createSandbox(options) {
@@ -14,20 +15,27 @@ function createSandbox(options) {
     options.oasisURL = destinationUrl + '/oasis.js.html';
   }
   sandbox = oasis.createSandbox(options);
+  sandboxes.push(sandbox);
   return sandbox;
 }
 
+function teardown() {
+  a_forEach.call(sandboxes, function (sandbox) {
+    sandbox.terminate();
+  });
+  sandboxes = [];
+}
 
 module('iframe Sandboxes', {
   setup: function () {
+    sandboxes = [];
     oasis = new Oasis();
   },
-  teardown: function () {
-    if (sandbox) { sandbox.terminate(); }
-  }
+  teardown: teardown
 });
 
 test("The iframes are uniquely named ( solve a problem with back button and improve debugging)", function() {
+  expect(2);
   oasis.register({
     url: "fixtures/index.js",
     capabilities: []
@@ -49,8 +57,8 @@ test("The iframes are uniquely named ( solve a problem with back button and impr
   ok( /fixtures\/index.js/.test( sandbox1.el.name ), 'The iframe name contains the url' );
 });
 
-
 test("The sandbox returns the name of the iframe", function() {
+  expect(1);
   oasis.register({
     url: "fixtures/index.js",
     capabilities: []
@@ -97,6 +105,7 @@ test("Oasis' bootloader can be hosted on a separate domain", function() {
 });
 
 test("returns a sandbox with an iframe element", function() {
+  expect(1);
   oasis.register({
     url: "fixtures/index.js",
     capabilities: []
@@ -110,6 +119,7 @@ test("returns a sandbox with an iframe element", function() {
 });
 
 test("A sandbox can be loaded from the same domain with `Oasis.config.allowSameOrigin` sets to true", function() {
+  expect(1);
   oasis.configure('allowSameOrigin', true);
 
   var sandbox = createSandbox({
@@ -122,6 +132,7 @@ test("A sandbox can be loaded from the same domain with `Oasis.config.allowSameO
 });
 
 test("Sandboxes can post messages to their own nested (non-Oasis) iframes", function() {
+  expect(1);
   stop();
 
   var sandboxUrl = destinationUrl +  "/fixtures/same_origin.js";
@@ -153,6 +164,7 @@ test("Sandboxes can post messages to their own nested (non-Oasis) iframes", func
 });
 
 test("does not generate exception when not in the DOM", function() {
+  expect(1);
   oasis.register({
     url: "fixtures/index.js",
     capabilities: []

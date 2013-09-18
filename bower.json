@@ -1,0 +1,29 @@
+{
+  "name": "Oasis.js",
+  "version": "0.3.0",
+  "homepage": "http://oasisjs.com",
+  "main": "dist/oasis.js.html",
+  "authors": [
+    "Tilde, inc."
+  ],
+  "description": "Oasis.js is a pleasant API for safe communication with untrusted code in sandboxed iframes.",
+  "keywords": [
+    "postMessage",
+    "MessageChannel"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "MessageChannel.js": "~0.1.3"
+  },
+  "devDependencies": {
+    "qunit": "git://github.com/lessmad/qunit#stop-names-test",
+    "jquery": "~1.9.1"
+  }
+}
