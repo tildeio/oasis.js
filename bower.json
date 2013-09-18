@@ -2,7 +2,10 @@
   "name": "Oasis.js",
   "version": "0.3.0",
   "homepage": "http://oasisjs.com",
-  "main": "dist/oasis.js.html",
+  "main": [
+    "dist/oasis.js.html",
+    "dist/oasis.amd.js"
+  ]
   "authors": [
     "Tilde, inc."
   ],
