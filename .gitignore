@@ -4,4 +4,5 @@ demo
 .bundle
 bin
 /node_modules
+/bower_components
 /sauce_connect.log*
