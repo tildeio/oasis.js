@@ -79,7 +79,10 @@ test("can load dependencies", function() {
     start();
   });
 
-  // Can't use promises here b/c script loading will be forced async in ie8, ie9
+  // Although we could use promises here for the inline adapter, we cannot
+  // generally do so because script loading will be forced async. in ie8 and
+  // ie9.  When we work around this issue, we should make this test a common
+  // test.
   interval = setInterval (function () {
     if (window.simpleDependencyLoaded) {
       clearInterval(interval);
