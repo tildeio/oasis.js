@@ -1,13 +1,9 @@
 var exec = require('shelljs').exec;
-var browsers = [{
-  },{
-  },{
-  }];
 
 var webkitBrowsers = [{
     browserName: 'chrome',
     version: '27',
-    platform: 'Windows 8',
+    platform: 'Windows 8'
   }, {
     browserName: 'safari',
     version: '6',
@@ -43,7 +39,6 @@ module.exports = {
     tunnelTimeout: testTimeout + (1 * 60 * 1000),
     build: buildLabel,
     concurrency: 3,
-    browsers: browsers,
     testname: "Oasis.js qunit tests",
     testTimeout: testTimeout,
     testInterval: 5000
