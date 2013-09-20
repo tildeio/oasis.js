@@ -26,6 +26,11 @@ test("it exists", function() {
   ok(InlineAdapter, 'namespace is present');
 });
 
+test("the inline adapter is listed in `Oasis.adapters`", function() {
+  expect(1);
+  equal(Oasis.adapters.inline, InlineAdapter, "Inline adapter is included in `Oasis.adapters`");
+});
+
 test("throws an error if the sandbox type is html", function() {
   expect(1);
   raises(function() {

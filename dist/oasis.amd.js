@@ -1,6 +1,6 @@
 define("oasis",
-  ["oasis/util","oasis/xhr","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/config","oasis/sandbox","oasis/sandbox_init","oasis/events","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, logger, Version, OasisConfiguration, Sandbox, autoInitializeSandbox, Events, Service, iframeAdapter, webworkerAdapter) {
+  ["oasis/util","oasis/xhr","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/config","oasis/sandbox","oasis/sandbox_init","oasis/events","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter","oasis/inline_adapter"],
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, logger, Version, OasisConfiguration, Sandbox, autoInitializeSandbox, Events, Service, iframeAdapter, webworkerAdapter, inlineAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var delegate = __dependency1__.delegate;
@@ -37,7 +37,8 @@ define("oasis",
     Oasis.RSVP = RSVP;
     Oasis.adapters = {
       iframe: iframeAdapter,
-      webworker: webworkerAdapter
+      webworker: webworkerAdapter,
+      inline: inlineAdapter
     };
 
     Oasis.prototype = {
