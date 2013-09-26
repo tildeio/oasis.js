@@ -1933,7 +1933,7 @@ define("oasis/xhr",
 
 
     function xhr(url, options, oasis) {
-      if (!oasis) { oasis = this; }
+      if (!oasis && this instanceof Oasis) { oasis = this; }
       if (!options) { options = NONE; }
 
       return new RSVP.Promise(function(resolve, reject){
