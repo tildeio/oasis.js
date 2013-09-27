@@ -684,13 +684,6 @@ define("oasis/inline_adapter",
 
 
 
-    function fetchResource(url, oasis) {
-      return xhr(url, {
-        dataType: 'text'
-      }, oasis).then(function (data) {
-        return new Function("oasis", data);
-      }).fail(RSVP.rethrow);
-    }
 
     var InlineAdapter = extend(BaseAdapter, {
       //-------------------------------------------------------------------------
@@ -738,6 +731,20 @@ define("oasis/inline_adapter",
         return sandbox.dependencies || [];
       },
 
+      fetchResource: function (url, oasis) {
+        var adapter = this;
+
+        return xhr(url, {
+          dataType: 'text'
+        }, oasis).then(function (code) {
+          return adapter.wrapResource(code);
+        }).fail(RSVP.rethrow);
+      },
+
+      wrapResource: function (code) {
+        return new Function("oasis", code);
+      },
+
       //-------------------------------------------------------------------------
       // Sandbox API
 
@@ -756,8 +763,10 @@ define("oasis/inline_adapter",
       },
 
       loadScripts: function (base, scriptURLs, oasis) {
+        var adapter = this;
+
         oasis._loadScripts = RSVP.all(a_map.call(scriptURLs, function (url) {
-          return fetchResource(url, oasis);
+          return adapter.fetchResource(url, oasis);
         })).then(function (dependencies) {
           a_forEach.call(dependencies, function (dependency) {
             dependency(oasis);
@@ -772,7 +781,7 @@ define("oasis/inline_adapter",
 
         function loadSandboxJS() {
           return new RSVP.Promise(function(resolve, reject) {
-            resolve(fetchResource(oasis.sandbox.options.url, oasis).then(applySandboxJS));
+            resolve(adapter.fetchResource(oasis.sandbox.options.url, oasis).then(applySandboxJS));
           });
         }
       }
@@ -1924,10 +1933,10 @@ define("oasis/xhr",
 
 
     function xhr(url, options, oasis) {
-      if (!oasis) { oasis = this; }
+      if (!oasis && this instanceof Oasis) { oasis = this; }
       if (!options) { options = NONE; }
 
-      return RSVP.Promise(function(resolve, reject){
+      return new RSVP.Promise(function(resolve, reject){
         var xhr = new XHR();
         xhr.open("get", url, true);
         setRequestHeader(xhr, options);

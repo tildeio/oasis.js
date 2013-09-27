@@ -4,6 +4,8 @@ import Oasis from "oasis";
 import RSVP from "rsvp";
 import InlineAdapter from "oasis/inline_adapter";
 
+import { o_create } from "oasis/shims";
+
 var oasis, interval;
 
 module('Inline Sandboxes', {
@@ -182,3 +184,26 @@ test("2 sandboxes", function(){
   sandbox2.start();
 });
 
+test("subclasses can customize resource wrapping", function() {
+  expect(1);
+  stop();
+
+  var MyInlineAdapter = o_create(InlineAdapter);
+  MyInlineAdapter.wrapResource = function(code) {
+    return new Function("oasis", "oasis._customWrapper=true;" + code);
+  };
+
+  var sandbox = oasis.createSandbox({
+    url: 'fixtures/index.js',
+    adapter: MyInlineAdapter,
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service
+    }
+  });
+
+  sandbox.waitForLoad().then(function () {
+    ok(sandbox.sandboxedOasis._customWrapper, "Subclass was able to specify a custom wrapper");
+    start();
+  });
+});
