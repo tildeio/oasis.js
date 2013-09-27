@@ -4038,14 +4038,22 @@ define("oasis/xhr",
 
     var XHR, setRequestHeader, getLoadStatus, send;
 
-    if ('withCredentials' in new XMLHttpRequest()) {
-      XHR = XMLHttpRequest;
-      setRequestHeader = xhrSetRequestHeader;
-      getLoadStatus = xhrGetLoadStatus;
-    } else if (typeof XDomainRequest !== 'undefined') {
-      XHR = XDomainRequest;
-      setRequestHeader = noop;
-      getLoadStatus = xdrGetLoadStatus;
+    try {
+      if ('withCredentials' in new XMLHttpRequest()) {
+        XHR = XMLHttpRequest;
+        setRequestHeader = xhrSetRequestHeader;
+        getLoadStatus = xhrGetLoadStatus;
+      } else if (typeof XDomainRequest !== 'undefined') {
+        XHR = XDomainRequest;
+        setRequestHeader = noop;
+        getLoadStatus = xdrGetLoadStatus;
+      }
+    } catch( exception ) {
+      if (typeof XDomainRequest !== 'undefined') {
+        XHR = XDomainRequest;
+        setRequestHeader = noop;
+        getLoadStatus = xdrGetLoadStatus;
+      }
     }
     // else inline adapter with cross-domain cards is not going to work
 
