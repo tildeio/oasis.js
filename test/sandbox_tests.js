@@ -1,7 +1,7 @@
 import Oasis from "oasis";
 import { commonTests } from "test/helpers/suite";
 
-commonTests('Sandbox', function (createSandbox, adapter) {
+commonTests('Sandbox', function (createSandbox, adapterName) {
   test("assertion: must register package", function() {
     expect(1);
     raises(function() {
@@ -57,7 +57,8 @@ commonTests('Sandbox', function (createSandbox, adapter) {
     expect(2);
     stop();
 
-    var LocalService = Oasis.Service.extend({ }),
+    var adapter = Oasis.adapters[adapterName],
+        LocalService = Oasis.Service.extend({ }),
         channel = adapter.createChannel(oasis),
         port = channel.port2;
 

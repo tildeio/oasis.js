@@ -1,7 +1,6 @@
-import iframeAdapter from "oasis/iframe_adapter";
-import webworkerAdapter from "oasis/webworker_adapter";
-import inlineAdapter from "oasis/inline_adapter";
-
+import IframeAdapter from "oasis/iframe_adapter";
+import WebworkerAdapter from "oasis/webworker_adapter";
+import InlineAdapter from "oasis/inline_adapter";
 import { a_forEach } from "oasis/shims";
 import { _addEventListener } from "test/helpers/shims";
 
@@ -15,7 +14,7 @@ function createSandbox(options) {
 }
 
 function createIframeSandbox(options, skipOasisURL) {
-  if (options.adapter === undefined) { options.adapter = iframeAdapter; }
+  if (options.adapter === undefined) { options.adapter = Oasis.adapters.iframe; }
   if (!options.oasisURL && !skipOasisURL) {
     options.oasisURL = destinationUrl + '/oasis.js.html';
   }
@@ -24,7 +23,7 @@ function createIframeSandbox(options, skipOasisURL) {
 }
 
 function createWebworkerSandbox(options) {
-  if (options.adapter === undefined) { options.adapter = webworkerAdapter; }
+  if (options.adapter === undefined) { options.adapter = Oasis.adapters.webworker; }
   var sandbox = createSandbox(options);
 
   if (sandbox.worker) {
@@ -37,7 +36,7 @@ function createWebworkerSandbox(options) {
 }
 
 function createInlineSandbox(options) {
-  if (options.adapter === undefined) { options.adapter = inlineAdapter; }
+  if (options.adapter === undefined) { options.adapter = Oasis.adapters.inline; }
   return createSandbox(options);
 }
 
@@ -51,6 +50,8 @@ function teardown() {
     sandbox.terminate();
   });
   sandboxes = [];
+
+  Oasis.reset();
 }
 
 export function commonTests(moduleName, testsFn) {
@@ -58,19 +59,19 @@ export function commonTests(moduleName, testsFn) {
     setup: setup,
     teardown: teardown
   });
-  testsFn(createIframeSandbox, iframeAdapter);
+  testsFn(createIframeSandbox, 'iframe');
 
   if (typeof Worker !== 'undefined') {
     module('webworker: ' + moduleName, {
       setup: setup,
       teardown: teardown
     });
-    testsFn(createWebworkerSandbox, webworkerAdapter);
+    testsFn(createWebworkerSandbox, 'webworker');
   }
 
   module('inline:    ' + moduleName, {
     setup: setup,
     teardown: teardown
   });
-  testsFn(createInlineSandbox, inlineAdapter);
+  testsFn(createInlineSandbox, 'inline');
 }
