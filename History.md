@@ -5,9 +5,7 @@
   can be useful if you have capabilities that never make sense in, for example,
   a webworker adapter, and want an easy way to disable the capability for all
   sandboxes so loaded.
-- Adapters are exported as types instead of instances.  `Oasis.adapters` still
-  contains instances.
-- Example:
+  Example:
     ```js
     import { extend } from "oasis/util";
     import IframeAdapter from "oasis/iframe_adapter";
@@ -25,6 +23,12 @@
       /* ... */
     });
     ```
+- Adapters are exported as types instead of instances.  `Oasis.adapters` still
+  contains instances.
+- `oasis.createSandbox` now tolerates duplicate capabilities.  Only uniq
+  capabilities are considered.  Previously, one received an unhelpful
+  `DOMException` that read "An attempt was made to use an object that is not, or
+  is no longer, usable."
 
 ### 0.3.0
 

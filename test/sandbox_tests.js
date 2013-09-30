@@ -83,6 +83,28 @@ commonTests('Sandbox', function (createSandbox, adapterName) {
     sandbox.start();
   });
 
+  test("sandboxes ignore duplicate capabilities", function() {
+    expect(1);
+    stop();
+
+    var sandbox = createSandbox({
+      url: 'fixtures/assertions.js',
+      capabilities: ['assertions', 'assertions'],
+      services: {
+        assertions: Oasis.Service.extend({
+          events: {
+            ok: function (message) {
+              start();
+              ok(true, message);
+            }
+          }
+        })
+      }
+    });
+
+    sandbox.start();
+  });
+
   test("Sandboxes should have promises that are resolved when the sandbox has finished initializing", function() {
     expect(3);
 

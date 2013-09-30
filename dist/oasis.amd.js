@@ -1153,8 +1153,10 @@ define("oasis/sandbox",
   function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger) {
     "use strict";
     var assert = __dependency1__.assert;
+    var uniq = __dependency1__.uniq;
     var a_forEach = __dependency2__.a_forEach;
     var a_reduce = __dependency2__.a_reduce;
+    var a_filter = __dependency2__.a_filter;
     var OasisPort = __dependency3__.OasisPort;
 
 
@@ -1180,7 +1182,7 @@ define("oasis/sandbox",
       this.adapter = options.adapter || Oasis.adapters.iframe;
       this.type = options.type || 'js';
 
-      this._capabilitiesToConnect = this.adapter.filterCapabilities(capabilities);
+      this._capabilitiesToConnect = this._filterCapabilities(capabilities);
       this.envPortDefereds = {};
       this.sandboxPortDefereds = {};
       this.channels = {};
@@ -1335,6 +1337,10 @@ define("oasis/sandbox",
       },
 
       // Oasis internal
+
+      _filterCapabilities: function(capabilities) {
+        return uniq.call(this.adapter.filterCapabilities(capabilities));
+      },
 
       _waitForLoadDeferred: function () {
         if (!this._loadDeferred) {
@@ -1717,6 +1723,7 @@ define("oasis/shims",
       };  
 
     var a_indexOf = isNativeFunc(Array.prototype.indexOf) ? Array.prototype.indexOf : function (searchElement /*, fromIndex */ ) {
+      /* jshint eqeqeq:false */
       "use strict";
       if (this == null) {
         throw new TypeError();
@@ -1788,6 +1795,7 @@ define("oasis/util",
   function(__dependency1__, __exports__) {
     "use strict";
     var o_create = __dependency1__.o_create;
+    var a_filter = __dependency1__.a_filter;
 
     function assert(assertion, string) {
       if (!assertion) {
@@ -1828,11 +1836,21 @@ define("oasis/util",
       };
     }
 
+    function uniq() {
+      var seen = {};
+      return a_filter.call(this, function (item) {
+        var _seen = !seen.hasOwnProperty(item);
+        seen[item] = true;
+        return _seen;
+      });
+    }
+
     __exports__.assert = assert;
     __exports__.noop = noop;
     __exports__.mustImplement = mustImplement;
     __exports__.extend = extend;
     __exports__.delegate = delegate;
+    __exports__.uniq = uniq;
   });
 define("oasis/version",
   [],
