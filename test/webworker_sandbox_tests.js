@@ -1,9 +1,10 @@
 /*global oasis:true */
 
 import Oasis from "oasis";
-import webworkerAdapter from "oasis/webworker_adapter";
 
 if (!this.Worker) { return; }
+
+var webworkerAdapter = Oasis.adapters.webworker;
 
 
 module('Webworker Sandboxes', {

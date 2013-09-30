@@ -1,7 +1,6 @@
 /*global oasis:true */
 
 import Oasis from "oasis";
-import iframeAdapter from "oasis/iframe_adapter";
 
 import { a_forEach } from "oasis/shims";
 import { getBase } from "test/helpers/shims";
@@ -10,7 +9,7 @@ var sandbox, sandboxes,
     destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
 
 function createSandbox(options) {
-  options.adapter = iframeAdapter;
+  options.adapter = Oasis.adapters.iframe;
   if( !options.oasisURL ) {
     options.oasisURL = destinationUrl + '/oasis.js.html';
   }

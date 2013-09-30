@@ -1,6 +1,6 @@
 define("oasis",
   ["oasis/util","oasis/xhr","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/config","oasis/sandbox","oasis/sandbox_init","oasis/events","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter","oasis/inline_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, logger, Version, OasisConfiguration, Sandbox, autoInitializeSandbox, Events, Service, iframeAdapter, webworkerAdapter, inlineAdapter) {
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, logger, Version, OasisConfiguration, Sandbox, autoInitializeSandbox, Events, Service, IframeAdapter, WebworkerAdapter, InlineAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var delegate = __dependency1__.delegate;
@@ -35,11 +35,16 @@ define("oasis",
     Oasis.Version = Version;
     Oasis.Service = Oasis.Consumer = Service;
     Oasis.RSVP = RSVP;
-    Oasis.adapters = {
-      iframe: iframeAdapter,
-      webworker: webworkerAdapter,
-      inline: inlineAdapter
+
+    Oasis.reset = function () {
+      Oasis.adapters = {
+        iframe: new IframeAdapter(),
+        webworker: new WebworkerAdapter(),
+        inline: new InlineAdapter()
+      };
     };
+
+    Oasis.reset();
 
     Oasis.prototype = {
       logger: logger,
@@ -110,6 +115,8 @@ define("oasis/base_adapter",
     var mustImplement = __dependency1__.mustImplement;
     var addEventListener = __dependency2__.addEventListener;
     var removeEventListener = __dependency2__.removeEventListener;
+    var a_indexOf = __dependency2__.a_indexOf;
+    var a_filter = __dependency2__.a_filter;
     var connectCapabilities = __dependency3__.connectCapabilities;
     var PostMessageMessageChannel = __dependency4__.PostMessageMessageChannel;
 
@@ -124,6 +131,7 @@ define("oasis/base_adapter",
     }
 
     function BaseAdapter() {
+      this._unsupportedCapabilities = [];
     }
 
     BaseAdapter.prototype = {
@@ -133,6 +141,22 @@ define("oasis/base_adapter",
 
       oasisURL: function(sandbox) {
         return sandbox.options.oasisURL || sandbox.oasis.configuration.oasisURL || 'oasis.js.html';
+      },
+
+      unsupportedCapabilities: function () {
+        return this._unsupportedCapabilities;
+      },
+
+      addUnsupportedCapability: function (capability) {
+        this._unsupportedCapabilities.push(capability);
+      },
+
+      filterCapabilities: function(capabilities) {
+        var unsupported = this._unsupportedCapabilities;
+        return a_filter.call(capabilities, function (capability) {
+          var index = a_indexOf.call(unsupported, capability);
+          return index === -1;
+        });
       },
 
       createChannel: function(oasis) {
@@ -663,10 +687,8 @@ define("oasis/iframe_adapter",
       }
     });
 
-    var iframeAdapter = new IframeAdapter();
 
-
-    return iframeAdapter;
+    return IframeAdapter;
   });
 define("oasis/inline_adapter",
   ["oasis/util","oasis/config","oasis/shims","oasis/xhr","rsvp","oasis/logger","oasis/base_adapter"],
@@ -680,8 +702,6 @@ define("oasis/inline_adapter",
     var a_map = __dependency3__.a_map;
     var xhr = __dependency4__.xhr;
     /*global self, postMessage, importScripts */
-
-
 
 
 
@@ -787,10 +807,8 @@ define("oasis/inline_adapter",
       }
     });
 
-    var inlineAdapter = new InlineAdapter();
 
-
-    return inlineAdapter;
+    return InlineAdapter;
   });
 define("oasis/logger",
   [],
@@ -1131,12 +1149,14 @@ define("oasis/message_channel",
     __exports__.PostMessagePort = PostMessagePort;
   });
 define("oasis/sandbox",
-  ["oasis/util","oasis/shims","oasis/message_channel","rsvp","oasis/logger","oasis/iframe_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, iframeAdapter) {
+  ["oasis/util","oasis/shims","oasis/message_channel","rsvp","oasis/logger"],
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger) {
     "use strict";
     var assert = __dependency1__.assert;
+    var uniq = __dependency1__.uniq;
     var a_forEach = __dependency2__.a_forEach;
     var a_reduce = __dependency2__.a_reduce;
+    var a_filter = __dependency2__.a_filter;
     var OasisPort = __dependency3__.OasisPort;
 
 
@@ -1159,10 +1179,10 @@ define("oasis/sandbox",
 
       this.dependencies = options.dependencies || pkg.dependencies;
 
-      this.adapter = options.adapter || iframeAdapter;
+      this.adapter = options.adapter || Oasis.adapters.iframe;
       this.type = options.type || 'js';
 
-      this._capabilitiesToConnect = capabilities;
+      this._capabilitiesToConnect = this._filterCapabilities(capabilities);
       this.envPortDefereds = {};
       this.sandboxPortDefereds = {};
       this.channels = {};
@@ -1318,6 +1338,10 @@ define("oasis/sandbox",
 
       // Oasis internal
 
+      _filterCapabilities: function(capabilities) {
+        return uniq.call(this.adapter.filterCapabilities(capabilities));
+      },
+
       _waitForLoadDeferred: function () {
         if (!this._loadDeferred) {
           // the adapter will resolve this
@@ -1332,10 +1356,9 @@ define("oasis/sandbox",
     return OasisSandbox;
   });
 define("oasis/sandbox_init",
-  ["oasis/iframe_adapter","oasis/webworker_adapter"],
-  function(iframeAdapter, webworkerAdapter) {
+  [],
+  function() {
     "use strict";
-
     function autoInitializeSandbox () {
       if (typeof window !== 'undefined') {
         if (/PhantomJS/.test(navigator.userAgent)) {
@@ -1352,10 +1375,10 @@ define("oasis/sandbox_init",
         }
 
         if (window.parent && window.parent !== window) {
-          iframeAdapter.connectSandbox(this);
+          Oasis.adapters.iframe.connectSandbox(this);
         } 
       } else {
-        webworkerAdapter.connectSandbox(this);
+        Oasis.adapters.webworker.connectSandbox(this);
       }
     }
 
@@ -1699,18 +1722,80 @@ define("oasis/shims",
         return A;
       };  
 
+    var a_indexOf = isNativeFunc(Array.prototype.indexOf) ? Array.prototype.indexOf : function (searchElement /*, fromIndex */ ) {
+      /* jshint eqeqeq:false */
+      "use strict";
+      if (this == null) {
+        throw new TypeError();
+      }
+      var t = Object(this);
+      var len = t.length >>> 0;
+
+      if (len === 0) {
+        return -1;
+      }
+      var n = 0;
+      if (arguments.length > 1) {
+        n = Number(arguments[1]);
+        if (n != n) { // shortcut for verifying if it's NaN
+          n = 0;
+        } else if (n != 0 && n != Infinity && n != -Infinity) {
+          n = (n > 0 || -1) * Math.floor(Math.abs(n));
+        }
+      }
+      if (n >= len) {
+        return -1;
+      }
+      var k = n >= 0 ? n : Math.max(len - Math.abs(n), 0);
+      for (; k < len; k++) {
+        if (k in t && t[k] === searchElement) {
+          return k;
+        }
+      }
+      return -1;
+    };
+
+    var a_filter = isNativeFunc(Array.prototype.filter) ? Array.prototype.filter : function(fun /*, thisp*/) {
+      'use strict';
+
+      if (!this) {
+        throw new TypeError();
+      }
+
+      var objects = Object(this);
+      var len = objects.length >>> 0;
+      if (typeof fun !== 'function') {
+        throw new TypeError();
+      }
+
+      var res = [];
+      var thisp = arguments[1];
+      for (var i in objects) {
+        if (objects.hasOwnProperty(i)) {
+          if (fun.call(thisp, objects[i], i, objects)) {
+            res.push(objects[i]);
+          }
+        }
+      }
+
+      return res;
+    };
+
     __exports__.o_create = o_create;
     __exports__.addEventListener = addEventListener;
     __exports__.removeEventListener = removeEventListener;
     __exports__.a_forEach = a_forEach;
     __exports__.a_reduce = a_reduce;
     __exports__.a_map = a_map;
+    __exports__.a_indexOf = a_indexOf;
+    __exports__.a_filter = a_filter;
   });
 define("oasis/util",
   ["oasis/shims","exports"],
   function(__dependency1__, __exports__) {
     "use strict";
     var o_create = __dependency1__.o_create;
+    var a_filter = __dependency1__.a_filter;
 
     function assert(assertion, string) {
       if (!assertion) {
@@ -1751,11 +1836,21 @@ define("oasis/util",
       };
     }
 
+    function uniq() {
+      var seen = {};
+      return a_filter.call(this, function (item) {
+        var _seen = !seen.hasOwnProperty(item);
+        seen[item] = true;
+        return _seen;
+      });
+    }
+
     __exports__.assert = assert;
     __exports__.noop = noop;
     __exports__.mustImplement = mustImplement;
     __exports__.extend = extend;
     __exports__.delegate = delegate;
+    __exports__.uniq = uniq;
   });
 define("oasis/version",
   [],
@@ -1862,10 +1957,8 @@ define("oasis/webworker_adapter",
       }
     });
 
-    var webworkerAdapter = new WebworkerAdapter();
 
-
-    return webworkerAdapter;
+    return WebworkerAdapter;
   });
 define("oasis/xhr",
   ["oasis/util","rsvp","exports"],
