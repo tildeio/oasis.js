@@ -4,9 +4,9 @@ import Oasis from "oasis";
 import RSVP from "rsvp";
 import InlineAdapter from "oasis/inline_adapter";
 
-import { o_create } from "oasis/shims";
+import { extend } from "oasis/util";
 
-var oasis, interval;
+var oasis, interval, inlineAdapter = Oasis.adapters.inline;
 
 module('Inline Sandboxes', {
   setup: function() {
@@ -25,12 +25,7 @@ module('Inline Sandboxes', {
 
 test("it exists", function() {
   expect(1);
-  ok(InlineAdapter, 'namespace is present');
-});
-
-test("the inline adapter is listed in `Oasis.adapters`", function() {
-  expect(1);
-  equal(Oasis.adapters.inline, InlineAdapter, "Inline adapter is included in `Oasis.adapters`");
+  ok(Oasis.adapters.inline, 'namespace is present');
 });
 
 test("throws an error if the sandbox type is html", function() {
@@ -39,7 +34,7 @@ test("throws an error if the sandbox type is html", function() {
     oasis.createSandbox({
       url: "fixtures/html_sandbox.html",
       type: 'html',
-      adapter: InlineAdapter,
+      adapter: inlineAdapter,
       capabilities: ['assertions'],
       services: {
         assertions: Oasis.Service
@@ -53,7 +48,7 @@ if (typeof HTMLElement !== 'undefined') {
     expect(2);
     var sandbox = oasis.createSandbox({
       url: 'fixtures/simple_value.js',
-      adapter: InlineAdapter,
+      adapter: inlineAdapter,
       capabilities: ['assertions'],
       services: {
         assertions: Oasis.Service
@@ -73,7 +68,7 @@ test("can load dependencies", function() {
 
   var sandbox = oasis.createSandbox({
     url: 'fixtures/simple_value.js',
-    adapter: InlineAdapter,
+    adapter: inlineAdapter,
     dependencies: ['fixtures/simple_dependency.js'],
     capabilities: ['assertions'],
     services: {
@@ -115,7 +110,7 @@ test("communication", function(){
 
   var sandbox = oasis.createSandbox({
     url: 'fixtures/simple_value.js',
-    adapter: InlineAdapter,
+    adapter: inlineAdapter,
     capabilities: ['pong'],
     services: {
       pong: PingPongService
@@ -130,7 +125,7 @@ test("2 sandboxes", function(){
 
   var sandbox1 = oasis.createSandbox({
     url: 'fixtures/simple_value.js',
-    adapter: InlineAdapter,
+    adapter: inlineAdapter,
     capabilities: ['pong'],
     services: {
       pong: Oasis.Service
@@ -139,7 +134,7 @@ test("2 sandboxes", function(){
 
   var sandbox2 = oasis.createSandbox({
     url: 'fixtures/simple_value_with_args.js',
-    adapter: InlineAdapter,
+    adapter: inlineAdapter,
     capabilities: ['pong'],
     services: {
       pong: Oasis.Service
@@ -188,14 +183,15 @@ test("subclasses can customize resource wrapping", function() {
   expect(1);
   stop();
 
-  var MyInlineAdapter = o_create(InlineAdapter);
-  MyInlineAdapter.wrapResource = function(code) {
-    return new Function("oasis", "oasis._customWrapper=true;" + code);
-  };
+  var MyInlineAdapter = extend(InlineAdapter, {
+    wrapResource: function(code) {
+      return new Function("oasis", "oasis._customWrapper=true;" + code);
+    }
+  });
 
   var sandbox = oasis.createSandbox({
     url: 'fixtures/index.js',
-    adapter: MyInlineAdapter,
+    adapter: new MyInlineAdapter(),
     capabilities: ['assertions'],
     services: {
       assertions: Oasis.Service
