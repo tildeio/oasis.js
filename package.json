@@ -6,6 +6,7 @@
   "scripts": {
     "postinstall": "bower install"
   },
+  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/tildeio/oasis.js.git"
@@ -30,7 +31,8 @@
     "grunt-contrib-symlink": "~0.2.0",
     "jsframe": "~0.1.0-3",
     "grunt-contrib-jst": "~0.5.1",
-    "shelljs": "~0.2.5"
+    "shelljs": "~0.2.5",
+    "grunt-release-component": "git://github.com/hjdivad/grunt-release-component.git#45d627cfaa965a7ec75088bfbc72947e58f344cb"
   },
   "dependencies": {
     "rsvp": "2.0.3",

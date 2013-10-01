@@ -29,7 +29,9 @@ module.exports = function(grunt) {
     'saucelabs-qunit': config('saucelabs-qunit'),
 
     connect: config('connect'),
-    watch: config('watch')
+    watch: config('watch'),
+
+    'release-component': config('release-component')
   });
 
   grunt.registerTask("jst", function () {
@@ -45,8 +47,14 @@ module.exports = function(grunt) {
   grunt.registerTask("jsframe", function(){
     var fs = require('fs'),
         jsf = require('jsframe'),
-        out = fs.openSync('dist/oasis.js.html', 'w'),
-        outMin = fs.openSync('dist/oasis.min.js.html', 'w');
+        out, outMin;
+
+    if (!fs.existsSync('./dist')) {
+      fs.mkdirSync('./dist');
+    }
+
+    out = fs.openSync('dist/oasis.js.html', 'w'),
+    outMin = fs.openSync('dist/oasis.min.js.html', 'w');
 
     jsf.process('tmp/oasis.js', out);
     jsf.process('tmp/oasis.min.js', outMin);
@@ -59,4 +67,8 @@ module.exports = function(grunt) {
   grunt.registerTask('test:ci', ['shell:npmInstall', 'build', 'connect', 'saucelabs-qunit']);
 
   grunt.registerTask('test:ie', ['shell:npmInstall', 'build', 'connect', 'saucelabs-qunit:ie']);
+
+  grunt.registerTask('release:major', ['build', 'release-component:major']);
+  grunt.registerTask('release:minor', ['build', 'release-component:minor']);
+  grunt.registerTask('release:patch', ['build', 'release-component:patch']);
 };
