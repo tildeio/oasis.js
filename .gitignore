@@ -7,3 +7,4 @@ bin
 /bower_components
 /sauce_connect.log*
 /bower_components
+/dist
