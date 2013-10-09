@@ -117,17 +117,31 @@ test("returns a sandbox with an iframe element", function() {
   ok(sandbox.el instanceof window.HTMLIFrameElement, "A new iframe was returned");
 });
 
-test("A sandbox can be loaded from the same domain with `Oasis.config.allowSameOrigin` sets to true", function() {
+test("A sandbox can communicate back to its originating site", function() {
   expect(1);
+  stop();
   oasis.configure('allowSameOrigin', true);
 
-  var sandbox = createSandbox({
-    url: "fixtures/index.js",
-    capabilities: [],
-    oasisURL: "/oasis.js.html"
+  var AssertionService = Oasis.Service.extend({
+    events: {
+      result: function (result) {
+        start();
+        equal(result, "success", "Sandbox was able to request a same-origin resource");
+      }
+    }
   });
 
-  ok(true, "Oasis can be loaded from the same domain");
+  var sandbox = createSandbox({
+    url: destinationUrl + "/fixtures/same_origin_parent.js",
+    dependencies: ['fixtures/shims.js'],
+    capabilities: ['assertions'],
+    services: {
+      assertions: AssertionService
+    },
+    oasisURL: destinationUrl + "/oasis.js.html"
+  });
+
+  sandbox.start();
 });
 
 test("Sandboxes can post messages to their own nested (non-Oasis) iframes", function() {

@@ -75,3 +75,11 @@ export function commonTests(moduleName, testsFn) {
   });
   testsFn(createInlineSandbox, 'inline');
 }
+
+export function isSandboxAttributeSupported() {
+  if( typeof Window === "undefined" ) return false;
+
+  var iframe = document.createElement('iframe');
+
+  return iframe.sandbox !== undefined;
+}
