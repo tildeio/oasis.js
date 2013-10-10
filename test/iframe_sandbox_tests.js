@@ -280,6 +280,36 @@ test("HTML Sandboxes do not verify the Oasis URL", function() {
   sandbox.start();
 });
 
+test("JS Sandboxes can not load resources from a different origin than the bootstrap", function() {
+  expect(1);
+  stop();
+
+  var otherOrigin = location.protocol + "//" + location.hostname + ":" + (parseInt(location.port, 10) + 3);
+
+  var sandbox = createSandbox({
+    url: '/fixtures/assertions.js',
+    dependencies: [otherOrigin + '/fixtures/shims.js'],
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        events: {
+          ok: function () {
+            ok(false, "JS sandbox should not load");
+            start();
+          }
+        }
+      })
+    }
+  });
+
+  sandbox.onerror = function( error ) {
+    ok( error.match("You can not load a resource"), "Loading an iframe sandbox with dependencies on an external origin fails");
+    start();
+  };
+
+  sandbox.start();
+});
+
 test("`sandbox.onerror` is called when the sandbox sends an error message", function() {
   expect(1);
   stop();

@@ -227,7 +227,7 @@ define("oasis/base_adapter",
         if (sandbox.type === 'js') {
           scriptURLs.push(sandboxURL);
         }
-        
+
         return scriptURLs;
       },
 
@@ -495,6 +495,7 @@ define("oasis/iframe_adapter",
     "use strict";
     var assert = __dependency1__.assert;
     var extend = __dependency1__.extend;
+    var a_forEach = __dependency2__.a_forEach;
     var addEventListener = __dependency2__.addEventListener;
     var removeEventListener = __dependency2__.removeEventListener;
     var a_map = __dependency2__.a_map;
@@ -520,6 +521,10 @@ define("oasis/iframe_adapter",
                           "only if you host the sandbox on a separate domain.");
         }
       }
+    }
+    function isUrl(s) {
+      var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+      return regexp.test(s);
     }
 
     var IframeAdapter = extend(BaseAdapter, {
@@ -681,12 +686,26 @@ define("oasis/iframe_adapter",
         baseElement.href = base;
         head.insertBefore(baseElement, head.childNodes[0] || null);
 
-        for (var i = 0; i < scriptURLs.length; ++i ) {
+        a_forEach.call( scriptURLs, function(scriptURL) {
+          if( isUrl( scriptURL ) ) {
+            var link = document.createElement('a'),
+                exception;
+
+            link.href = scriptURL;
+
+            if( window.location.host !== link.host ) {
+              exception = "You can not load a resource (" + scriptURL +  ") from a domain other than " + window.location.host;
+              Window.postMessage( window.parent, {sandboxException: exception}, '*' );
+              // Stop loading
+              throw exception;
+            }
+          }
+
           scriptElement = document.createElement('script');
-          scriptElement.src = scriptURLs[i];
+          scriptElement.src = scriptURL;
           scriptElement.async = false;
           head.appendChild(scriptElement);
-        }
+        });
       },
 
       name: function(sandbox) {
@@ -1913,7 +1932,6 @@ define("oasis/webworker_adapter",
 
         // Error handling inside the worker
         worker.errorHandler = function(event) {
-          console.log(event.data);
           if(!event.data.sandboxException) {return;}
 
           sandbox.onerror( event.data.sandboxException );
