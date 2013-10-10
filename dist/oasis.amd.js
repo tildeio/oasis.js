@@ -1864,7 +1864,7 @@ define("oasis/version",
   function() {
     "use strict";
 
-    return '0.3.0';
+    return '0.4.0';
   });
 define("oasis/webworker_adapter",
   ["oasis/util","oasis/shims","rsvp","oasis/logger","oasis/base_adapter"],

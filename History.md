@@ -1,4 +1,4 @@
-### next
+### 0.4.0
 
 - Adapters can have unsupported capabilities.  These are capabilities the
   adapter will never connect, even when they are registered for a sandbox.  This
@@ -29,6 +29,8 @@
   capabilities are considered.  Previously, one received an unhelpful
   `DOMException` that read "An attempt was made to use an object that is not, or
   is no longer, usable."
+- A sandboxed iframe can communicate back to its originating site
+  with `oasis.configure('allowSameOrigin', true)`.
 
 ### 0.3.0
 
