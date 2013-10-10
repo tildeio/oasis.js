@@ -68,3 +68,21 @@ test("The sandbox returns the name of the worker", function() {
 
   ok( sandbox.name(), sandbox.worker.name,'The sandbox returns the worker name');
 });
+
+test("`sandbox.onerror` is called when the sandbox sends an error message", function() {
+  expect(1);
+  stop();
+
+  var sandbox = oasis.createSandbox({
+    adapter: webworkerAdapter,
+    url: "fixtures/error.js",
+    capabilities: []
+  }, true);
+
+  sandbox.onerror = function(error) {
+    equal(error, "An error occured", "The error is handled");
+    start();
+  };
+
+  sandbox.start();
+});

@@ -547,6 +547,22 @@ define("oasis/iframe_adapter",
           iframe.height = options.height;
         }
 
+        // Error handling inside the iFrame
+        iframe.errorHandler = function(event) {
+          if(!event.data.sandboxException) {return;}
+          try {
+            // verify this message came from the expected sandbox; try/catch
+            // because ie8 will disallow reading contentWindow in the case of
+            // another sandbox's message
+            if( event.source !== iframe.contentWindow ) {return;}
+          } catch(e) {
+            return;
+          }
+
+          sandbox.onerror( event.data.sandboxException );
+        };
+        addEventListener(window, 'message', iframe.errorHandler);
+
         switch (sandbox.type) {
           case 'js':
             verifySandbox( sandbox.oasis, oasisURL );
@@ -1339,6 +1355,10 @@ define("oasis/sandbox",
         sandbox.oasis.services = [];
       },
 
+      onerror: function(error) {
+        throw error;
+      },
+
       name: function() {
         return this.adapter.name(this);
       },
@@ -1890,6 +1910,15 @@ define("oasis/webworker_adapter",
         var worker = new Worker(oasisURL);
         worker.name = sandbox.options.url + '?uuid=' + UUID.generate();
         sandbox.worker = worker;
+
+        // Error handling inside the worker
+        worker.errorHandler = function(event) {
+          console.log(event.data);
+          if(!event.data.sandboxException) {return;}
+
+          sandbox.onerror( event.data.sandboxException );
+        };
+        addEventListener(worker, 'message', worker.errorHandler);
 
         sandbox._waitForLoadDeferred().resolve(new RSVP.Promise( function(resolve, reject) {
           worker.initializationHandler = function (event) {

@@ -279,3 +279,20 @@ test("HTML Sandboxes do not verify the Oasis URL", function() {
 
   sandbox.start();
 });
+
+test("`sandbox.onerror` is called when the sandbox sends an error message", function() {
+  expect(1);
+  stop();
+
+  var sandbox = createSandbox({
+    url: "fixtures/error.js",
+    capabilities: []
+  }, true);
+
+  sandbox.onerror = function(error) {
+    equal(error, "An error occured", "The error is handled");
+    start();
+  };
+
+  sandbox.start();
+});
