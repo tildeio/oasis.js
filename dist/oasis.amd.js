@@ -227,7 +227,7 @@ define("oasis/base_adapter",
         if (sandbox.type === 'js') {
           scriptURLs.push(sandboxURL);
         }
-        
+
         return scriptURLs;
       },
 
@@ -495,6 +495,7 @@ define("oasis/iframe_adapter",
     "use strict";
     var assert = __dependency1__.assert;
     var extend = __dependency1__.extend;
+    var a_forEach = __dependency2__.a_forEach;
     var addEventListener = __dependency2__.addEventListener;
     var removeEventListener = __dependency2__.removeEventListener;
     var a_map = __dependency2__.a_map;
@@ -521,6 +522,10 @@ define("oasis/iframe_adapter",
         }
       }
     }
+    function isUrl(s) {
+      var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+      return regexp.test(s);
+    }
 
     var IframeAdapter = extend(BaseAdapter, {
       //-------------------------------------------------------------------------
@@ -546,6 +551,22 @@ define("oasis/iframe_adapter",
         } else if (options.height) {
           iframe.height = options.height;
         }
+
+        // Error handling inside the iFrame
+        iframe.errorHandler = function(event) {
+          if(!event.data.sandboxException) {return;}
+          try {
+            // verify this message came from the expected sandbox; try/catch
+            // because ie8 will disallow reading contentWindow in the case of
+            // another sandbox's message
+            if( event.source !== iframe.contentWindow ) {return;}
+          } catch(e) {
+            return;
+          }
+
+          sandbox.onerror( event.data.sandboxException );
+        };
+        addEventListener(window, 'message', iframe.errorHandler);
 
         switch (sandbox.type) {
           case 'js':
@@ -665,12 +686,26 @@ define("oasis/iframe_adapter",
         baseElement.href = base;
         head.insertBefore(baseElement, head.childNodes[0] || null);
 
-        for (var i = 0; i < scriptURLs.length; ++i ) {
+        a_forEach.call( scriptURLs, function(scriptURL) {
+          if( isUrl( scriptURL ) ) {
+            var link = document.createElement('a'),
+                exception;
+
+            link.href = scriptURL;
+
+            if( window.location.host !== link.host ) {
+              exception = "You can not load a resource (" + scriptURL +  ") from a domain other than " + window.location.host;
+              Window.postMessage( window.parent, {sandboxException: exception}, '*' );
+              // Stop loading
+              throw exception;
+            }
+          }
+
           scriptElement = document.createElement('script');
-          scriptElement.src = scriptURLs[i];
+          scriptElement.src = scriptURL;
           scriptElement.async = false;
           head.appendChild(scriptElement);
-        }
+        });
       },
 
       name: function(sandbox) {
@@ -1339,6 +1374,10 @@ define("oasis/sandbox",
         sandbox.oasis.services = [];
       },
 
+      onerror: function(error) {
+        throw error;
+      },
+
       name: function() {
         return this.adapter.name(this);
       },
@@ -1890,6 +1929,14 @@ define("oasis/webworker_adapter",
         var worker = new Worker(oasisURL);
         worker.name = sandbox.options.url + '?uuid=' + UUID.generate();
         sandbox.worker = worker;
+
+        // Error handling inside the worker
+        worker.errorHandler = function(event) {
+          if(!event.data.sandboxException) {return;}
+
+          sandbox.onerror( event.data.sandboxException );
+        };
+        addEventListener(worker, 'message', worker.errorHandler);
 
         sandbox._waitForLoadDeferred().resolve(new RSVP.Promise( function(resolve, reject) {
           worker.initializationHandler = function (event) {

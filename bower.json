@@ -23,7 +23,7 @@
     "tests"
   ],
   "dependencies": {
-    "MessageChannel.js": "~0.1.3"
+    "MessageChannel.js": "~0.1.4"
   },
   "devDependencies": {
     "qunit": "git://github.com/lessmad/qunit#stop-names-test",
