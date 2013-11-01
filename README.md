@@ -105,6 +105,20 @@ Sandboxed widgets that require no UI can be loaded as web workers:
   adapter: oasis.adapters.webworker
 ```
 
+### Starting Sandboxes
+
+Web worker sandboxes will start immediately.  HTML (ie iframe) sandboxes will
+start as soon as their DOM element is placed in the document.  The simplest way
+to do this is to append them to the body:
+
+```js
+document.body.appendChild(sandbox.el);
+```
+
+But they can be placed anywhere in the DOM.  Please note that once in the DOM
+the sandboxes should not be moved: iframes moved within documents are reloaded
+by the browser.
+
 ## Connecting to Ports Directly
 
 For simple applications it can be convenient to connect directly to ports for
