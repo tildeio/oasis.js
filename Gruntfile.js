@@ -42,16 +42,7 @@ module.exports = function(grunt) {
     });
   });
 
-  grunt.registerTask("jsframe", function(){
-    var fs = require('fs'),
-        jsf = require('jsframe'),
-        out = fs.openSync('dist/oasis.js.html', 'w'),
-        outMin = fs.openSync('dist/oasis.min.js.html', 'w');
-
-    jsf.process('tmp/oasis.js', out);
-    jsf.process('tmp/oasis.min.js', outMin);
-  });
-  grunt.registerTask('build', ['jst', 'transpile', 'jshint', 'concat', 'uglify', 'jsframe', 'copy', 'symlink']);
+  grunt.registerTask('build', ['jst', 'transpile', 'jshint', 'concat', 'uglify', 'copy', 'symlink']);
 
   grunt.registerTask('default', ['shell:npmInstall', 'build']);
   grunt.registerTask('server', ['shell:npmInstall', 'build', 'connect', 'watch']);

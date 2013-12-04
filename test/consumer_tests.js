@@ -1,7 +1,7 @@
 import Oasis from "oasis";
 import { commonTests } from "test/helpers/suite";
 
-commonTests('Consumer', function (createSandbox, adapter) {
+commonTests('Consumer', function (oasis, adapter) {
   test("Consumers instances are saved on the Oasis global", function() {
     expect(1);
     stop();
@@ -20,7 +20,7 @@ commonTests('Consumer', function (createSandbox, adapter) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/consumer.js',
       services: {
         assertions: AssertionsService
@@ -52,7 +52,7 @@ commonTests('Consumer', function (createSandbox, adapter) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/delayed_connect.js',
       services: {
         assertions: AssertionsService

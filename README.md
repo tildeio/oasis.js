@@ -320,3 +320,8 @@ Then navigate to `http://localhost:8000`
 
 The easiest way to see the samples is to run the test server and navigate to
 `http://localhost:8000/samples`.
+
+# TODO
+
+- kill generatesrc; base; dependencies
+- fixup docs

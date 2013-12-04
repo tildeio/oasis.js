@@ -1,7 +1,7 @@
 import Oasis from "oasis";
 import { commonTests } from "test/helpers/suite";
 
-commonTests('Connect', function (createSandbox) {
+commonTests('Connect', function (oasis) {
   test("Oasis.connect's promise rejects when connecting to a service not provided in the initiliazation message", function() {
     expect(1);
     stop();
@@ -15,7 +15,7 @@ commonTests('Connect', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: "fixtures/connect_failed.js",
       capabilities: ['assertions'],
       services: {
@@ -39,7 +39,7 @@ commonTests('Connect', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: "fixtures/connect_failed_callback.js",
       capabilities: ['assertions'],
       services: {
@@ -63,7 +63,7 @@ commonTests('Connect', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: "fixtures/connect_failed_consumer.js",
       capabilities: ['assertions'],
       services: {

@@ -1,7 +1,7 @@
 import Oasis from "oasis";
 import { commonTests } from "test/helpers/suite";
 
-commonTests('Events', function (createSandbox) {
+commonTests('Events', function (oasis) {
   test("service - card can communicate with the environment through a port with the environment shorthand for events", function() {
     expect(1);
 
@@ -21,7 +21,7 @@ commonTests('Events', function (createSandbox) {
       }
     });
 
-    createSandbox({
+    oasis.createSandbox({
       url: "fixtures/assertions.js",
       services: {
         assertions: AssertionsService
@@ -56,7 +56,7 @@ commonTests('Events', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: "fixtures/assertions_shorthand.js",
       services: {
         assertions: AssertionsService
@@ -89,7 +89,7 @@ commonTests('Events', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/peter_pong.js',
       services: {
         peterpong: PeterPongService
@@ -119,7 +119,7 @@ commonTests('Events', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/peter_pong_request.js',
       services: {
         peterpong: PeterPongService
@@ -133,7 +133,7 @@ commonTests('Events', function (createSandbox) {
     expect(2);
     stop(2);
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/sandbox_wrapped_event_callbacks.js',
       capabilities: ['wrappedEvents'],
       services: {
@@ -170,7 +170,7 @@ commonTests('Events', function (createSandbox) {
       inWrapper = false;
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/environment_wrapped_event_callbacks.js',
       capabilities: ['wrappedEvents'],
       services: {

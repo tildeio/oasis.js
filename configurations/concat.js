@@ -10,12 +10,12 @@ var vendorSources = [
 module.exports = {
   amd: {
     src: ['tmp/amd/**/*.js'],
-    dest: 'tmp/oasis.amd.js'
+    dest: 'dist/oasis.amd.js'
   },
 
   test: {
     src: vendorSources.concat([
-      'tmp/oasis.amd.js',
+      'dist/oasis.amd.js',
       'tmp/test/**/*.js'
     ]),
     dest: 'tmp/public/test.js'
@@ -23,9 +23,9 @@ module.exports = {
 
   browser: {
     src: vendorSources.concat([
-      'tmp/oasis.amd.js'
+      'dist/oasis.amd.js'
     ]),
-    dest: 'tmp/oasis.js',
+    dest: 'dist/oasis.js',
     options: {
       footer: "self.Oasis = requireModule('oasis'); self.oasis = new self.Oasis(); self.oasis.autoInitializeSandbox();"
     }

@@ -13,21 +13,6 @@ module('Webworker Sandboxes', {
   }
 });
 
-test("throws an error if the sandbox type is html", function() {
-  expect(1);
-  raises(function() {
-    oasis.createSandbox({
-      url: "fixtures/html_sandbox.html",
-      type: 'html',
-      adapter: webworkerAdapter,
-      capabilities: ['assertions'],
-      services: {
-        assertions: Oasis.Service
-      }
-    });
-  }, Error, "Creating a sandbox with type: html but adapter: webworker fails.");
-});
-
 test("The workers are uniquely named to improve debugging", function() {
   expect(2);
   oasis.register({
@@ -75,7 +60,7 @@ test("`sandbox.onerror` is called when the sandbox sends an error message", func
 
   var sandbox = oasis.createSandbox({
     adapter: webworkerAdapter,
-    url: "fixtures/error.js",
+    url: "fixtures/error.worker.js",
     capabilities: []
   }, true);
 

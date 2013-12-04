@@ -28,12 +28,13 @@
         "strictEqual",
         "module",
         "expect",
-        "minispade"
+        "minispade",
+        "importScripts"
     ],
 
     "node" : false,
     "browser" : true,
-    "es3": true,
+    "es3": false,
     "esnext": true,
 
     "boss" : true,

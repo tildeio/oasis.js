@@ -28,21 +28,6 @@ test("it exists", function() {
   ok(Oasis.adapters.inline, 'namespace is present');
 });
 
-test("throws an error if the sandbox type is html", function() {
-  expect(1);
-  raises(function() {
-    oasis.createSandbox({
-      url: "fixtures/html_sandbox.html",
-      type: 'html',
-      adapter: inlineAdapter,
-      capabilities: ['assertions'],
-      services: {
-        assertions: Oasis.Service
-      }
-    });
-  }, Error, "Creating a sandbox with type: html but adapter: inline fails.");
-});
-
 if (typeof HTMLElement !== 'undefined') {
   test("can be created", function() {
     expect(2);
@@ -61,38 +46,6 @@ if (typeof HTMLElement !== 'undefined') {
     ok(sandbox.el instanceof HTMLElement, 'has DOM element');
   });
 }
-
-test("can load dependencies", function() {
-  stop(2);
-  expect(1);
-
-  var sandbox = oasis.createSandbox({
-    url: 'fixtures/simple_value.js',
-    adapter: inlineAdapter,
-    dependencies: ['fixtures/simple_dependency.js'],
-    capabilities: ['assertions'],
-    services: {
-      assertions: Oasis.Service
-    }
-  });
-
-  sandbox.start();
-  sandbox.waitForLoad().then(function(){
-    start();
-  });
-
-  // Although we could use promises here for the inline adapter, we cannot
-  // generally do so because script loading will be forced async. in ie8 and
-  // ie9.  When we work around this issue, we should make this test a common
-  // test.
-  interval = setInterval (function () {
-    if (window.simpleDependencyLoaded) {
-      clearInterval(interval);
-      ok(true, "dependency was loaded");
-      start();
-    }
-  }, 10);
-});
 
 test("communication", function(){
   expect(1);
