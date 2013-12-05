@@ -1,7 +1,7 @@
 import Oasis from "oasis";
 import { commonTests } from "test/helpers/suite";
 
-commonTests('Services', function (createSandbox) {
+commonTests('Services', function (oasis) {
   test("service is notified about ports created for a sandbox", function() {
     expect(2);
 
@@ -20,7 +20,7 @@ commonTests('Services', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: "fixtures/index.js",
       services: {
         testData: DataService
@@ -50,7 +50,7 @@ commonTests('Services', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: "fixtures/index.js",
       services: {
         assertions: AssertionsService

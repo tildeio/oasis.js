@@ -5,9 +5,7 @@
 </head>
 <body>
   <script type="text/javascript">
-    var destinationUrl = location.protocol + "//" + location.hostname + ":" + (parseInt(location.port, 10) - 2);
-
-    window.parent.postMessage("childInitialized", destinationUrl);
+    window.parent.postMessage("childInitialized", "*");
   </script>
 </body>
 </html>

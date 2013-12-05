@@ -28,7 +28,7 @@ module.exports = {
   testOasis: {
     expand: true,
     cwd: 'dist',
-    src: ['oasis.js.html'],
+    src: ['oasis.js'],
     dest: 'tmp/public/'
   }
 };

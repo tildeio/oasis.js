@@ -1,11 +1,11 @@
 import Oasis from "oasis";
 import { commonTests, isSandboxAttributeSupported } from "test/helpers/suite";
 
-commonTests('Sandbox', function (createSandbox, adapterName) {
+commonTests('Sandbox', function (oasis, adapterName) {
   test("assertion: must register package", function() {
     expect(1);
     raises(function() {
-      createSandbox({
+      oasis.createSandbox({
         url: "fixtures/index.js"
       });
     }, Error, "Creating a sandbox from an unregistered package fails");
@@ -24,7 +24,7 @@ commonTests('Sandbox', function (createSandbox, adapterName) {
     expect(2);
     stop(2);
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/sandbox_ports.js',
       capabilities: ['assertions', 'something', 'somethingElse'],
       services: {
@@ -62,7 +62,7 @@ commonTests('Sandbox', function (createSandbox, adapterName) {
         channel = adapter.createChannel(oasis),
         port = channel.port2;
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/index.js',
       capabilities: ['serviceCapability', 'portCapability'],
       services: {
@@ -87,7 +87,7 @@ commonTests('Sandbox', function (createSandbox, adapterName) {
     expect(1);
     stop();
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/assertions.js',
       capabilities: ['assertions', 'assertions'],
       services: {
@@ -122,7 +122,7 @@ commonTests('Sandbox', function (createSandbox, adapterName) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/index.js',
       services: {
         assertions: AssertionsService
@@ -165,7 +165,7 @@ commonTests('Sandbox', function (createSandbox, adapterName) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/port_for.js',
       capabilities: ['assertions'],
       services: {
@@ -214,14 +214,14 @@ commonTests('Sandbox', function (createSandbox, adapterName) {
       }
     });
 
-    sandbox1 = createSandbox({
+    sandbox1 = oasis.createSandbox({
       url: 'fixtures/multiple_url_1.js',
       services: {
         assertions: AssertionsService
       }
     });
 
-    sandbox2 = createSandbox({
+    sandbox2 = oasis.createSandbox({
       url: "fixtures/multiple_url_2.js",
       services: {
         assertions2: AssertionsService
@@ -253,7 +253,7 @@ commonTests('Sandbox', function (createSandbox, adapterName) {
         }
       });
 
-      var sandbox = createSandbox({
+      var sandbox = oasis.createSandbox({
         url: "fixtures/assertions.js",
         services: {
           assertions: AssertionsService

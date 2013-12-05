@@ -2,7 +2,7 @@ import Oasis from "oasis";
 import { a_indexOf } from "test/helpers/shims";
 import { commonTests } from "test/helpers/suite";
 
-commonTests('Wiretapping', function (createSandbox, adapter) {
+commonTests('Wiretapping', function (oasis, adapter) {
   test("Sandboxes can be wiretapped to listen to events being sent and received", function() {
     expect(4);
     oasis.register({
@@ -22,7 +22,7 @@ commonTests('Wiretapping', function (createSandbox, adapter) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/wiretapping.js',
       services: {
         assertions: AssertionsService,

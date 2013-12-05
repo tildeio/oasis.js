@@ -3,7 +3,7 @@ import { commonTests } from "test/helpers/suite";
 
 var adapter;
 
-commonTests('Unsupported Capabilities', function (createSandbox, adapterName) {
+commonTests('Unsupported Capabilities', function (oasis, adapterName) {
   test("adapters can specify unsupported capabilities", function() {
     adapter = Oasis.adapters[adapterName];
     deepEqual(adapter.unsupportedCapabilities(), [], "default list of unsupported capabilities is empty");
@@ -42,7 +42,7 @@ commonTests('Unsupported Capabilities', function (createSandbox, adapterName) {
 
     adapter.addUnsupportedCapability('red');
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/unsupported_capability_card.js',
       capabilities: ['red', 'blue'],
       services: {

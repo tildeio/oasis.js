@@ -76,32 +76,5 @@ commonTests('Nested Sandbox', function (createSandbox, adapter) {
 
       sandbox.start();
     });
-
-    test("Nested sandboxes should default `oasisURL` to the one they were given", function() {
-      expect(1);
-
-      var AssertionService = Oasis.Service.extend({
-        events: {
-          checkUrl: function (oasisURL) {
-            var expected = "oasis-custom-url.js.html";
-            start();
-            equal(oasisURL.substring(oasisURL.length - expected.length), expected, "Nested sandboxed used right oasisURL");
-          }
-        }
-      });
-
-      var sandbox = createSandbox({
-        url: 'fixtures/nested_custom_oasis_url_parent.js',
-        capabilities: ['assertions'],
-        services: {
-          assertions: AssertionService
-        },
-        oasisURL: destinationUrl + '/oasis-custom-url.js.html'
-      });
-
-      stop();
-
-      sandbox.start();
-    });
   }
 });

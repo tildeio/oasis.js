@@ -2,7 +2,7 @@ import Oasis from "oasis";
 import { errorsHaveStacks } from "test/helpers/shims";
 import { commonTests } from "test/helpers/suite";
 
-commonTests('Requests', function (createSandbox) {
+commonTests('Requests', function (oasis) {
   test("environment can request a value from a sandbox", function() {
     expect(1);
     oasis.register({
@@ -22,7 +22,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/simple_value.js',
       services: {
         pong: PingPongService
@@ -51,7 +51,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/simple_value_with_args.js',
       services: {
         pong: PingPongService
@@ -85,7 +85,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/request_from_sandbox.js',
       services: {
         pong: PingPongService
@@ -122,7 +122,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/request_from_sandbox_with_args.js',
       services: {
         pong: PingPongService
@@ -160,7 +160,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/request_from_sandbox.js',
       services: {
         pong: PingPongPromiseService
@@ -185,7 +185,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/promise.js',
       services: {
         promisepong: PingPongPromiseService
@@ -235,7 +235,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/request_from_sandbox.js',
       services: {
         pong: PingPongPromiseService
@@ -268,7 +268,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/rejected_request_from_environment.js',
       services: {
         pong: PingPongPromiseService
@@ -297,7 +297,7 @@ commonTests('Requests', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/request_value_is_undefined.js',
       services: {
         pong: PingPongService
@@ -308,7 +308,7 @@ commonTests('Requests', function (createSandbox) {
   });
 });
 
-commonTests('EXPERIMENTAL API (Requests): ', function (createSandbox) {
+commonTests('EXPERIMENTAL API (Requests): ', function (oasis) {
   test("environment can fail a request with an exception", function() {
     expect(1);
     oasis.register({
@@ -333,7 +333,7 @@ commonTests('EXPERIMENTAL API (Requests): ', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/request_from_sandbox.js',
       services: {
         pong: PingPongService
@@ -358,7 +358,7 @@ commonTests('EXPERIMENTAL API (Requests): ', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/simple_error.js',
       services: {
         pong: PingPongService

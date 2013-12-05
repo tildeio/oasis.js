@@ -1,6 +1,6 @@
 module.exports = {
   browser: {
-    src: ['tmp/oasis.js'],
-    dest: 'tmp/oasis.min.js'
+    src: ['dist/oasis.js'],
+    dest: 'dist/oasis.min.js'
   }
 };

@@ -1,7 +1,7 @@
 import Oasis from "oasis";
 import { commonTests } from "test/helpers/suite";
 
-commonTests('Ports', function (createSandbox) {
+commonTests('Ports', function (oasis) {
   test("sandbox can communicate with the environment through a port", function() {
     expect(2);
 
@@ -23,7 +23,7 @@ commonTests('Ports', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: "fixtures/assertions.js",
       services: {
         assertions: AssertionsService
@@ -37,7 +37,7 @@ commonTests('Ports', function (createSandbox) {
     expect(1);
     stop();
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: "fixtures/assertions.js",
       capabilities: ['assertions']
     });
@@ -84,7 +84,7 @@ commonTests('Ports', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: "fixtures/close_service.js",
       services: {
         close: CloseService
@@ -117,7 +117,7 @@ commonTests('Ports', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/to_environment.js',
       services: {
         pingpong: PingPongService
@@ -150,7 +150,7 @@ commonTests('Ports', function (createSandbox) {
       }
     });
 
-    var sandbox = createSandbox({
+    var sandbox = oasis.createSandbox({
       url: 'fixtures/to_environment.js',
       services: {
         pingpong: PingPongService
