@@ -323,5 +323,3 @@ The easiest way to see the samples is to run the test server and navigate to
 
 # TODO
 
-- kill generatesrc; base; dependencies
-- fixup docs
