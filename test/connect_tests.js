@@ -2,7 +2,7 @@ import Oasis from "oasis";
 import { commonTests } from "test/helpers/suite";
 
 commonTests('Connect', function (oasis) {
-  test("Oasis.connect's promise rejects when connecting to a service not provided in the initiliazation message", function() {
+  test("Oasis.connect's promise rejects when connecting to a service not provided in the initialization message", function() {
     expect(1);
     stop();
 
@@ -74,4 +74,3 @@ commonTests('Connect', function (oasis) {
     sandbox.start();
   });
 });
-

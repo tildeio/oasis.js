@@ -2332,7 +2332,12 @@ define("oasis/connect",
         oasis.ports[capability] = port;
       });
 
-      // TODO: for each handler w/o capability, reject
+      // for each handler w/o capability, reject
+      for( var prop in oasis.handlers ) {
+        if( ! oasis.ports[prop] ) {
+          oasis.handlers[prop].rejectCapability();
+        }
+      }
 
       this.receivedPorts = true;
     }
