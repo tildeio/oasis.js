@@ -538,7 +538,9 @@ define("oasis/iframe_adapter",
 
         Logger.log('Initializing sandbox ' + iframe.name);
 
-        // Promise that sandbox is loaded and capabilities are connected
+        // Promise that sandbox has loaded and capabilities connected at least once.
+        // This does not mean that the sandbox will be loaded & connected in the
+        // face of reconnects (eg pages that navigate)
         sandbox._waitForLoadDeferred().resolve(new RSVP.Promise( function(resolve, reject) {
           iframe.initializationHandler = function (event) {
             if( event.data !== sandbox.adapter.sandboxInitializedMessage ) {return;}
@@ -562,27 +564,21 @@ define("oasis/iframe_adapter",
 
         sandbox.el = iframe;
 
-        // Promise that sandbox is loaded; capabilities not connected
-        return new RSVP.Promise(function (resolve, reject) {
-          iframe.oasisLoadHandler = function (event) {
-            if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
-            try {
-              // verify this message came from the expected sandbox; try/catch
-              // because ie8 will disallow reading contentWindow in the case of
-              // another sandbox's message
-              if( event.source !== iframe.contentWindow ) {return;}
-            } catch(e) {
-              return;
-            }
-            removeEventListener(window, 'message', iframe.oasisLoadHandler);
+        iframe.oasisLoadHandler = function (event) {
+          if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
+          try {
+            // verify this message came from the expected sandbox; try/catch
+            // because ie8 will disallow reading contentWindow in the case of
+            // another sandbox's message
+            if( event.source !== iframe.contentWindow ) {return;}
+          } catch(e) {
+            return;
+          }
 
-            sandbox.oasis.configuration.eventCallback(function () {
-              Logger.log("container: iframe sandbox has loaded Oasis");
-              resolve(sandbox);
-            });
-          };
-          addEventListener(window, 'message', iframe.oasisLoadHandler);
-        });
+          Logger.log("container: iframe sandbox has loaded Oasis");
+          sandbox.createAndTransferCapabilities();
+        };
+        addEventListener(window, 'message', iframe.oasisLoadHandler);
       },
 
       startSandbox: function(sandbox) {
@@ -666,8 +662,10 @@ define("oasis/inline_adapter",
 
         var oasis = sandbox.sandboxedOasis = new Oasis();
         sandbox.sandboxedOasis.sandbox = sandbox;
-
-        return RSVP.resolve();
+        // When we upgrade RSVP we can change this to `RSVP.async`
+        RSVP.resolve().then(function () {
+          sandbox.createAndTransferCapabilities();
+        });
       },
  
       startSandbox: function(sandbox) {
@@ -1119,17 +1117,11 @@ define("oasis/sandbox",
       this.channels = {};
       this.capabilities = {};
       this.options = options;
-
-      a_forEach.call(capabilities, function(capability) {
-        this.envPortDefereds[capability] = RSVP.defer();
-        this.sandboxPortDefereds[capability] = RSVP.defer();
-      }, this);
+      this._reconnection = false;
 
       var sandbox = this;
-      this.adapter.initializeSandbox(this).then(function () {
-        sandbox.createChannels();
-        sandbox.connectPorts();
-      }).fail(RSVP.rethrow);
+      this.promisePorts();
+      this.adapter.initializeSandbox(this);
     };
 
     OasisSandbox.prototype = {
@@ -1147,6 +1139,23 @@ define("oasis/sandbox",
         assert(portPromise, "Connect was called on '" + capability + "' but no such capability was registered.");
 
         return portPromise;
+      },
+
+      createAndTransferCapabilities: function () {
+        if (this._reconnection) { this.promisePorts(); }
+
+        this.createChannels();
+        this.connectPorts();
+
+        // subsequent calls to `createAndTransferCapabilities` requires new port promises
+        this._reconnection = true;
+      },
+
+      promisePorts: function () {
+        a_forEach.call(this._capabilitiesToConnect, function(capability) {
+          this.envPortDefereds[capability] = RSVP.defer();
+          this.sandboxPortDefereds[capability] = RSVP.defer();
+        }, this);
       },
 
       createChannels: function () {
@@ -1839,18 +1848,16 @@ define("oasis/webworker_adapter",
           addEventListener(worker, 'message', worker.initializationHandler);
         }));
 
-        return new RSVP.Promise(function (resolve, reject) {
-          worker.loadHandler = function (event) {
-            sandbox.oasis.configuration.eventCallback(function () {
-              if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
-              removeEventListener(worker, 'message', worker.loadHandler);
+        worker.loadHandler = function (event) {
+          sandbox.oasis.configuration.eventCallback(function () {
+            if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
+            removeEventListener(worker, 'message', worker.loadHandler);
 
-              Logger.log("worker sandbox initialized");
-              resolve(sandbox);
-            });
-          };
-          addEventListener(worker, 'message', worker.loadHandler);
-        });
+            Logger.log("worker sandbox initialized");
+            sandbox.createAndTransferCapabilities();
+          });
+        };
+        addEventListener(worker, 'message', worker.loadHandler);
       },
 
       startSandbox: function(sandbox) { },
