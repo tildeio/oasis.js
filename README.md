@@ -323,3 +323,15 @@ The easiest way to see the samples is to run the test server and navigate to
 
 # TODO
 
+- OasisSandbox: don't call createChannels/connectPorts after init, but instead
+  expose a hook
+- Adapter.initialize: this should call the hook on [re]connect
+- push; doc reconnection
+  - `waitForLoad()` semantics in the face of reconnect?
+    it's a promise, can only be fulfilled once, so it's a promise that the card
+    has initialized & connected at least once;
+    - don't save refs to ports or services, they can die at any moment (incl.
+      mid-message)
+  - `sandbox.connect('capability')` semantics sort of stay the same: basically
+    you must call `connect` again in the face of reconnection.  How do you know
+    to do this?  your port is stopped?

@@ -274,3 +274,67 @@ test("`sandbox.onerror` is called when the sandbox sends an error message", func
 
   sandbox.start();
 });
+
+test("A sandbox can be reconnected after navigation", function() {
+  expect(2);
+  stop(2);
+
+  var sandbox = createSandbox({
+    url: "fixtures/reconnect.html",
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        requests: {
+          firstLoad: function () {
+            start();
+            ok(true, "Sandbox loaded initially");
+
+            return true;
+          },
+        },
+        events: {
+          secondLoad: function (result) {
+            start();
+            ok(true, "Sandbox reconnected after navigation");
+          }
+        }
+      })
+    }
+  });
+
+  sandbox.start();
+});
+
+test("when a sandbox is reconnected, services are torn down and recreated", function() {
+  expect(4);
+  stop(2);
+
+  var sandbox = createSandbox({
+    url: "fixtures/reconnect.html",
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        init: function () {
+          // fires twice: once for initial connection and again on reconnection
+          ok("Service initialized");
+        },
+        requests: {
+          firstLoad: function () {
+            start();
+            ok(true, "Sandbox loaded initially");
+
+            return true;
+          },
+        },
+        events: {
+          secondLoad: function (result) {
+            start();
+            ok(true, "Sandbox reconnected after navigation");
+          }
+        }
+      })
+    }
+  });
+
+  sandbox.start();
+});
