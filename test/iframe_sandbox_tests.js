@@ -3,7 +3,7 @@
 import Oasis from "oasis";
 
 import { a_forEach } from "oasis/shims";
-import { getBase } from "test/helpers/shims";
+import { getBase, _addEventListener } from "test/helpers/shims";
 
 var sandbox, sandboxes,
     destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);
@@ -275,40 +275,11 @@ test("`sandbox.onerror` is called when the sandbox sends an error message", func
   sandbox.start();
 });
 
-test("A sandbox can be reconnected after navigation", function() {
-  expect(2);
-  stop(2);
-
-  var sandbox = createSandbox({
-    url: "fixtures/reconnect.html",
-    capabilities: ['assertions'],
-    services: {
-      assertions: Oasis.Service.extend({
-        requests: {
-          firstLoad: function () {
-            start();
-            ok(true, "Sandbox loaded initially");
-
-            return true;
-          },
-        },
-        events: {
-          secondLoad: function (result) {
-            start();
-            ok(true, "Sandbox reconnected after navigation");
-          }
-        }
-      })
-    }
-  });
-
-  sandbox.start();
-});
-
 test("when a sandbox is reconnected, services are torn down and recreated", function() {
   expect(4);
   stop(2);
 
+  oasis.configure('allowSameOrigin', true);
   var sandbox = createSandbox({
     url: "fixtures/reconnect.html",
     capabilities: ['assertions'],
@@ -337,4 +308,212 @@ test("when a sandbox is reconnected, services are torn down and recreated", func
   });
 
   sandbox.start();
+});
+
+test("with `reconnect:'none'` sandboxes do not reconnect", function() {
+  expect(3);
+  stop();
+
+  oasis.configure('reconnect', 'none');
+  var sandbox = createSandbox({
+    url: "fixtures/reconnect.html",
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        requests: {
+          firstLoad: function () {
+            ok(true, "sandbox is navigating and will reconnect");
+            return true;
+          }
+        }
+      })
+    }
+  });
+
+  sandbox.start();
+
+  sandbox.waitForLoad().then(function (sandbox) {
+    ok(true, "sandbox loaded first time");
+
+    sandbox.createAndTransferCapabilities = function () {
+      start();
+      ok(false, "sandbox did not accept reconnection with reconnect: none");
+    };
+
+    _addEventListener(window, 'message', oasisLoadMessageReceived);
+
+    function oasisLoadMessageReceived(event) {
+      if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
+      try {
+        if( event.source !== sandbox.el.contentWindow ) {return;}
+      } catch(e) {
+        return;
+      }
+
+      setTimeout (function () {
+        ok(true, "Second load event received: should not have called `createAndTransferCapabilities` again");
+        start();
+      }, 1);
+    }
+  });
+});
+
+test("with `reconnect: any` sandboxes will reconnect with other origins", function() {
+  expect(4);
+  stop(2);
+
+  oasis.configure('allowSameOrigin', false);
+  oasis.configure('reconnect', 'any');
+  var sandbox = createSandbox({
+    url: "fixtures/reconnect.html",
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        init: function () {
+          // fires twice: once for initial connection and again on reconnection
+          ok("Service initialized");
+        },
+        requests: {
+          firstLoad: function () {
+            start();
+            ok(true, "Sandbox loaded initially");
+
+            return true;
+          },
+        },
+        events: {
+          secondLoad: function (result) {
+            start();
+            ok(true, "Sandbox reconnected after navigation");
+          }
+        }
+      })
+    }
+  });
+
+  sandbox.start();
+});
+
+test("with `reconnect: verify` sandboxes will not reconnect with different origins", function() {
+  expect(3);
+  stop();
+
+  oasis.configure('reconnect', 'verify');
+  var sandbox = createSandbox({
+    url: "fixtures/reconnect_different_origin.html",
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        requests: {
+          firstLoad: function () {
+            ok(true, "sandbox is navigating and will reconnect");
+            return true;
+          }
+        }
+      })
+    }
+  });
+
+  sandbox.start();
+
+  sandbox.waitForLoad().then(function (sandbox) {
+    ok(true, "sandbox loaded first time");
+
+    sandbox.createAndTransferCapabilities = function () {
+      start();
+      ok(false, "sandbox did not accept reconnection from a different origin with reconnect: verify");
+    };
+
+    sandbox.onerror = function (error) {
+      start();
+      ok(/Cannot reconnect/i.test(error.message), "reconnect: verify prevented reconnection from different origin");
+    };
+  });
+});
+
+test("with `reconnect: verify` sandboxes will not reconnect if allowSameOrigin is false", function() {
+  expect(3);
+  stop();
+
+  oasis.configure('allowSameOrigin', false);
+  oasis.configure('reconnect', 'verify');
+  var sandbox = createSandbox({
+    url: "fixtures/reconnect.html",
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        requests: {
+          firstLoad: function () {
+            ok(true, "sandbox is navigating and will reconnect");
+            return true;
+          }
+        }
+      })
+    }
+  });
+
+  sandbox.start();
+
+  sandbox.waitForLoad().then(function (sandbox) {
+    ok(true, "sandbox loaded first time");
+
+    sandbox.createAndTransferCapabilities = function () {
+      start();
+      ok(false, "sandbox did not accept reconnection with reconnect: verify and allowSameOrigin: false");
+    };
+
+    sandbox.onerror = function (error) {
+      start();
+      ok(/Cannot reconnect/i.test(error.message), "reconnect: verify prevented reconnection from null origin");
+    };
+  });
+});
+
+test("with `reconnect: verify` sandboxes will reconnect with origins that match the sandbox's original url", function() {
+  expect(2);
+  stop(2);
+
+  oasis.configure('allowSameOrigin', true);
+  oasis.configure('reconnect', 'verify');
+  var sandbox = createSandbox({
+    url: "fixtures/reconnect.html",
+    capabilities: ['assertions'],
+    services: {
+      assertions: Oasis.Service.extend({
+        requests: {
+          firstLoad: function () {
+            start();
+            ok(true, "Sandbox loaded initially");
+
+            return true;
+          },
+        },
+        events: {
+          secondLoad: function (result) {
+            start();
+            ok(true, "Sandbox reconnected after navigation");
+          }
+        }
+      })
+    }
+  });
+
+  sandbox.start();
+});
+
+test("`reconnect` can be overridden at `createSandbox`", function() {
+  expect(1);
+
+  oasis.configure('reconnect', 'none');
+  var sandbox = createSandbox({
+    url: "fixtures/reconnect.html",
+    capabilities: ['dummy'],
+    reconnect: 'verify'
+  });
+
+  equal(sandbox.options.reconnect, "verify", "reconnect option can be specified per-sandbox");
+});
+
+test("`reconnect` defaults to 'verify'", function() {
+  equal(new Oasis().configuration.reconnect, "verify", "`reconnect` defaults to 'verify'");
 });

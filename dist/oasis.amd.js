@@ -215,10 +215,18 @@ define("oasis/config",
       - `eventCallback` - a function that wraps `message` event handlers.  By
         default the event hanlder is simply invoked.
       - `allowSameOrigin` - a card can be hosted on the same domain
+      - `reconnect` - the default reconnect options for iframe sandboxes.  Possible values are:
+        - "none" - do not allow sandbox reconnection
+        - "verify" - only allow reconnections from the original origin of the sandbox
+        - "any" - allow any sandbox reconnections.  Only use this setting if you are
+          using Oasis strictly for isolation of trusted applications or if it's safe
+          to connect your sandbox to arbitrary origins.  This is an advanced setting
+          and should be used with care.
     */
     function OasisConfiguration() {
       this.eventCallback = function (callback) { callback(); };
       this.allowSameOrigin = false;
+      this.reconnect = 'verify';
     }
 
 
@@ -493,6 +501,40 @@ define("oasis/iframe_adapter",
         }
       }
     }
+
+    function verifyCurrentSandboxOrigin(sandbox, event) {
+      var linkOriginal, linkCurrent;
+
+      if (sandbox.firstLoad || sandbox.options.reconnect === "any") {
+        return true;
+      }
+
+      if (!sandbox.oasis.configuration.allowSameOrigin || event.origin === "null") {
+        fail();
+      } else {
+        linkOriginal = document.createElement('a');
+        linkCurrent = document.createElement('a');
+
+        linkOriginal.href = sandbox.options.url;
+        linkCurrent.href = event.origin;
+
+        if (linkCurrent.protocol === linkOriginal.protocol &&
+            linkCurrent.host === linkOriginal.host) {
+      
+          return true;
+        }
+
+        fail();
+      }
+
+      function fail() {
+        sandbox.onerror(
+          new Error("Cannot reconnect null origins unless `reconnect` is set to " +
+                    "'any'.  `reconnect: 'verify' requires `allowSameOrigin: " +
+                    "true`"));
+      }
+    }
+
     function isUrl(s) {
       var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
       return regexp.test(s);
@@ -581,7 +623,15 @@ define("oasis/iframe_adapter",
           }
 
           Logger.log("container: iframe sandbox has loaded Oasis");
-          sandbox.createAndTransferCapabilities();
+
+      
+          if (verifyCurrentSandboxOrigin(sandbox, event)) {
+            sandbox.createAndTransferCapabilities();
+          }
+
+          if (sandbox.options.reconnect === "none") {
+            removeEventListener(window, 'message', iframe.oasisLoadHandler);
+          }
         };
         addEventListener(window, 'message', iframe.oasisLoadHandler);
       },
@@ -1089,6 +1139,7 @@ define("oasis/sandbox",
     "use strict";
     var assert = __dependency1__.assert;
     var uniq = __dependency1__.uniq;
+    var reverseMerge = __dependency1__.reverseMerge;
     var a_forEach = __dependency2__.a_forEach;
     var a_reduce = __dependency2__.a_reduce;
     var a_filter = __dependency2__.a_filter;
@@ -1096,6 +1147,14 @@ define("oasis/sandbox",
 
 
     var OasisSandbox = function(oasis, options) {
+      options = reverseMerge(options || {}, {
+        reconnect: oasis.configuration.reconnect
+      });
+
+      var reconnect = options.reconnect;
+      assert( reconnect === "none" || reconnect === "verify" || reconnect === "any",
+              "`reconnect` must be one of 'none', 'verify' or 'any'.  '" + reconnect + "' is invalid.");
+
       this.connections = {};
       this.wiretaps = [];
 
@@ -1120,7 +1179,7 @@ define("oasis/sandbox",
       this.channels = {};
       this.capabilities = {};
       this.options = options;
-      this._reconnection = false;
+      this.firstLoad = true;
 
       var sandbox = this;
       this.promisePorts();
@@ -1145,13 +1204,13 @@ define("oasis/sandbox",
       },
 
       createAndTransferCapabilities: function () {
-        if (this._reconnection) { this.promisePorts(); }
+        if (!this.firstLoad) { this.promisePorts(); }
 
         this.createChannels();
         this.connectPorts();
 
         // subsequent calls to `createAndTransferCapabilities` requires new port promises
-        this._reconnection = true;
+        this.firstLoad = false;
       },
 
       promisePorts: function () {
@@ -1792,12 +1851,25 @@ define("oasis/util",
       });
     }
 
+    function reverseMerge(a, b) {
+      for (var prop in b) {
+        if (!b.hasOwnProperty(prop)) { continue; }
+
+        if (! (prop in a)) {
+          a[prop] = b[prop];
+        }
+      }
+
+      return a;
+    }
+
     __exports__.assert = assert;
     __exports__.noop = noop;
     __exports__.mustImplement = mustImplement;
     __exports__.extend = extend;
     __exports__.delegate = delegate;
     __exports__.uniq = uniq;
+    __exports__.reverseMerge = reverseMerge;
   });
 define("oasis/version",
   [],

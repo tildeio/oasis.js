@@ -1,6 +1,9 @@
 ### 0.4.0
 *TBD*
 
+- iFrame sandboxes can reconnect.  This is useful if you want to sandbox an
+  existing app that navigates (rather than a "single page app").
+
 - Adapters can have unsupported capabilities.  These are capabilities the
   adapter will never connect, even when they are registered for a sandbox.  This
   can be useful if you have capabilities that never make sense in, for example,
