@@ -3109,8 +3109,6 @@ define("oasis/sandbox",
 
       pkg = pkg || {};
 
-      this.dependencies = options.dependencies || pkg.dependencies;
-
       this.adapter = options.adapter || Oasis.adapters.iframe;
 
       this._capabilitiesToConnect = this._filterCapabilities(capabilities);
