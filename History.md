@@ -1,4 +1,8 @@
 ### 0.4.0
+*TBD*
+
+- iFrame sandboxes can reconnect.  This is useful if you want to sandbox an
+  existing app that navigates (rather than a "single page app").
 
 - Adapters can have unsupported capabilities.  These are capabilities the
   adapter will never connect, even when they are registered for a sandbox.  This
@@ -33,6 +37,7 @@
   with `oasis.configure('allowSameOrigin', true)`.
 
 ### 0.3.0
+*29 August 2013*
 
 - `oasis.logger.enable()` will log some Oasis internals, especially around
   sandbox initialization.  Specific output and output format subject to change.
@@ -45,10 +50,12 @@
   inline adapter for trusted environments.
 
 ### 0.2.1
+*16 August 2013*
 
 - HTML sandboxes are supported again.
 
 ### 0.2.0
+*12 August 2013*
 
 - Ports are saved on sandboxes.
 ```js
