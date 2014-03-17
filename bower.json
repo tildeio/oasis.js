@@ -9,10 +9,13 @@
   "authors": [
     "Tilde, inc."
   ],
-  "description": "Oasis.js is a pleasant API for safe communication with untrusted code in sandboxed iframes.",
+  "description": "Oasis.js is a pleasant API for safe communication with untrusted code in sandboxed iframes and web workers.",
   "keywords": [
     "postMessage",
-    "MessageChannel"
+    "MessageChannel",
+    "sandbox",
+    "iframe",
+    "worker"
   ],
   "license": "MIT",
   "ignore": [
@@ -23,7 +26,7 @@
     "tests"
   ],
   "dependencies": {
-    "MessageChannel.js": "~0.1.4"
+    "MessageChannel.js": "~0.1.5"
   },
   "devDependencies": {
     "qunit": "git://github.com/lessmad/qunit#stop-names-test",
