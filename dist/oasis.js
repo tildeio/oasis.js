@@ -1164,18 +1164,16 @@ function UUID(){}UUID.generate=function(){var a=UUID._gri,b=UUID._ha;return b(a(
           messageHandlers = [];
 
       if( target.addEventListener ) {
-        originalAddEventListener = target.addEventListener;
         addEventListenerName = 'addEventListener';
-        targetRemoveEventListener = target.removeEventListener;
         removeEventListenerName = 'removeEventListener';
         messageEventType = 'message';
       } else if( target.attachEvent ) {
-        originalAddEventListener = target.attachEvent;
         addEventListenerName = 'attachEvent';
-        targetRemoveEventListener = target.detachEvent;
         removeEventListenerName = 'detachEvent';
         messageEventType = 'onmessage';
       }
+      originalAddEventListener = target[addEventListenerName];
+      targetRemoveEventListener = target[removeEventListenerName];
 
       target[addEventListenerName] = function() {
         var args = Array.prototype.slice.call( arguments ),
@@ -1286,7 +1284,19 @@ function UUID(){}UUID.generate=function(){var a=UUID._gri,b=UUID._ha;return b(a(
         otherWindow.postMessage(data, targetOrigin);
       };
 
-      _overrideMessageEventListener( Window.prototype );
+      // Juggling to find where to override `addEventListener`
+      // Firefox 30.0a1 (2014-02-17) adds `addEventListener` on the global object
+      // Internet Explorer doesn't allow to override `window.attachEvent`
+      var target;
+      if( window.addEventListener ) {
+        target = window;
+      } else if( window.attachEvent ) {
+        target = Window.prototype;
+      } else {
+        throw "We couldn't find a method to attach an event handler.";
+      }
+
+      _overrideMessageEventListener( target );
     } else {
       //Worker
       _overrideMessageEventListener( self );
