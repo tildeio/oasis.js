@@ -19,10 +19,10 @@ var ieBrowsers = [{
       version: '8',
       platform: 'Windows 7'
   }];
-  
+
 var otherBrowsers = [{
     browserName: 'firefox',
-    version: '21',
+    version: '29',
     platform: 'Windows 8'
   }];
 
