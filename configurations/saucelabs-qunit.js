@@ -16,8 +16,12 @@ var ieBrowsers = [{
       platform: 'Windows 8'
     },{
       browserName: 'internet explorer',
-      version: '8',
+      version: '9',
       platform: 'Windows 7'
+    },{
+      browserName: 'internet explorer',
+      version: '8',
+      platform: 'Windows XP'
   }];
   
 var otherBrowsers = [{
