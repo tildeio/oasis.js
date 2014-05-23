@@ -409,7 +409,7 @@ test("with `reconnect:'none'` sandboxes do not reconnect", function() {
     function oasisLoadMessageReceived(event) {
       if( event.data !== sandbox.adapter.oasisLoadedMessage ) {return;}
       try {
-        if( event.source !== sandbox.el.contentWindow ) {return;}
+        if( !sandbox.el || event.source !== sandbox.el.contentWindow ) {return;}
       } catch(e) {
         return;
       }
