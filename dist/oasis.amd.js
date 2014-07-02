@@ -520,7 +520,6 @@ define("oasis/iframe_adapter",
 
         if (linkCurrent.protocol === linkOriginal.protocol &&
             linkCurrent.host === linkOriginal.host) {
-      
           return true;
         }
 
@@ -551,6 +550,9 @@ define("oasis/iframe_adapter",
 
         if( sandbox.oasis.configuration.allowSameOrigin ) {
           sandboxAttributes.push('allow-same-origin');
+        }
+        if( options && options.sandbox && options.sandbox.popups ) {
+          sandboxAttributes.push('allow-popups');
         }
 
         iframe.name = sandbox.options.url + '?uuid=' + UUID.generate();
@@ -624,7 +626,7 @@ define("oasis/iframe_adapter",
 
           Logger.log("container: iframe sandbox has loaded Oasis");
 
-      
+
           if (verifyCurrentSandboxOrigin(sandbox, event)) {
             sandbox.createAndTransferCapabilities();
           }

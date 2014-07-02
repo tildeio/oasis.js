@@ -3,6 +3,7 @@
 <head>
   <script src="/oasis.js" ></script>
   <script src="/fixtures/shims.js"></script>
+  <script src="/vendor/jquery.js"></script>
   <script type="text/javascript">
     /*global _addEventListener */
 
@@ -33,7 +34,13 @@
           }
         });
 
-        document.body.appendChild(iframe);
+        // We need to wait for document.body to be available
+        // In some cases (only encountered with Saucelabs),
+        // `document.body` can be null
+        // See http://stackoverflow.com/questions/9916747/why-is-document-body-null-in-my-javascript
+        $(document).ready( function() {
+          document.body.appendChild(iframe);
+        });
       });
     }, Oasis.RSVP.rethrow);
   </script>
