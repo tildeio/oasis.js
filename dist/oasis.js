@@ -40,6 +40,10 @@ if (typeof define !== 'function' && typeof requireModule !== 'function') {
   })();
 }
 
+define('UUID', [], function(){
+  return UUID;
+});
+
 /*
  Version: core-1.0
  The MIT License: Copyright (c) 2012 LiosK.
@@ -2476,8 +2480,8 @@ define("oasis/events",
     return Events;
   });
 define("oasis/iframe_adapter",
-  ["oasis/util","oasis/shims","rsvp","oasis/logger","oasis/base_adapter"],
-  function(__dependency1__, __dependency2__, RSVP, Logger, BaseAdapter) {
+  ["oasis/util","oasis/shims","UUID","rsvp","oasis/logger","oasis/base_adapter"],
+  function(__dependency1__, __dependency2__, UUID, RSVP, Logger, BaseAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var extend = __dependency1__.extend;
@@ -2485,7 +2489,7 @@ define("oasis/iframe_adapter",
     var addEventListener = __dependency2__.addEventListener;
     var removeEventListener = __dependency2__.removeEventListener;
     var a_map = __dependency2__.a_map;
-    /*global Window, UUID */
+    /*global Window */
 
 
 
@@ -3143,8 +3147,8 @@ define("oasis/message_channel",
     __exports__.PostMessagePort = PostMessagePort;
   });
 define("oasis/sandbox",
-  ["oasis/util","oasis/shims","oasis/message_channel","rsvp","oasis/logger"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger) {
+  ["oasis/util","oasis/shims","oasis/message_channel","rsvp","oasis/logger","oasis/iframe_adapter"],
+  function(__dependency1__, __dependency2__, __dependency3__, RSVP, Logger, IframeAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var uniq = __dependency1__.uniq;
@@ -3180,7 +3184,7 @@ define("oasis/sandbox",
 
       pkg = pkg || {};
 
-      this.adapter = options.adapter || Oasis.adapters.iframe;
+      this.adapter = options.adapter || new IframeAdapter();
 
       this._capabilitiesToConnect = this._filterCapabilities(capabilities);
       this.envPortDefereds = {};
@@ -3888,15 +3892,15 @@ define("oasis/version",
     return '0.4.0';
   });
 define("oasis/webworker_adapter",
-  ["oasis/util","oasis/shims","rsvp","oasis/logger","oasis/base_adapter"],
-  function(__dependency1__, __dependency2__, RSVP, Logger, BaseAdapter) {
+  ["oasis/util","oasis/shims","UUID","rsvp","oasis/logger","oasis/base_adapter"],
+  function(__dependency1__, __dependency2__, UUID, RSVP, Logger, BaseAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var extend = __dependency1__.extend;
     var a_forEach = __dependency2__.a_forEach;
     var addEventListener = __dependency2__.addEventListener;
     var removeEventListener = __dependency2__.removeEventListener;
-    /*global self, postMessage, importScripts, UUID */
+    /*global self, postMessage, importScripts */
 
 
 
