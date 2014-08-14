@@ -19,7 +19,7 @@ test("listeners are invoked on send", function() {
 
   oasis.xhr('/fixtures/index.js').then(function () {
     start();
-  }).fail(RSVP.rethrow);
+  })['catch'](RSVP.rethrow);
 });
 
 test("listeners are invoked on load", function() {
@@ -31,5 +31,5 @@ test("listeners are invoked on load", function() {
     ok(true, 'load listener was called');
   });
 
-  oasis.xhr('/fixtures/index.js').fail(RSVP.rethrow);
+  oasis.xhr('/fixtures/index.js')['catch'](RSVP.rethrow);
 });
