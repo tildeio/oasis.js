@@ -251,7 +251,7 @@ define("oasis/connect",
         if (options.promise) {
           options.promise.then(function() {
             port.start();
-          }).fail(RSVP.rethrow);
+          })['catch'](RSVP.rethrow);
         } else {
           port.start();
         }
@@ -337,7 +337,7 @@ define("oasis/connect",
 
           RSVP.resolve(handler.setupCapability(port)).then(function () {
             port.start();
-          }).fail(RSVP.rethrow);
+          })['catch'](RSVP.rethrow);
         }
 
         oasis.ports[capability] = port;
@@ -719,8 +719,7 @@ define("oasis/inline_adapter",
 
         var oasis = sandbox.sandboxedOasis = new Oasis();
         sandbox.sandboxedOasis.sandbox = sandbox;
-        // When we upgrade RSVP we can change this to `RSVP.async`
-        RSVP.resolve().then(function () {
+        RSVP.async(function () {
           sandbox.createAndTransferCapabilities();
         });
       },
@@ -758,7 +757,7 @@ define("oasis/inline_adapter",
           dataType: 'text'
         }, oasis).then(function (code) {
           return adapter.wrapResource(code);
-        }).fail(RSVP.rethrow);
+        })['catch'](RSVP.rethrow);
       },
 
       wrapResource: function (code) {
@@ -777,7 +776,7 @@ define("oasis/inline_adapter",
       didConnect: function(oasis) {
         var adapter = this;
 
-        return oasis.sandbox._waitForLoadDeferred().resolve(loadSandboxJS().fail(RSVP.rethrow));
+        return oasis.sandbox._waitForLoadDeferred().resolve(loadSandboxJS()['catch'](RSVP.rethrow));
 
         function applySandboxJS(sandboxFn) {
           Logger.log("sandbox: inline sandbox initialized");
@@ -1310,7 +1309,7 @@ define("oasis/sandbox",
         RSVP.all(allSandboxPortPromises).then(function (ports) {
           Logger.log("container: All " + ports.length + " ports created.  Transferring them.");
           sandbox.adapter.connectPorts(sandbox, ports);
-        }).fail(RSVP.rethrow);
+        })['catch'](RSVP.rethrow);
       },
 
       start: function(options) {

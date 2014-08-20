@@ -1,10 +1,10 @@
 var vendorSources = [
   'vendor/loader.js',
+  'node_modules/rsvp/dist/rsvp.js',
   'vendor/**/*.js',
   'bower_components/UUID.js/dist/uuid.core.js',
   'bower_components/kamino.js/lib/kamino.js',
-  'bower_components/MessageChannel.js/lib/message_channel.js',
-  'node_modules/rsvp/dist/*.amd.js'
+  'bower_components/MessageChannel.js/lib/message_channel.js'
 ];
 
 module.exports = {
