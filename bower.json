@@ -27,7 +27,7 @@
   ],
   "dependencies": {
     "MessageChannel.js": "~0.1.5",
-    "ie8-shims.js": "git@github.com:Cyril-sf/ie8-shims.git#cf/initial-implementation"
+    "ie8-shims.js": "git://github.com/Cyril-sf/ie8-shims.git#cf/initial-implementation"
   },
   "devDependencies": {
     "qunit": "git://github.com/lessmad/qunit#stop-names-test",
