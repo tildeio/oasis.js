@@ -1,8 +1,7 @@
 import IframeAdapter from "oasis/iframe_adapter";
 import WebworkerAdapter from "oasis/webworker_adapter";
 import InlineAdapter from "oasis/inline_adapter";
-import { a_forEach, o_create } from "oasis/shims";
-import { _addEventListener } from "test/helpers/shims";
+import { a_forEach, o_create, addEventListener as _addEventListener } from "ie8Shims";
 
 var sandboxes = [],
     destinationUrl = window.location.protocol + "//" + window.location.hostname + ":" + (parseInt(window.location.port, 10) + 1);

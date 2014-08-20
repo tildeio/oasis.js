@@ -4,11 +4,7 @@ module.exports = {
       'lib/**/*.js',
       'test/*.js',
       'test/fixtures/**/*.js',
-      'test/helpers/**/*.js',
-      // There's one warning that we can't disable in here, grabbed from a
-      // Mozilla polyfill.  Don't want to change `!=` to `!==` in a polyfill.
-      '!test/helpers/shims.js',
-      '!lib/oasis/shims.js'
+      'test/helpers/**/*.js'
     ],
     options: {
       jshintrc: '.jshintrc',

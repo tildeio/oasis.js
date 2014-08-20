@@ -4,7 +4,8 @@ var vendorSources = [
   'vendor/**/*.js',
   'bower_components/UUID.js/dist/uuid.core.js',
   'bower_components/kamino.js/lib/kamino.js',
-  'bower_components/MessageChannel.js/lib/message_channel.js'
+  'bower_components/MessageChannel.js/lib/message_channel.js',
+  'bower_components/ie8-shims.js/dist/ie8-shims.js'
 ];
 
 module.exports = {

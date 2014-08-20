@@ -1,5 +1,5 @@
 import Oasis from "oasis";
-import { a_indexOf } from "test/helpers/shims";
+import { a_indexOf } from "ie8Shims";
 import { commonTests } from "test/helpers/suite";
 
 commonTests('Wiretapping', function (oasis, adapter) {

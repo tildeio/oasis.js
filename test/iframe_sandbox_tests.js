@@ -2,8 +2,8 @@
 
 import Oasis from "oasis";
 
-import { a_forEach } from "oasis/shims";
-import { getBase, _addEventListener } from "test/helpers/shims";
+import { a_forEach, addEventListener as _addEventListener } from "ie8Shims";
+import { getBase } from "test/helpers/shims";
 import { isSandboxAttributeSupported } from "test/helpers/suite";
 
 var sandbox, sandboxes,
