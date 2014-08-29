@@ -71,6 +71,8 @@ define("oasis",
         @param {Object} options
       */
       createSandbox: function (options) {
+        options = options || {};
+        options.adapter  = options.adapter || Oasis.adapters.iframe;
         return new Sandbox(this, options);
       },
 
@@ -1067,7 +1069,7 @@ define("oasis/sandbox",
 
       pkg = pkg || {};
 
-      this.adapter = options.adapter || Oasis.adapters.iframe;
+      this.adapter = options.adapter;
 
       this._capabilitiesToConnect = this._filterCapabilities(capabilities);
       this.envPortDefereds = {};
