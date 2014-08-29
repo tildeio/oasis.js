@@ -27,7 +27,7 @@ module.exports = {
     ]),
     dest: 'dist/oasis.js',
     options: {
-      footer: "self.Oasis = requireModule('oasis'); self.oasis = new self.Oasis(); self.oasis.autoInitializeSandbox();"
+      footer: "self.Oasis = requireModule('oasis'); self.oasis = new self.Oasis(); self.oasis.autoInitializeSandbox(self.Oasis.adapters);"
     }
   }
 };

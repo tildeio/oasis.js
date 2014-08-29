@@ -1261,7 +1261,7 @@ define("oasis/sandbox_init",
   [],
   function() {
     "use strict";
-    function autoInitializeSandbox () {
+    function autoInitializeSandbox (adapters) {
       if (typeof window !== 'undefined') {
         if (/PhantomJS/.test(navigator.userAgent)) {
           // We don't support phantomjs for several reasons, including
@@ -1277,10 +1277,10 @@ define("oasis/sandbox_init",
         }
 
         if (window.parent && window.parent !== window) {
-          Oasis.adapters.iframe.connectSandbox(this);
+          adapters.iframe.connectSandbox(this);
         } 
       } else {
-        Oasis.adapters.webworker.connectSandbox(this);
+        adapters.webworker.connectSandbox(this);
       }
     }
 
