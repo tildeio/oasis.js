@@ -3022,7 +3022,7 @@ define("oasis",
       Oasis.adapters = {
         iframe: new IframeAdapter(),
         webworker: new WebworkerAdapter(),
-        inline: new InlineAdapter()
+        inline: new InlineAdapter(this)
       };
     };
 
@@ -3693,13 +3693,17 @@ define("oasis/inline_adapter",
 
 
     var InlineAdapter = extend(BaseAdapter, {
+      initialize: function(Oasis) {
+        this.Oasis = Oasis;
+      },
+
       //-------------------------------------------------------------------------
       // Environment API
 
       initializeSandbox: function(sandbox) {
         sandbox.el = document.createElement('div');
 
-        var oasis = sandbox.sandboxedOasis = new Oasis();
+        var oasis = sandbox.sandboxedOasis = new this.Oasis();
         sandbox.sandboxedOasis.sandbox = sandbox;
         RSVP.async(function () {
           sandbox.createAndTransferCapabilities();
