@@ -1,13 +1,12 @@
 define("oasis",
-  ["oasis/util","oasis/xhr","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/config","oasis/sandbox","oasis/sandbox_init","oasis/events","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter","oasis/inline_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, RSVP, logger, Version, OasisConfiguration, Sandbox, autoInitializeSandbox, Events, Service, IframeAdapter, WebworkerAdapter, InlineAdapter) {
+  ["oasis/util","oasis/connect","rsvp","oasis/logger","oasis/version","oasis/config","oasis/sandbox","oasis/sandbox_init","oasis/events","oasis/service","oasis/iframe_adapter","oasis/webworker_adapter"],
+  function(__dependency1__, __dependency2__, RSVP, logger, Version, OasisConfiguration, Sandbox, autoInitializeSandbox, Events, Service, IframeAdapter, WebworkerAdapter) {
     "use strict";
     var assert = __dependency1__.assert;
     var delegate = __dependency1__.delegate;
-    var xhr = __dependency2__.xhr;
-    var connect = __dependency3__.connect;
-    var connectCapabilities = __dependency3__.connectCapabilities;
-    var portFor = __dependency3__.portFor;
+    var connect = __dependency2__.connect;
+    var connectCapabilities = __dependency2__.connectCapabilities;
+    var portFor = __dependency2__.portFor;
 
 
 
@@ -39,8 +38,7 @@ define("oasis",
     Oasis.reset = function () {
       Oasis.adapters = {
         iframe: new IframeAdapter(),
-        webworker: new WebworkerAdapter(),
-        inline: new InlineAdapter(this)
+        webworker: new WebworkerAdapter()
       };
     };
 
@@ -57,8 +55,6 @@ define("oasis",
       trigger: delegate('events', 'trigger'),
 
       didCreate: function() {},
-
-      xhr: xhr,
 
       /**
         This is the entry point that allows the containing environment to create a
@@ -694,111 +690,6 @@ define("oasis/iframe_adapter",
 
 
     return IframeAdapter;
-  });
-define("oasis/inline_adapter",
-  ["oasis/util","oasis/config","oasis/shims","oasis/xhr","rsvp","oasis/logger","oasis/base_adapter"],
-  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, RSVP, Logger, BaseAdapter) {
-    "use strict";
-    var assert = __dependency1__.assert;
-    var extend = __dependency1__.extend;
-    var noop = __dependency1__.noop;
-    var configuration = __dependency2__.configuration;
-    var a_forEach = __dependency3__.a_forEach;
-    var a_map = __dependency3__.a_map;
-    var xhr = __dependency4__.xhr;
-    /*global self, postMessage, importScripts */
-
-
-
-    var InlineAdapter = extend(BaseAdapter, {
-      initialize: function(Oasis) {
-        this.Oasis = Oasis;
-      },
-
-      //-------------------------------------------------------------------------
-      // Environment API
-
-      initializeSandbox: function(sandbox) {
-        sandbox.el = document.createElement('div');
-
-        var oasis = sandbox.sandboxedOasis = new this.Oasis();
-        sandbox.sandboxedOasis.sandbox = sandbox;
-        RSVP.async(function () {
-          sandbox.createAndTransferCapabilities();
-        });
-      },
- 
-      startSandbox: function(sandbox) {
-        var body = document.body || document.documentElement.getElementsByTagName('body')[0];
-        body.appendChild(sandbox.el);
-      },
-
-      terminateSandbox: function(sandbox) {
-        var el = sandbox.el;
-
-        if (el.parentNode) {
-          Logger.log("Terminating sandbox ", sandbox.el.name);
-          el.parentNode.removeChild(el);
-        }
-
-        sandbox.el = null;
-      },
-
-      connectPorts: function(sandbox, ports) {
-        var rawPorts = a_map.call(ports, function(oasisPort){ return oasisPort.port; }),
-            message = this.createInitializationMessage(sandbox),
-            event = { data: message, ports: rawPorts };
-
-        // Normally `connectSandbox` is called in autoinitialization, but there
-        // isn't a real sandbox here.
-        this.connectSandbox(sandbox.sandboxedOasis, event);
-      },
-
-      fetchResource: function (url, oasis) {
-        var adapter = this;
-
-        return xhr(url, {
-          dataType: 'text'
-        }, oasis).then(function (code) {
-          return adapter.wrapResource(code);
-        })['catch'](RSVP.rethrow);
-      },
-
-      wrapResource: function (code) {
-        return new Function("oasis", code);
-      },
-
-      //-------------------------------------------------------------------------
-      // Sandbox API
-
-      connectSandbox: function(oasis, pseudoEvent) {
-        return this.initializeOasisSandbox(pseudoEvent, oasis);
-      },
-
-      oasisLoaded: noop,
-
-      didConnect: function(oasis) {
-        var adapter = this;
-
-        return oasis.sandbox._waitForLoadDeferred().resolve(loadSandboxJS()['catch'](RSVP.rethrow));
-
-        function applySandboxJS(sandboxFn) {
-          Logger.log("sandbox: inline sandbox initialized");
-          sandboxFn(oasis);
-          return oasis.sandbox;
-        }
-
-        function loadSandboxJS() {
-          return new RSVP.Promise(function (resolve, reject) {
-            resolve(adapter.fetchResource(oasis.sandbox.options.url, oasis).
-              then(applySandboxJS));
-          });
-        }
-      },
-    });
-
-
-    return InlineAdapter;
   });
 define("oasis/logger",
   [],
@@ -1979,119 +1870,4 @@ define("oasis/webworker_adapter",
 
 
     return WebworkerAdapter;
-  });
-define("oasis/xhr",
-  ["oasis/util","rsvp","exports"],
-  function(__dependency1__, RSVP, __exports__) {
-    "use strict";
-    var noop = __dependency1__.noop;
-    /*global XDomainRequest */
-
-
-    var a_slice = Array.prototype.slice;
-
-    function acceptsHeader(options) {
-      var dataType = options.dataType;
-
-      if (dataType && accepts[dataType]) {
-        return accepts[dataType];
-      }
-
-      return accepts['*'];
-    }
-
-    function xhrSetRequestHeader(xhr, options) {
-      xhr.setRequestHeader("Accepts", acceptsHeader(options));
-    }
-
-    function xhrGetLoadStatus(xhr) {
-      return xhr.status;
-    }
-
-    function xdrGetLoadStatus() {
-      return 200;
-    }
-
-    var NONE = {};
-
-    function trigger(event, oasis) {
-      if (!oasis) { return; }
-
-      var args = a_slice.call(arguments, 2);
-
-      args.unshift(event);
-      oasis.trigger.apply(oasis, args);
-    }
-
-    var accepts = {
-      "*": "*/*",
-      text: "text/plain",
-      html: "text/html",
-      xml: "application/xml, text/xml",
-      json: "application/json, text/javascript"
-    };
-
-    var XHR, setRequestHeader, getLoadStatus, send;
-
-    try {
-      if ('withCredentials' in new XMLHttpRequest()) {
-        XHR = XMLHttpRequest;
-        setRequestHeader = xhrSetRequestHeader;
-        getLoadStatus = xhrGetLoadStatus;
-      } else if (typeof XDomainRequest !== 'undefined') {
-        XHR = XDomainRequest;
-        setRequestHeader = noop;
-        getLoadStatus = xdrGetLoadStatus;
-      }
-    } catch( exception ) {
-      if (typeof XDomainRequest !== 'undefined') {
-        XHR = XDomainRequest;
-        setRequestHeader = noop;
-        getLoadStatus = xdrGetLoadStatus;
-      }
-    }
-    // else inline adapter with cross-domain cards is not going to work
-
-
-    function xhr(url, options, oasis) {
-      if (!oasis && this instanceof Oasis) { oasis = this; }
-      if (!options) { options = NONE; }
-
-      return new RSVP.Promise(function(resolve, reject){
-        var xhr = new XHR();
-        xhr.open("get", url, true);
-        setRequestHeader(xhr, options);
-
-        if (options.timeout) {
-          xhr.timeout = options.timeout;
-        }
-
-        xhr.onload = function () {
-          trigger('xhr.load', oasis, url, options, xhr);
-
-          var status = getLoadStatus(xhr);
-          if (status >= 200 && status < 300) {
-            resolve(xhr.responseText);
-          } else {
-            reject(xhr);
-          }
-        };
-
-        xhr.onprogress = noop;
-        xhr.ontimeout = function () {
-          trigger('xhr.timeout', oasis, url, options, xhr);
-          reject(xhr);
-        };
-
-        xhr.onerror = function () {
-          trigger('xhr.error', oasis, url, options, xhr);
-          reject(xhr);
-        };
-
-        trigger('xhr.send', oasis, url, options, xhr);
-        xhr.send();
-      });
-    }
-
-    __exports__.xhr = xhr;
   });

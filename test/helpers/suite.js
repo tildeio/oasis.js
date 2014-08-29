@@ -19,10 +19,6 @@ function webworkerOptions(options) {
   options.url = options.url.replace(/\.js/, '.worker.js');
 }
 
-function inlineOptions(options) {
-  if (options.adapter === undefined) { options.adapter = Oasis.adapters.inline; }
-}
-
 function createSandbox(options) {
   var sandbox = window.oasis.createSandbox(options);
   sandboxes.push(sandbox);
@@ -47,11 +43,6 @@ function createWebworkerSandbox(options) {
   return sandbox;
 }
 
-function createInlineSandbox(options) {
-  inlineOptions(options);
-  return createSandbox(options);
-}
-
 function registerIframe(options) {
   iframeOptions(options);
   window.oasis.register(options);
@@ -59,11 +50,6 @@ function registerIframe(options) {
 
 function registerWebworker(options) {
   webworkerOptions(options);
-  window.oasis.register(options);
-}
-
-function registerInline(options) {
-  inlineOptions(options);
   window.oasis.register(options);
 }
 
@@ -84,14 +70,6 @@ function webworkerOasis() {
     configure: configure,
     register: registerWebworker,
     createSandbox: createWebworkerSandbox
-  };
-}
-
-function inlineOasis() {
-  return {
-    configure: configure,
-    register: registerInline,
-    createSandbox: createInlineSandbox
   };
 }
 
@@ -123,12 +101,6 @@ export function commonTests(moduleName, testsFn) {
     });
     testsFn(webworkerOasis(), 'webworker');
   }
-
-  module('inline:    ' + moduleName, {
-    setup: setup,
-    teardown: teardown
-  });
-  testsFn(inlineOasis(), 'inline');
 }
 
 export function isSandboxAttributeSupported() {

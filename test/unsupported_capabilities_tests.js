@@ -10,7 +10,7 @@ commonTests('Unsupported Capabilities', function (oasis, adapterName) {
   });
 
   test("users can add unsupported capabilities to a single adapter", function() {
-    expect(3);
+    expect(2);
     adapter = Oasis.adapters[adapterName];
     adapter.addUnsupportedCapability('cap');
     deepEqual(adapter.unsupportedCapabilities(), ['cap'], "users can add unsupported capabilities to an adapter");
