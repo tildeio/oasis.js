@@ -377,8 +377,75 @@ if( isSandboxAttributeSupported() ) {
           start();
           equal(data, 'some-test-value',  "The non-sandboxed iframe can read cookies");
 
-          var oasis2CookieValue = window.docCookies.getItem('oasis2');
+          var oasis2CookieValue = docCookies.getItem('oasis2');
           equal(oasis2CookieValue, 'value-from-iframe', "The non-sandboxed iframe can set cookies");
+
+          // set config back to default
+          oasis.configure('sandboxed', true);
+        }
+      }
+    });
+
+    var sandbox = createSandbox({
+      url: sandboxUrl,
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("sandboxed iframe on same origin can't modify properties of the parent document", function() {
+    expect(3);
+    stop();
+    equal(window.testProperty, undefined, 'propery starts out undefined');
+
+    var sandboxUrl = window.location.origin + '/fixtures/modify_parent.html';
+    oasis.register({
+      url: sandboxUrl,
+      capabilities: ['assertions']
+    });
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok: function(accessedParent) {
+          start();
+          equal(accessedParent, false);
+          equal(window.testProperty, undefined, 'propery was not modified');
+        }
+      }
+    });
+
+    var sandbox = createSandbox({
+      url: sandboxUrl,
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("non-sandboxed iframe on same origin can modify properties of the parent document", function() {
+    expect(3);
+    stop();
+    oasis.configure('sandboxed', false);
+    equal(window.testProperty, undefined, 'propery starts out undefined');
+
+    var sandboxUrl = window.location.origin + '/fixtures/modify_parent.html';
+    oasis.register({
+      url: sandboxUrl,
+      capabilities: ['assertions']
+    });
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok: function(accessedParent) {
+          start();
+          equal(accessedParent, true);
+          equal(window.testProperty, 'hello from iframe', 'propery was modified');
+          window.testProperty = undefined; // reset it
 
           // set config back to default
           oasis.configure('sandboxed', true);
