@@ -283,6 +283,20 @@ received from, a sandbox.  This can be particularly useful in testing.
   });
 ```
 
+# Using Oasis with Trusted Code
+
+You may want to use Oasis's services even if you trust the code on both sides
+of the sandbox divide.  In this case, you can turn off sandboxing security features:
+
+```js
+  oasis.configure('sandboxed', false);
+```
+
+With this setting, host the child documents on the same domain as
+the parent, and they will have full trusted access to the parent.
+This includes access to shared cookies, `window.open`, `window.parent`, etc.
+
+
 # Requirements & Browser Support
 
 Oasis.js is designed to take advantage of current and upcoming features in
