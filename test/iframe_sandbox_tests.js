@@ -1,4 +1,5 @@
-/*global oasis:true */
+/*globals oasis:true */
+/*global docCookies */
 
 import Oasis from "oasis";
 
@@ -277,6 +278,110 @@ if( isSandboxAttributeSupported() ) {
         ok: function(data) {
           start();
           equal(data, false,  "The sandboxed iframe can not open a popup window");
+        }
+      }
+    });
+
+    var sandbox = createSandbox({
+      url: sandboxUrl,
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("non-sandboxed iframe on different origin can open popup", function() {
+    expect(1);
+    stop();
+    oasis.configure('sandboxed', false);
+
+    var sandboxUrl = destinationUrl + '/fixtures/popup_parent.html';
+    oasis.register({
+      url: sandboxUrl,
+      capabilities: ['assertions']
+    });
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok: function(data) {
+          start();
+          equal(data, true,  "The non-sandboxed iframe can open a popup window");
+
+          // set config back to default
+          oasis.configure('sandboxed', true);
+        }
+      }
+    });
+
+    var sandbox = createSandbox({
+      url: sandboxUrl,
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("non-sandboxed iframe on same origin can open popup", function() {
+    expect(1);
+    stop();
+    oasis.configure('sandboxed', false);
+
+    var sandboxUrl = window.location.origin + '/fixtures/popup_parent.html';
+    oasis.register({
+      url: sandboxUrl,
+      capabilities: ['assertions']
+    });
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok: function(data) {
+          start();
+          equal(data, true,  "The non-sandboxed iframe can open a popup window");
+
+          // set config back to default
+          oasis.configure('sandboxed', true);
+        }
+      }
+    });
+
+    var sandbox = createSandbox({
+      url: sandboxUrl,
+      services: {
+        assertions: AssertionsService
+      }
+    });
+
+    sandbox.start();
+  });
+
+  test("non-sandboxed iframe on same origin can read and set cookies", function() {
+    expect(2);
+    stop();
+    oasis.configure('sandboxed', false);
+    docCookies.setItem('oasis', 'some-test-value');
+    docCookies.removeItem('oasis2');
+
+    var sandboxUrl = window.location.origin + '/fixtures/cookie.html';
+    oasis.register({
+      url: sandboxUrl,
+      capabilities: ['assertions']
+    });
+
+    var AssertionsService = Oasis.Service.extend({
+      events: {
+        ok: function(data) {
+          start();
+          equal(data, 'some-test-value',  "The non-sandboxed iframe can read cookies");
+
+          var oasis2CookieValue = window.docCookies.getItem('oasis2');
+          equal(oasis2CookieValue, 'value-from-iframe', "The non-sandboxed iframe can set cookies");
+
+          // set config back to default
+          oasis.configure('sandboxed', true);
         }
       }
     });
