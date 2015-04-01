@@ -76,6 +76,37 @@ test("The sandbox returns the name of the iframe", function() {
   equal( sandbox.name(), sandbox.el.name, 'The sandbox returns the iframe name' );
 });
 
+test("The iframe name respects query strings in the url", function() {
+  expect(2);
+  var sandboxUrl = destinationUrl + '/fixtures/index.html';
+  oasis.register({
+    url: sandboxUrl,
+    capabilities: []
+  });
+
+  var sandbox = createSandbox({
+    url: sandboxUrl
+  });
+  sandbox.start();
+
+  var questionMarkCount = sandbox.name().split('?').length - 1;
+  equal( questionMarkCount, 1, 'The iframe name is correct with no url query string' );
+
+  sandboxUrl = destinationUrl + '/fixtures/index.html?qsonurl=true';
+  oasis.register({
+    url: sandboxUrl,
+    capabilities: []
+  });
+
+  sandbox = createSandbox({
+    url: sandboxUrl
+  });
+  sandbox.start();
+
+  questionMarkCount = sandbox.name().split('?').length - 1;
+  equal( questionMarkCount, 1, 'The iframe name is correct with url query string' );
+});
+
 test("Oasis' bootloader can be hosted on a separate domain", function() {
   expect(2);
   var cardUrl = destinationUrl +  "/fixtures/assertions.html";

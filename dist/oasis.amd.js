@@ -546,7 +546,8 @@ define("oasis/iframe_adapter",
 
       initializeSandbox: function(sandbox) {
         var options = sandbox.options,
-            iframe = document.createElement('iframe');
+            iframe = document.createElement('iframe'),
+            queryStringPrefix = options.url && (options.url.indexOf('?') > -1) ? '&' : '?';
 
         if(sandbox.oasis.configuration.sandboxed !== false) {
           var sandboxAttributes = ['allow-scripts'];
@@ -559,7 +560,7 @@ define("oasis/iframe_adapter",
           }
           iframe.sandbox = sandboxAttributes.join(' ');
         }
-        iframe.name = sandbox.options.url + '?uuid=' + UUID.generate();
+        iframe.name = sandbox.options.url + queryStringPrefix + 'uuid=' + UUID.generate();
         iframe.seamless = true;
 
         // rendering-specific code
