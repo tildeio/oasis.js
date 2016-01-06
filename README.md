@@ -293,8 +293,7 @@ modern browsers.
   IE10+.
 - `MessageChannel`: An HTML5 feature that allows granular communication between
   iframes.  It replaces the need to do cumbersome multiplexing over a single
-  `postMessage` channel.  Available in all Evergreen browsers (and IE10+) with
-  the exception of Firefox.
+  `postMessage` channel.  Available in all Evergreen browsers (and IE10+).
 - `postMessage` structured data: An HTML5 feature that allows sending structured
   data, not just strings, over `postMessage`.
 
